@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../supabase'
 import { biometricService } from '../services/BiometricService'
 
-// Hash SHA-256 no cliente para garantir que a senha nunca chegue pura ao Supabase
+// Hash SHA-256 no cliente para garantir que a senha nunca chegue pura no armazenamento local.
 async function hashSHA256(str) {
   if (!str) return ''
   const encoder = new TextEncoder()
@@ -11,13 +10,6 @@ async function hashSHA256(str) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-// Verifica se o Supabase está de fato configurado com chaves válidas
-function isSupabaseEnabled() {
-  const url = import.meta.env.VITE_SUPABASE_URL || ''
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  return url && key && !url.includes('YOUR_SUPABASE_URL') && !key.includes('YOUR_SUPABASE_ANON_KEY')
 }
 
 export const useWalletStore = defineStore('wallet', () => {
@@ -190,7 +182,7 @@ export const useWalletStore = defineStore('wallet', () => {
     return Number(Math.max(0, gross - penalty).toFixed(2))
   })
 
-  // --- PERSISTÊNCIA: SOMENTE SUPABASE ---
+  // --- PERSISTÊNCIA LOCAL ---
 
   // Monta o objeto da carteira para salvar
   function buildWalletPayload() {
@@ -211,7 +203,7 @@ export const useWalletStore = defineStore('wallet', () => {
     }
   }
 
-  // Aplica os dados recebidos do Supabase no estado reativo
+  // Aplica os dados persistidos localmente no estado reativo
   function applyWalletData(w) {
     if (!w) return
     salary.value = w.salary ?? salary.value
@@ -234,181 +226,54 @@ export const useWalletStore = defineStore('wallet', () => {
     monthlyContribution.value = w.monthlyContribution ?? monthlyContribution.value
   }
 
-  // Salva no Supabase e mantém cache local
-  async function saveToSupabase() {
+  async function saveWalletState() {
     const payload = buildWalletPayload()
     payload._cachedAt = Date.now()
-
-    // Cache local primeiro (para fallback biométrico)
     localStorage.setItem('breyne_wallet_cache', JSON.stringify(payload))
-
-    if (!isSupabaseEnabled() || !currentUser.value || currentUser.value.id === 'local-user') return
-
-    // Proteção: não sobrescrever dados no Supabase com arrays vazios
-    // a menos que o cache de backup já estivesse vazio
-    const prevRaw = localStorage.getItem('breyne_wallet_cache_backup')
-    if (prevRaw) {
-      try {
-        const prev = JSON.parse(prevRaw)
-        const hadData = prev.investments?.length > 0 || prev.transactions?.length > 0
-        const hasData = payload.investments?.length > 0 || payload.transactions?.length > 0
-        if (hadData && !hasData) {
-          console.warn('[saveToSupabase] Pulando upsert: dados críticos foram zerados sem motivo aparente')
-          return
-        }
-      } catch (_) {}
-    }
-
-    // Backup antes de salvar
     localStorage.setItem('breyne_wallet_cache_backup', JSON.stringify(payload))
-
-    isSyncing.value = true
-    try {
-      const { error } = await supabase.from('user_wallets').upsert({
-        user_id: currentUser.value.id,
-        wallet_data: payload,
-        updated_at: new Date().toISOString()
-      })
-      if (error) console.warn('Supabase save error:', error.message)
-    } catch (err) {
-      console.warn('Supabase save exception:', err)
-    } finally {
-      isSyncing.value = false
-    }
+    isSyncing.value = false
   }
 
-  // Carrega a carteira do Supabase (com fallback para cache local)
-  async function loadFromSupabase(userId) {
-    if (!isSupabaseEnabled() || !userId) {
-      console.warn('[loadFromSupabase] Supabase desabilitado ou userId inválido', { isSupabaseEnabled: isSupabaseEnabled(), userId })
-      return false
-    }
-
-    // Lê cache local
+  async function loadWalletState() {
     const cachedRaw = localStorage.getItem('breyne_wallet_cache')
     let cached = null
     if (cachedRaw) {
       try { cached = JSON.parse(cachedRaw) } catch (_) {}
     }
 
-    try {
-      console.log('[loadFromSupabase] Buscando dados para userId:', userId)
-      const { data, error } = await supabase
-        .from('user_wallets')
-        .select('wallet_data')
-        .eq('user_id', userId)
-        .single()
-
-      if (error) {
-        console.warn('[loadFromSupabase] Erro na query:', error.message, error.details, error.hint)
-      }
-
-      if (data) {
-        console.log('[loadFromSupabase] Dados recebidos, tipo wallet_data:', typeof data.wallet_data)
-      }
-
-      if (!error && data?.wallet_data) {
-        // Supabase pode retornar string (coluna text) ou objeto (jsonb)
-        const supabaseData = typeof data.wallet_data === 'string'
-          ? JSON.parse(data.wallet_data)
-          : data.wallet_data
-        console.log('[loadFromSupabase] Dados parseados com sucesso. keys:', Object.keys(supabaseData))
-        // Se o cache local tem timestamp e é mais recente que o Supabase, preserva o cache
-        if (cached && cached._cachedAt && (!supabaseData._cachedAt || cached._cachedAt > supabaseData._cachedAt)) {
-          console.log('[loadFromSupabase] Usando cache local (mais recente)')
-          applyWalletData(cached)
-          return true
-        }
-        console.log('[loadFromSupabase] Aplicando dados do Supabase')
-        applyWalletData(supabaseData)
-        localStorage.setItem('breyne_wallet_cache', JSON.stringify(supabaseData))
-        console.log('[loadFromSupabase] Pós-aplicação —',
-          'investments:', investments.value?.length,
-          'transactions:', transactions.value?.length,
-          'salary:', salary.value,
-          'currentUser:', currentUser.value?.id)
-        return true
-      }
-    } catch (err) {
-      console.warn('[loadFromSupabase] Exceção:', err)
-    }
-
-    // Fallback: cache local
     if (cached) {
-      console.log('[loadFromSupabase] Fallback para cache local')
       applyWalletData(cached)
       return true
     }
-    console.warn('[loadFromSupabase] Sem dados - nem Supabase nem cache local')
+
     return false
   }
 
-  // Compatibilidade: mantém o nome antigo chamado pelas views/dashboard
   async function saveToLocalStorage() {
-    await saveToSupabase()
+    await saveWalletState()
   }
 
   async function loadFromLocalStorage() {
     if (currentUser.value) return
 
-    const { data: sessionData } = await supabase.auth.getSession()
-
-    // Outra chamada concorrente (ex: login biométrico) pode ter definido
-    // currentUser enquanto esta função estava suspensa no await acima.
-    if (currentUser.value) return
-
-    if (sessionData?.session?.user) {
-      const user = sessionData.session.user
-      currentUser.value = {
-        id: user.id,
-        name: user.user_metadata?.name || user.email.split('@')[0],
-        email: user.email
-      }
-      localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
-      await loadFromSupabase(user.id)
-      await biometricService.syncWithSupabase(user.id)
-      isBiometricEnabled.value = await biometricService.hasCredential(user.id)
-    } else {
-      const explicitUser = localStorage.getItem('breyne_user')
-      if (explicitUser) {
-        try {
-          const parsed = JSON.parse(explicitUser)
-          if (parsed && parsed.id) {
-            currentUser.value = parsed
-            isBiometricEnabled.value = localStorage.getItem('breyne_bio_enabled') === 'true'
-            const cached = localStorage.getItem('breyne_wallet_cache')
-            if (cached) {
-              applyWalletData(JSON.parse(cached))
-            } else {
-              // Sem cache local — tenta restaurar sessão e buscar do Supabase
-              const tokensRaw = localStorage.getItem('breyne_session_tokens')
-              if (tokensRaw) {
-                try {
-                  const tokens = JSON.parse(tokensRaw)
-                  const { data: sr } = await supabase.auth.setSession({
-                    access_token: tokens.access_token || '',
-                    refresh_token: tokens.refresh_token
-                  })
-                  if (sr?.session) {
-                    localStorage.setItem('breyne_user', JSON.stringify(parsed))
-                    await loadFromSupabase(parsed.id)
-                  }
-                } catch (_) {}
-              }
-              // Se ainda não carregou nada, invalida para forçar re-login
-              if (!localStorage.getItem('breyne_wallet_cache')) {
-                currentUser.value = null
-                localStorage.removeItem('breyne_user')
-              }
-            }
+    const explicitUser = localStorage.getItem('breyne_user')
+    if (explicitUser) {
+      try {
+        const parsed = JSON.parse(explicitUser)
+        if (parsed && parsed.id) {
+          currentUser.value = parsed
+          isBiometricEnabled.value = localStorage.getItem('breyne_bio_enabled') === 'true'
+          const cached = localStorage.getItem('breyne_wallet_cache')
+          if (cached) {
+            await loadWalletState()
           }
-        } catch (_) {
-          currentUser.value = null
-          localStorage.removeItem('breyne_user')
         }
-      } else {
+      } catch (_) {
         currentUser.value = null
+        localStorage.removeItem('breyne_user')
       }
+    } else {
+      currentUser.value = null
     }
   }
 
@@ -427,13 +292,13 @@ export const useWalletStore = defineStore('wallet', () => {
       date: new Date().toISOString()
     })
 
-    await saveToSupabase()
+    await saveToLocalStorage()
     return true
   }
 
   async function deleteTransaction(id) {
     transactions.value = transactions.value.filter(t => t.id !== id)
-    await saveToSupabase()
+    await saveToLocalStorage()
   }
 
   async function addInvestment(name, amount, type, category) {
@@ -447,13 +312,13 @@ export const useWalletStore = defineStore('wallet', () => {
       category
     })
 
-    await saveToSupabase()
+    await saveToLocalStorage()
     return true
   }
 
   async function deleteInvestment(id) {
     investments.value = investments.value.filter(i => i.id !== id)
-    await saveToSupabase()
+    await saveToLocalStorage()
   }
 
   async function adjustEmergencyFund(amount, isDeposit) {
@@ -485,7 +350,7 @@ export const useWalletStore = defineStore('wallet', () => {
       })
     }
 
-    await saveToSupabase()
+    await saveToLocalStorage()
     return true
   }
 
@@ -504,7 +369,7 @@ export const useWalletStore = defineStore('wallet', () => {
         category: 'Rendimentos',
         date: new Date().toISOString()
       })
-      await saveToSupabase()
+      await saveToLocalStorage()
     }
   }
 
@@ -516,106 +381,67 @@ export const useWalletStore = defineStore('wallet', () => {
       throw new Error('Por favor, insira um e-mail real válido (exemplo@dominio.com).')
     }
 
-    if (!isSupabaseEnabled()) {
-      throw new Error('Supabase não configurado. Verifique o arquivo .env.')
-    }
-
     const hashedPassword = await hashSHA256(password)
+    const userId = `local-${Date.now()}`
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password: hashedPassword,
-      options: { data: { name } }
-    })
-
-    if (signUpError) throw new Error(signUpError.message)
-
-    if (signUpData.user) {
-      await supabase.from('user_wallets').upsert({
-        user_id: signUpData.user.id,
-        wallet_data: buildWalletPayload(),
-        updated_at: new Date().toISOString()
-      })
-
-      if (signUpData.session) {
-        const user = signUpData.user
-        currentUser.value = {
-          id: user.id,
-          name: user.user_metadata?.name || email.split('@')[0],
-          email: user.email
-        }
-        localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
-        addToSavedAccounts(currentUser.value)
-        await loadFromSupabase(user.id)
-      }
+    currentUser.value = {
+      id: userId,
+      name: name || email.split('@')[0],
+      email
     }
 
-    if (enableBio && currentUser.value) {
-      return { success: true, autoSignedIn: true, user: currentUser.value }
-    }
-
+    localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
+    addToSavedAccounts(currentUser.value)
+    localStorage.setItem('breyne_session_tokens', JSON.stringify({ refresh_token: hashedPassword, access_token: hashedPassword }))
     localStorage.setItem('breyne_bio_enabled', enableBio ? 'true' : 'false')
     isBiometricEnabled.value = enableBio
-    return { success: true, autoSignedIn: !!signUpData?.session, user: signUpData?.user || null }
+
+    await saveToLocalStorage()
+    await loadWalletState()
+
+    return { success: true, autoSignedIn: true, user: currentUser.value }
   }
 
   async function loginMockUser(email, password) {
-    if (!isSupabaseEnabled()) {
-      return { success: false, message: 'Supabase não configurado. Verifique o arquivo .env.' }
-    }
+    const savedUsersRaw = localStorage.getItem('breyne_saved_accounts') || '[]'
+    const savedUsers = JSON.parse(savedUsersRaw)
+    const matchingAccount = savedUsers.find(account => account.email === email)
 
-    const hashedPassword = await hashSHA256(password)
-
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password: hashedPassword
-    })
-
-    if (authError) {
+    if (!matchingAccount) {
       return { success: false, message: 'E-mail ou senha incorretos.' }
     }
 
-    if (authData.user) {
-      currentUser.value = {
-        id: authData.user.id,
-        name: authData.user.user_metadata?.name || email.split('@')[0],
-        email: authData.user.email
-      }
-      localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
+    const hashedPassword = await hashSHA256(password)
+    const expectedHash = localStorage.getItem(`breyne_password_${matchingAccount.id}`)
 
-      addToSavedAccounts(currentUser.value)
-
-      if (authData.session?.refresh_token) {
-        localStorage.setItem('breyne_session_tokens', JSON.stringify({
-          refresh_token: authData.session.refresh_token,
-          access_token: authData.session.access_token
-        }))
-      }
-
-      await loadFromSupabase(authData.user.id)
-      await biometricService.syncWithSupabase(authData.user.id)
-      isBiometricEnabled.value = (await biometricService.hasCredential(authData.user.id))
-      return { success: true }
+    if (expectedHash !== hashedPassword) {
+      return { success: false, message: 'E-mail ou senha incorretos.' }
     }
 
-    return { success: false, message: 'Erro desconhecido ao fazer login.' }
+    currentUser.value = {
+      id: matchingAccount.id,
+      name: matchingAccount.name || email.split('@')[0],
+      email
+    }
+    localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
+    addToSavedAccounts(currentUser.value)
+    localStorage.setItem('breyne_session_tokens', JSON.stringify({ refresh_token: hashedPassword, access_token: hashedPassword }))
+
+    await loadWalletState()
+    isBiometricEnabled.value = await biometricService.hasCredential(currentUser.value.id)
+    return { success: true }
   }
 
   async function resetPasswordMock(email) {
-    if (!isSupabaseEnabled()) return false
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/login'
-    })
-
-    return !error
+    return false
   }
 
   async function logoutMock() {
     currentUser.value = null
     localStorage.removeItem('breyne_user')
-    localStorage.removeItem('supabase.auth.token')
-    localStorage.removeItem('supabase.auth.token-code-verifier')
+    localStorage.removeItem('breyne_session_tokens')
+    localStorage.removeItem('breyne_bio_tokens')
+    localStorage.removeItem('breyne_bio_enabled')
   }
 
   // --- MULTI-ACCOUNT ---
@@ -637,8 +463,6 @@ export const useWalletStore = defineStore('wallet', () => {
   async function switchAccount(accountEmail) {
     currentUser.value = null
     localStorage.removeItem('breyne_user')
-    localStorage.removeItem('supabase.auth.token')
-    localStorage.removeItem('supabase.auth.token-code-verifier')
     return accountEmail
   }
 
@@ -646,51 +470,29 @@ export const useWalletStore = defineStore('wallet', () => {
 
   async function updateUserName(newName) {
     if (!newName || !currentUser.value) return false
-    try {
-      // Se houver sessão Supabase ativa, atualiza no Auth também
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (sessionData?.session?.user) {
-        const { error } = await supabase.auth.updateUser({
-          data: { name: newName }
-        })
-        if (error) throw error
-      }
-      currentUser.value.name = newName
-      localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
-      // Atualiza na lista de contas salvas também
-      const acct = savedAccounts.value.find(a => a.id === currentUser.value.id)
-      if (acct) {
-        acct.name = newName
-        localStorage.setItem('breyne_saved_accounts', JSON.stringify(savedAccounts.value))
-      }
-      return true
-    } catch (err) {
-      console.warn('Erro ao atualizar nome:', err)
-      return false
+    currentUser.value.name = newName
+    localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
+    const acct = savedAccounts.value.find(a => a.id === currentUser.value.id)
+    if (acct) {
+      acct.name = newName
+      localStorage.setItem('breyne_saved_accounts', JSON.stringify(savedAccounts.value))
     }
+    return true
   }
 
   async function updatePassword(newPassword) {
     if (!newPassword) return { success: false, message: 'Senha não pode ser vazia.' }
-    try {
-      const hashedPassword = await hashSHA256(newPassword)
-      const { error } = await supabase.auth.updateUser({
-        password: hashedPassword
-      })
-      if (error) return { success: false, message: error.message }
-      // Invalida biometria ao alterar a senha (segurança)
-      if (isBiometricEnabled.value) {
-        await removeBiometric()
-      }
-      return { success: true }
-    } catch (err) {
-      return { success: false, message: err.message || 'Erro ao atualizar senha.' }
+    const hashedPassword = await hashSHA256(newPassword)
+    localStorage.setItem(`breyne_password_${currentUser.value.id}`, hashedPassword)
+    if (isBiometricEnabled.value) {
+      await removeBiometric()
     }
+    return { success: true }
   }
 
   async function updateProfilePhoto(url) {
     profilePhotoUrl.value = url || ''
-    await saveToSupabase()
+    await saveToLocalStorage()
   }
 
   // --- BIOMETRIA (delegada ao BiometricService) ---
@@ -774,7 +576,6 @@ export const useWalletStore = defineStore('wallet', () => {
     simulateInterest,
     saveToLocalStorage,
     loadFromLocalStorage,
-    loadFromSupabase,
 
     // Auth
     registerMockUser,

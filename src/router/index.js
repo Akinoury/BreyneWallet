@@ -52,7 +52,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  // Mock check for now, will integrate with supabase session later
+  // Verifica a sessão local armazenada no navegador.
   const isAuthenticated = localStorage.getItem('breyne_user') !== null
   const authRoutes = ['login', 'register', 'forgot-password']
 

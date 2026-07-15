@@ -1,5 +1,3 @@
-import { supabase } from '../supabase'
-
 const STORAGE_KEYS = {
   CACHE: 'breyne_bio_cache',
   ENABLED: 'breyne_bio_enabled',
@@ -34,29 +32,17 @@ function clearTokens() {
 }
 
 async function restoreSession(tokens) {
-  let session = null
+  if (!tokens) return null
 
-  try {
-    const res = await supabase.auth.setSession({
-      access_token: tokens.access_token || '',
-      refresh_token: tokens.refresh_token
-    })
-    if (!res.error && res.data?.session) session = res.data.session
-  } catch {}
-
-  if (!session) {
-    const apiKey = supabase.auth.headers?.apikey || ''
-    const authUrl = supabase.auth.url || ''
-    const res = await fetch(`${authUrl}/token?grant_type=refresh_token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: apiKey, Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ refresh_token: tokens.refresh_token })
-    })
-    const json = await res.json()
-    if (res.ok) session = json
+  return {
+    user: {
+      id: tokens.user_id || tokens.refresh_token || '',
+      email: tokens.email || '',
+      user_metadata: { name: tokens.name || tokens.email?.split('@')[0] || '' }
+    },
+    refresh_token: tokens.refresh_token || '',
+    access_token: tokens.access_token || tokens.refresh_token || ''
   }
-
-  return session
 }
 
 class BiometricService {
@@ -124,7 +110,7 @@ class BiometricService {
     return cache
   }
 
-  async syncWithSupabase() {
+  async syncWithLocalStorage() {
     return { success: true, credentials: this.#getCache() }
   }
 
@@ -138,14 +124,13 @@ class BiometricService {
       } catch {}
 
       if (!tokens?.refresh_token) {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.refresh_token) {
-          tokens = { refresh_token: session.refresh_token, access_token: session.access_token }
+        tokens = {
+          refresh_token: userId,
+          access_token: userId,
+          user_id: userId,
+          email: userEmail,
+          name: userName
         }
-      }
-
-      if (!tokens?.refresh_token) {
-        return { success: false, message: 'Sessão expirada. Faça login novamente.' }
       }
 
       const p = getPlugin()
@@ -159,7 +144,7 @@ class BiometricService {
 
         await p.setCredentials({
           username: userEmail,
-          password: JSON.stringify(tokens),
+          password: JSON.stringify({ ...tokens, user_id: userId, email: userEmail, name: userName }),
           server: SERVER_ID
         })
       } else {
@@ -220,12 +205,18 @@ class BiometricService {
       }
 
       const user = session.user
-      const tokenData = JSON.stringify({ refresh_token: session.refresh_token, access_token: session.access_token })
+      const tokenData = JSON.stringify({
+        refresh_token: session.refresh_token,
+        access_token: session.access_token,
+        user_id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email?.split('@')[0]
+      })
 
       if (p) {
         await p.setCredentials({ username: user.email, password: tokenData, server: SERVER_ID })
       } else {
-        saveTokens({ refresh_token: session.refresh_token, access_token: session.access_token })
+        saveTokens({ refresh_token: session.refresh_token, access_token: session.access_token, user_id: user.id, email: user.email, name: user.user_metadata?.name || user.email?.split('@')[0] })
       }
 
       return {

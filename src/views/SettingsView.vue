@@ -428,7 +428,7 @@ const saveProfileSettings = async () => {
       successMsg.value = 'Perfil atualizado com sucesso!'
       setTimeout(() => { successMsg.value = '' }, 3000)
     } else {
-      errorMsg.value = 'Erro ao atualizar nome no Supabase.'
+      errorMsg.value = 'Erro ao atualizar nome do perfil.'
     }
   } catch (err) {
     errorMsg.value = 'Erro ao salvar alterações do perfil.'
