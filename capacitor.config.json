@@ -1,0 +1,10 @@
+{
+  "appId": "com.breynewallet.app",
+  "appName": "BreyneWallet",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {}
+}
