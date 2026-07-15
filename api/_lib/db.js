@@ -15,7 +15,7 @@ function createClient() {
   }
 
   if (url.startsWith('redis://')) {
-    return { type: 'redis', client: new IORedis(url, { maxRetriesPerRequest: 1, lazyConnect: true }) }
+    return { type: 'redis', client: new IORedis(url, { maxRetriesPerRequest: 1, retryStrategy: () => null }) }
   }
 
   return { type: 'rest', client: new Redis({ url, token: token || '' }) }
