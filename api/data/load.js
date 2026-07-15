@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const walletData = await loadWallet(payload.userId)
     return res.json({ success: true, data: walletData || null })
   } catch (err) {
-    console.error('Load error:', err.message, err.stack)
+    console.error('Load error:', err)
     return res.status(500).json({ error: 'Erro interno do servidor.' })
   }
 }

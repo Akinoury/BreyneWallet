@@ -18,14 +18,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Token inválido ou expirado.' })
     }
 
-    let walletData
-    try {
-      walletData = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-      walletData = walletData.walletData
-    } catch (_) {
-      walletData = req.body?.walletData
-    }
-
+    const walletData = req.body?.walletData
     if (!walletData) {
       return res.status(400).json({ error: 'Dados da carteira são obrigatórios.' })
     }
@@ -35,7 +28,7 @@ export default async function handler(req, res) {
 
     return res.json({ success: true, updatedAt: walletData._updatedAt })
   } catch (err) {
-    console.error('Save error:', err.message, err.stack)
+    console.error('Save error:', err)
     return res.status(500).json({ error: 'Erro interno do servidor.' })
   }
 }

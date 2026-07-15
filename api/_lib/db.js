@@ -53,6 +53,11 @@ function serialize(obj) {
 
 function deserialize(str) {
   if (!str) return null
+  if (typeof str === 'object' && str.type === 'Buffer') {
+    str = Buffer.from(str.data || str).toString()
+  }
+  if (Buffer.isBuffer(str)) str = str.toString()
+  if (typeof str !== 'string') return str
   try { return JSON.parse(str) } catch { return str }
 }
 
