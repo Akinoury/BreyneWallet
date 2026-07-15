@@ -48,7 +48,7 @@
         <p class="success-info">
           As instruções de recuperação de senha foram enviadas para <strong>{{ email }}</strong>. 
           <br /><br />
-          <em>Como teste local, redefinimos temporariamente sua senha para: <strong>123456</strong></em>
+          <em>Em breve você receberá instruções para redefinir sua senha.</em>
         </p>
         
         <div class="progress-bar-container">
@@ -81,22 +81,24 @@ const emailSent = ref(false)
 const countdown = ref(5)
 const progressPercent = ref(0)
 
-const handleReset = () => {
+const handleReset = async () => {
   errorMsg.value = ''
   successMsg.value = ''
   isLoading.value = true
 
-  setTimeout(async () => {
-    const success = await store.resetPasswordMock(email.value)
+  try {
+    const result = await store.forgotPassword(email.value)
     isLoading.value = false
-
-    if (success) {
+    if (result.success) {
       emailSent.value = true
       startCountdown()
     } else {
-      errorMsg.value = 'E-mail não encontrado em nossa base local. Cadastre este e-mail primeiro para poder testar a recuperação.'
+      errorMsg.value = result.error || 'E-mail não encontrado.'
     }
-  }, 1200)
+  } catch (err) {
+    isLoading.value = false
+    errorMsg.value = err.message || 'Erro ao processar solicitação.'
+  }
 }
 
 const startCountdown = () => {

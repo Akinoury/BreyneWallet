@@ -1,40 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { api } from '../services/api'
 import { biometricService } from '../services/BiometricService'
 
-// Hash SHA-256 no cliente para garantir que a senha nunca chegue pura no armazenamento local.
-async function hashSHA256(str) {
-  if (!str) return ''
-  const encoder = new TextEncoder()
-  const data = encoder.encode(str)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
 export const useWalletStore = defineStore('wallet', () => {
-  // --- STATE ---
   const salary = ref(1420.00)
   const useManualLimit = ref(true)
   const expenseTaxRate = ref(20)
   const emergencyFund = ref(250.00)
   const isSyncing = ref(false)
   const profilePhotoUrl = ref('')
-  // Taxa de câmbio dólar comercial — atualizada pelo InvestmentsView via BCB AwesomeAPI
   const usdToBrl = ref(5.70)
-
-  // Aporte mensal adicional para simulador (persistido)
   const monthlyContribution = ref(0)
 
-  // --- TAXAS CONFIGURÁVEIS (% sobre o salário X) ---
-  const consumptionRate = ref(59.01)   // % do salário para limite de consumo
-  const fundReturnRate = ref(0.00)     // % do salário destinado ao fundo de emergência (removido)
-  const investmentRate = ref(40.99)    // % do salário para investimentos
-  const investmentBonusRate = ref(5.00) // % sobre o valor investido como bônus
-  const penaltyRate = ref(50.00)       // % de penalidade sobre o excedente
+  const consumptionRate = ref(59.01)
+  const fundReturnRate = ref(0.00)
+  const investmentRate = ref(40.99)
+  const investmentBonusRate = ref(5.00)
+  const penaltyRate = ref(50.00)
 
-  // Multi-account: contas salvas para troca rápida
-  const savedAccounts = ref(JSON.parse(localStorage.getItem('breyne_saved_accounts') || '[]'))
+  const savedAccounts = ref([])
 
   const investments = ref([
     { id: 1, name: 'WEGE3', amount: 1500.00, type: 'national', category: 'Ações' },
@@ -69,15 +54,12 @@ export const useWalletStore = defineStore('wallet', () => {
   const currentUser = ref(null)
   const isBiometricEnabled = ref(false)
 
-  // --- COMPUTED (Regras de Negócio do Fechamento Financeiro) ---
-
   const limitConsumption = computed(() => {
     const rate = Number(consumptionRate.value) || 0
     const sal = Number(salary.value) || 0
     return Number((sal * (rate / 100)).toFixed(2))
   })
 
-  // % do salário é destinado ao retorno para o fundo de emergência
   const fundReturnValue = computed(() => {
     const rate = Number(fundReturnRate.value) || 0
     const sal = Number(salary.value) || 0
@@ -143,7 +125,6 @@ export const useWalletStore = defineStore('wallet', () => {
     return Number((exc * (rate / 100)).toFixed(2))
   })
 
-  // Quanto sobra, de fato, para investir após descontar excedente e penalidade
   const availableToInvest = computed(() => {
     const inv = Number(investedValue.value) || 0
     const exc = Number(exceededValue.value) || 0
@@ -166,12 +147,10 @@ export const useWalletStore = defineStore('wallet', () => {
     investments.value.filter(i => i.type === 'national').reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
   )
 
-  // internationalInvestmentsTotal: soma em USD (os ativos internacionais são armazenados em USD)
   const internationalInvestmentsTotal = computed(() =>
     investments.value.filter(i => i.type === 'international').reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
   )
 
-  // Valor em BRL dos investimentos internacionais (convertido pelo câmbio atual)
   const internationalInvestmentsTotalBrl = computed(() =>
     Number((internationalInvestmentsTotal.value * (Number(usdToBrl.value) || 5.70)).toFixed(2))
   )
@@ -182,9 +161,6 @@ export const useWalletStore = defineStore('wallet', () => {
     return Number(Math.max(0, gross - penalty).toFixed(2))
   })
 
-  // --- PERSISTÊNCIA LOCAL ---
-
-  // Monta o objeto da carteira para salvar
   function buildWalletPayload() {
     return {
       salary: salary.value,
@@ -203,14 +179,12 @@ export const useWalletStore = defineStore('wallet', () => {
     }
   }
 
-  // Aplica os dados persistidos localmente no estado reativo
   function applyWalletData(w) {
     if (!w) return
     salary.value = w.salary ?? salary.value
     useManualLimit.value = w.useManualLimit ?? useManualLimit.value
     expenseTaxRate.value = w.expenseTaxRate ?? expenseTaxRate.value
     emergencyFund.value = w.emergencyFund ?? emergencyFund.value
-    // Proteção: só substitui arrays se tiverem conteúdo ou se os atuais estiverem vazios
     if (w.investments?.length > 0 || !investments.value?.length) {
       investments.value = w.investments ?? investments.value
     }
@@ -227,25 +201,29 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   async function saveWalletState() {
-    const payload = buildWalletPayload()
-    payload._cachedAt = Date.now()
-    localStorage.setItem('breyne_wallet_cache', JSON.stringify(payload))
-    localStorage.setItem('breyne_wallet_cache_backup', JSON.stringify(payload))
+    if (!currentUser.value) return
+    isSyncing.value = true
+    try {
+      const payload = buildWalletPayload()
+      payload._cachedAt = Date.now()
+      await api.saveWallet(payload)
+    } catch (e) {
+      console.warn('Save to server failed:', e)
+    }
     isSyncing.value = false
   }
 
   async function loadWalletState() {
-    const cachedRaw = localStorage.getItem('breyne_wallet_cache')
-    let cached = null
-    if (cachedRaw) {
-      try { cached = JSON.parse(cachedRaw) } catch (_) {}
+    if (!currentUser.value) return false
+    try {
+      const result = await api.loadWallet()
+      if (result.data) {
+        applyWalletData(result.data)
+        return true
+      }
+    } catch (e) {
+      console.warn('Load from server failed:', e)
     }
-
-    if (cached) {
-      applyWalletData(cached)
-      return true
-    }
-
     return false
   }
 
@@ -255,29 +233,21 @@ export const useWalletStore = defineStore('wallet', () => {
 
   async function loadFromLocalStorage() {
     if (currentUser.value) return
+    const token = api.getToken()
+    if (!token) return
 
-    const explicitUser = localStorage.getItem('breyne_user')
-    if (explicitUser) {
-      try {
-        const parsed = JSON.parse(explicitUser)
-        if (parsed && parsed.id) {
-          currentUser.value = parsed
-          isBiometricEnabled.value = localStorage.getItem('breyne_bio_enabled') === 'true'
-          const cached = localStorage.getItem('breyne_wallet_cache')
-          if (cached) {
-            await loadWalletState()
-          }
-        }
-      } catch (_) {
-        currentUser.value = null
-        localStorage.removeItem('breyne_user')
+    try {
+      const result = await api.me()
+      if (result.user) {
+        currentUser.value = result.user
+        isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
+        await loadWalletState()
       }
-    } else {
+    } catch {
+      api.logout()
       currentUser.value = null
     }
   }
-
-  // --- ACTIONS DE DADOS ---
 
   async function addTransaction(description, amount, expenseType, category) {
     if (amount <= 0 || isNaN(amount)) return false
@@ -292,13 +262,13 @@ export const useWalletStore = defineStore('wallet', () => {
       date: new Date().toISOString()
     })
 
-    await saveToLocalStorage()
+    await saveWalletState()
     return true
   }
 
   async function deleteTransaction(id) {
     transactions.value = transactions.value.filter(t => t.id !== id)
-    await saveToLocalStorage()
+    await saveWalletState()
   }
 
   async function addInvestment(name, amount, type, category) {
@@ -312,13 +282,13 @@ export const useWalletStore = defineStore('wallet', () => {
       category
     })
 
-    await saveToLocalStorage()
+    await saveWalletState()
     return true
   }
 
   async function deleteInvestment(id) {
     investments.value = investments.value.filter(i => i.id !== id)
-    await saveToLocalStorage()
+    await saveWalletState()
   }
 
   async function adjustEmergencyFund(amount, isDeposit) {
@@ -350,7 +320,7 @@ export const useWalletStore = defineStore('wallet', () => {
       })
     }
 
-    await saveToLocalStorage()
+    await saveWalletState()
     return true
   }
 
@@ -369,133 +339,87 @@ export const useWalletStore = defineStore('wallet', () => {
         category: 'Rendimentos',
         date: new Date().toISOString()
       })
-      await saveToLocalStorage()
+      await saveWalletState()
     }
   }
 
-  // --- AUTENTICAÇÃO ---
-
-  async function registerMockUser(name, email, password, enableBio) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      throw new Error('Por favor, insira um e-mail real válido (exemplo@dominio.com).')
+  async function registerUser(name, email, password, enableBio) {
+    const result = await api.register(name, email, password)
+    if (result.success) {
+      currentUser.value = result.user
+      isBiometricEnabled.value = enableBio
+      try { localStorage.setItem('breyne_bio_enabled', enableBio ? 'true' : 'false') } catch {}
+      await saveWalletState()
     }
-
-    const hashedPassword = await hashSHA256(password)
-    const userId = `local-${Date.now()}`
-
-    currentUser.value = {
-      id: userId,
-      name: name || email.split('@')[0],
-      email
-    }
-
-    localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
-    addToSavedAccounts(currentUser.value)
-    localStorage.setItem('breyne_session_tokens', JSON.stringify({ refresh_token: hashedPassword, access_token: hashedPassword }))
-    localStorage.setItem('breyne_bio_enabled', enableBio ? 'true' : 'false')
-    isBiometricEnabled.value = enableBio
-
-    await saveToLocalStorage()
-    await loadWalletState()
-
-    return { success: true, autoSignedIn: true, user: currentUser.value }
+    return { success: result.success, autoSignedIn: true, user: result.user }
   }
 
-  async function loginMockUser(email, password) {
-    const savedUsersRaw = localStorage.getItem('breyne_saved_accounts') || '[]'
-    const savedUsers = JSON.parse(savedUsersRaw)
-    const matchingAccount = savedUsers.find(account => account.email === email)
-
-    if (!matchingAccount) {
-      return { success: false, message: 'E-mail ou senha incorretos.' }
+  async function loginUser(email, password) {
+    const result = await api.login(email, password)
+    if (result.success) {
+      currentUser.value = result.user
+      isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
     }
-
-    const hashedPassword = await hashSHA256(password)
-    const expectedHash = localStorage.getItem(`breyne_password_${matchingAccount.id}`)
-
-    if (expectedHash !== hashedPassword) {
-      return { success: false, message: 'E-mail ou senha incorretos.' }
-    }
-
-    currentUser.value = {
-      id: matchingAccount.id,
-      name: matchingAccount.name || email.split('@')[0],
-      email
-    }
-    localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
-    addToSavedAccounts(currentUser.value)
-    localStorage.setItem('breyne_session_tokens', JSON.stringify({ refresh_token: hashedPassword, access_token: hashedPassword }))
-
-    await loadWalletState()
-    isBiometricEnabled.value = await biometricService.hasCredential(currentUser.value.id)
-    return { success: true }
+    return result
   }
 
-  async function resetPasswordMock(email) {
-    return false
+  async function forgotPassword(email) {
+    return await api.forgotPassword(email)
   }
 
-  async function logoutMock() {
+  async function logoutUser() {
     currentUser.value = null
-    localStorage.removeItem('breyne_user')
-    localStorage.removeItem('breyne_session_tokens')
-    localStorage.removeItem('breyne_bio_tokens')
-    localStorage.removeItem('breyne_bio_enabled')
+    isBiometricEnabled.value = false
+    api.logout()
+    try {
+      localStorage.removeItem('breyne_user')
+      localStorage.removeItem('breyne_bio_enabled')
+      localStorage.removeItem('breyne_bio_tokens')
+    } catch {}
   }
-
-  // --- MULTI-ACCOUNT ---
 
   function addToSavedAccounts(user) {
     if (!user || !user.id) return
     const exists = savedAccounts.value.find(a => a.id === user.id)
     if (!exists) {
       savedAccounts.value.push({ id: user.id, name: user.name, email: user.email })
-      localStorage.setItem('breyne_saved_accounts', JSON.stringify(savedAccounts.value))
     }
   }
 
   function removeFromSavedAccounts(accountId) {
     savedAccounts.value = savedAccounts.value.filter(a => a.id !== accountId)
-    localStorage.setItem('breyne_saved_accounts', JSON.stringify(savedAccounts.value))
   }
 
   async function switchAccount(accountEmail) {
     currentUser.value = null
-    localStorage.removeItem('breyne_user')
+    api.logout()
     return accountEmail
   }
 
-  // --- CONFIGURAÇÕES ---
-
   async function updateUserName(newName) {
     if (!newName || !currentUser.value) return false
-    currentUser.value.name = newName
-    localStorage.setItem('breyne_user', JSON.stringify(currentUser.value))
-    const acct = savedAccounts.value.find(a => a.id === currentUser.value.id)
-    if (acct) {
-      acct.name = newName
-      localStorage.setItem('breyne_saved_accounts', JSON.stringify(savedAccounts.value))
-    }
-    return true
+    try {
+      const result = await api.updateProfile(newName)
+      if (result.success) {
+        currentUser.value.name = newName
+        return true
+      }
+    } catch {}
+    return false
   }
 
-  async function updatePassword(newPassword) {
-    if (!newPassword) return { success: false, message: 'Senha não pode ser vazia.' }
-    const hashedPassword = await hashSHA256(newPassword)
-    localStorage.setItem(`breyne_password_${currentUser.value.id}`, hashedPassword)
-    if (isBiometricEnabled.value) {
-      await removeBiometric()
+  async function updatePassword(newPassword, currentPassword) {
+    try {
+      return await api.updatePassword(currentPassword || '', newPassword)
+    } catch (e) {
+      return { success: false, message: e.message }
     }
-    return { success: true }
   }
 
   async function updateProfilePhoto(url) {
     profilePhotoUrl.value = url || ''
-    await saveToLocalStorage()
+    await saveWalletState()
   }
-
-  // --- BIOMETRIA (delegada ao BiometricService) ---
 
   async function enrollBiometric() {
     if (!currentUser.value || !currentUser.value.id) {
@@ -541,14 +465,12 @@ export const useWalletStore = defineStore('wallet', () => {
     savedAccounts,
     monthlyContribution,
 
-    // Taxas configuráveis
     consumptionRate,
     fundReturnRate,
     investmentRate,
     investmentBonusRate,
     penaltyRate,
 
-    // Computeds
     limitConsumption,
     fundReturnValue,
     investedValue,
@@ -567,7 +489,6 @@ export const useWalletStore = defineStore('wallet', () => {
     internationalInvestmentsTotalBrl,
     totalInvestments,
 
-    // Actions
     addTransaction,
     deleteTransaction,
     addInvestment,
@@ -577,23 +498,19 @@ export const useWalletStore = defineStore('wallet', () => {
     saveToLocalStorage,
     loadFromLocalStorage,
 
-    // Auth
-    registerMockUser,
-    loginMockUser,
-    resetPasswordMock,
-    logoutMock,
+    registerUser,
+    loginUser,
+    forgotPassword,
+    logoutUser,
 
-    // Multi-account
     addToSavedAccounts,
     removeFromSavedAccounts,
     switchAccount,
 
-    // Configurações
     updateUserName,
     updatePassword,
     updateProfilePhoto,
 
-    // Biometria
     enrollBiometric,
     removeBiometric
   }

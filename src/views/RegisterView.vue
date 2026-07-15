@@ -191,7 +191,7 @@ const handleRegister = async () => {
   isLoading.value = true
 
   try {
-    const result = await store.registerMockUser(
+    const result = await store.registerUser(
       name.value, 
       email.value, 
       password.value, 

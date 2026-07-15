@@ -106,13 +106,13 @@ const handleSwitchAccount = async (email) => {
 
 const navigateToAddAccount = async () => {
   isDropdownOpen.value = false
-  await store.logoutMock()
+  await store.logoutUser()
   router.push('/login')
 }
 
 const logout = async () => {
   isDropdownOpen.value = false
-  await store.logoutMock()
+  await store.logoutUser()
   router.push({ name: 'login' })
 }
 

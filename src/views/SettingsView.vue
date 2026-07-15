@@ -453,7 +453,7 @@ const saveSecuritySettings = async () => {
 
   isSavingSecurity.value = true
   try {
-    const res = await store.updatePassword(newPassword.value)
+    const res = await store.updatePassword(newPassword.value, '')
     if (res.success) {
       successMsg.value = 'Senha atualizada com sucesso!'
       newPassword.value = ''

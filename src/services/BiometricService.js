@@ -16,6 +16,14 @@ function getPlugin() {
   try { return window.Capacitor?.Plugins?.NativeBiometric ?? null } catch { return null }
 }
 
+function getJwtToken() {
+  try { return localStorage.getItem('breyne_token') } catch { return null }
+}
+
+function setJwtToken(token) {
+  try { localStorage.setItem('breyne_token', token) } catch {}
+}
+
 function loadTokens() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.TOKENS)
@@ -29,20 +37,6 @@ function saveTokens(data) {
 
 function clearTokens() {
   localStorage.removeItem(STORAGE_KEYS.TOKENS)
-}
-
-async function restoreSession(tokens) {
-  if (!tokens) return null
-
-  return {
-    user: {
-      id: tokens.user_id || tokens.refresh_token || '',
-      email: tokens.email || '',
-      user_metadata: { name: tokens.name || tokens.email?.split('@')[0] || '' }
-    },
-    refresh_token: tokens.refresh_token || '',
-    access_token: tokens.access_token || tokens.refresh_token || ''
-  }
 }
 
 class BiometricService {
@@ -116,22 +110,17 @@ class BiometricService {
 
   async register(userId, userEmail, userName) {
     try {
-      let tokens = null
-
-      try {
-        const raw = localStorage.getItem('breyne_session_tokens')
-        if (raw) tokens = JSON.parse(raw)
-      } catch {}
-
-      if (!tokens?.refresh_token) {
-        tokens = {
-          refresh_token: userId,
-          access_token: userId,
-          user_id: userId,
-          email: userEmail,
-          name: userName
-        }
+      const jwt = getJwtToken()
+      if (!jwt) {
+        return { success: false, message: 'Faça login antes de cadastrar a biometria.' }
       }
+
+      const tokenData = JSON.stringify({
+        token: jwt,
+        user_id: userId,
+        email: userEmail,
+        name: userName
+      })
 
       const p = getPlugin()
       if (p) {
@@ -144,11 +133,11 @@ class BiometricService {
 
         await p.setCredentials({
           username: userEmail,
-          password: JSON.stringify({ ...tokens, user_id: userId, email: userEmail, name: userName }),
+          password: tokenData,
           server: SERVER_ID
         })
       } else {
-        saveTokens(tokens)
+        saveTokens({ token: jwt, user_id: userId, email: userEmail, name: userName })
       }
     } catch (err) {
       return { success: false, message: err?.message || 'Falha ao cadastrar biometria.' }
@@ -173,7 +162,7 @@ class BiometricService {
   async authenticate() {
     try {
       const p = getPlugin()
-      let tokens = null
+      let tokenData = null
 
       if (p) {
         await p.verifyIdentity({
@@ -187,44 +176,26 @@ class BiometricService {
         if (!credentials?.password) {
           return { success: false, message: 'Nenhuma credencial encontrada. Cadastre a biometria primeiro.' }
         }
-        try { tokens = JSON.parse(credentials.password) } catch { tokens = { refresh_token: credentials.password } }
+        try { tokenData = JSON.parse(credentials.password) } catch { tokenData = null }
       } else {
-        tokens = loadTokens()
-        if (!tokens) {
+        tokenData = loadTokens()
+        if (!tokenData) {
           return { success: false, message: 'Nenhuma credencial encontrada. Cadastre a biometria primeiro.' }
         }
       }
 
-      if (!tokens?.refresh_token) {
+      if (!tokenData?.token) {
         return { success: false, message: 'Token inválido. Cadastre a biometria novamente.' }
       }
 
-      const session = await restoreSession(tokens)
-      if (!session?.user?.id || !session?.refresh_token) {
-        return { success: false, message: 'Sessão expirada. Faça login novamente.' }
-      }
-
-      const user = session.user
-      const tokenData = JSON.stringify({
-        refresh_token: session.refresh_token,
-        access_token: session.access_token,
-        user_id: user.id,
-        email: user.email,
-        name: user.user_metadata?.name || user.email?.split('@')[0]
-      })
-
-      if (p) {
-        await p.setCredentials({ username: user.email, password: tokenData, server: SERVER_ID })
-      } else {
-        saveTokens({ refresh_token: session.refresh_token, access_token: session.access_token, user_id: user.id, email: user.email, name: user.user_metadata?.name || user.email?.split('@')[0] })
-      }
+      setJwtToken(tokenData.token)
 
       return {
         success: true,
         user: {
-          user_id: user.id,
-          email: user.email,
-          name: user.user_metadata?.name || user.email?.split('@')[0]
+          user_id: tokenData.user_id,
+          email: tokenData.email,
+          name: tokenData.name
         }
       }
     } catch (err) {

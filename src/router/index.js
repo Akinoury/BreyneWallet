@@ -51,14 +51,17 @@ const router = createRouter({
   ]
 })
 
+function getToken() {
+  try { return localStorage.getItem('breyne_token') } catch { return null }
+}
+
 router.beforeEach((to, from, next) => {
-  // Verifica a sessão local armazenada no navegador.
-  const isAuthenticated = localStorage.getItem('breyne_user') !== null
+  const hasToken = getToken() !== null
   const authRoutes = ['login', 'register', 'forgot-password']
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  if (to.meta.requiresAuth && !hasToken) {
     next({ name: 'login' })
-  } else if (authRoutes.includes(to.name) && isAuthenticated) {
+  } else if (authRoutes.includes(to.name) && hasToken) {
     next({ name: 'dashboard' })
   } else {
     next()

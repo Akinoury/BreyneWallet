@@ -85,6 +85,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useWalletStore } from '../stores/walletStore'
 import { biometricService } from '../services/BiometricService'
+import { api } from '../services/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -130,7 +131,7 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    const result = await store.loginMockUser(email.value, password.value)
+    const result = await store.loginUser(email.value, password.value)
     isLoading.value = false
 
     if (result.success) {
@@ -182,16 +183,13 @@ const triggerBiometricScan = async () => {
     successMsg.value = 'Biometria verificada! Redirecionando...'
     playBeep(880, 'sine', 0.15)
 
-    const accounts = biometricService.getSavedAccounts()
-    const matchedAccount = accounts.find(a => a.id === result.user?.user_id)
-    if (matchedAccount) {
+    if (result.user) {
       store.currentUser = {
-        id: matchedAccount.id,
-        name: matchedAccount.name,
-        email: matchedAccount.email
+        id: result.user.user_id || result.user.id,
+        name: result.user.name,
+        email: result.user.email
       }
-      localStorage.setItem('breyne_user', JSON.stringify(store.currentUser))
-      await store.loadFromLocalStorage()
+      await store.loadWalletState()
     }
 
     setTimeout(() => {

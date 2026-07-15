@@ -9,6 +9,15 @@ const base = isMobile || !isGithubPages ? '/' : '/Breyne.Wallet/'
 export default defineConfig({
   base,
 
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      }
+    }
+  },
+
   plugins: [
     vue(),
     VitePWA({
