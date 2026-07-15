@@ -3,7 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const isMobile = process.env.CAPACITOR_BUILD === 'true'
-const base = isMobile ? '/' : '/Breyne.Wallet/'
+const isGithubPages = process.env.GITHUB_PAGES === 'true'
+const base = isMobile || !isGithubPages ? '/' : '/Breyne.Wallet/'
 
 export default defineConfig({
   base,
