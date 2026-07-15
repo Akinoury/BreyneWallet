@@ -1,22 +1,45 @@
 import { Redis } from '@upstash/redis'
+import IORedis from 'ioredis'
 
-let redis
-try {
-  const REDIS_URL = process.env.REDIS_URL || process.env.KV_REST_API_URL
-  const REDIS_TOKEN = process.env.KV_REST_API_TOKEN
+function createClient() {
+  const url = process.env.REDIS_URL || process.env.KV_REST_API_URL
+  const token = process.env.KV_REST_API_TOKEN
 
-  if (REDIS_URL?.startsWith('redis://')) {
-    redis = new Redis({ url: REDIS_URL })
-  } else if (REDIS_URL) {
-    redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN || '' })
-  } else {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL || 'http://localhost:8079',
-      token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
-    })
+  if (!url) {
+    const restUrl = process.env.UPSTASH_REDIS_REST_URL
+    const restToken = process.env.UPSTASH_REDIS_REST_TOKEN
+    if (restUrl) {
+      return { type: 'rest', client: new Redis({ url: restUrl, token: restToken || '' }) }
+    }
+    throw new Error('Nenhuma configuração Redis encontrada.')
   }
+
+  if (url.startsWith('redis://')) {
+    return { type: 'redis', client: new IORedis(url, { maxRetriesPerRequest: 1, lazyConnect: true }) }
+  }
+
+  return { type: 'rest', client: new Redis({ url, token: token || '' }) }
+}
+
+let connection
+try {
+  connection = createClient()
 } catch (e) {
   console.error('Redis init error:', e)
+  connection = null
+}
+
+function getClient() {
+  if (!connection) throw new Error('Redis não configurado.')
+  return connection.client
+}
+
+function isRedis() {
+  return connection?.type === 'redis'
+}
+
+function isRest() {
+  return connection?.type === 'rest'
 }
 
 const USER_PREFIX = 'user:'
@@ -24,65 +47,95 @@ const WALLET_PREFIX = 'wallet:'
 const ACCOUNTS_KEY = 'breyne_accounts'
 const EMAIL_PREFIX = 'email:'
 
-function checkRedis() {
-  if (!redis) throw new Error('Redis não configurado.')
+function serialize(obj) {
+  return JSON.stringify(obj)
+}
+
+function deserialize(str) {
+  if (!str) return null
+  try { return JSON.parse(str) } catch { return str }
 }
 
 export async function createUser(id, name, email, passwordHash) {
-  checkRedis()
+  const client = getClient()
   const user = { id, name, email, passwordHash, createdAt: new Date().toISOString() }
-  await redis.set(USER_PREFIX + id, user)
-  await redis.sadd(ACCOUNTS_KEY, id)
-  await redis.set(EMAIL_PREFIX + email.toLowerCase(), id)
+  const userStr = serialize(user)
+  if (isRedis()) {
+    await client.set(USER_PREFIX + id, userStr)
+    await client.sadd(ACCOUNTS_KEY, id)
+    await client.set(EMAIL_PREFIX + email.toLowerCase(), id)
+  } else {
+    await client.set(USER_PREFIX + id, user)
+    await client.sadd(ACCOUNTS_KEY, id)
+    await client.set(EMAIL_PREFIX + email.toLowerCase(), id)
+  }
   return { id, name, email, createdAt: user.createdAt }
 }
 
 export async function findUserByEmail(email) {
-  checkRedis()
-  const id = await redis.get(EMAIL_PREFIX + email.toLowerCase())
+  const client = getClient()
+  const id = await client.get(EMAIL_PREFIX + email.toLowerCase())
   if (!id) return null
-  return await redis.get(USER_PREFIX + id)
+  const raw = await client.get(USER_PREFIX + id)
+  return deserialize(raw)
 }
 
 export async function findUserById(id) {
-  checkRedis()
-  return await redis.get(USER_PREFIX + id)
+  const client = getClient()
+  const raw = await client.get(USER_PREFIX + id)
+  return deserialize(raw)
 }
 
 export async function updateUserName(userId, newName) {
-  checkRedis()
-  const user = await redis.get(USER_PREFIX + userId)
+  const client = getClient()
+  const raw = await client.get(USER_PREFIX + userId)
+  const user = deserialize(raw)
   if (!user) return null
   user.name = newName
-  await redis.set(USER_PREFIX + userId, user)
+  if (isRedis()) {
+    await client.set(USER_PREFIX + userId, serialize(user))
+  } else {
+    await client.set(USER_PREFIX + userId, user)
+  }
   return { id: user.id, name: user.name, email: user.email }
 }
 
 export async function updateUserPassword(userId, newPasswordHash) {
-  checkRedis()
-  const user = await redis.get(USER_PREFIX + userId)
+  const client = getClient()
+  const raw = await client.get(USER_PREFIX + userId)
+  const user = deserialize(raw)
   if (!user) return false
   user.passwordHash = newPasswordHash
-  await redis.set(USER_PREFIX + userId, user)
+  if (isRedis()) {
+    await client.set(USER_PREFIX + userId, serialize(user))
+  } else {
+    await client.set(USER_PREFIX + userId, user)
+  }
   return true
 }
 
 export async function saveWallet(userId, walletData) {
-  checkRedis()
-  await redis.set(WALLET_PREFIX + userId, walletData)
+  const client = getClient()
+  if (isRedis()) {
+    await client.set(WALLET_PREFIX + userId, serialize(walletData))
+  } else {
+    await client.set(WALLET_PREFIX + userId, walletData)
+  }
 }
 
 export async function loadWallet(userId) {
-  checkRedis()
-  return await redis.get(WALLET_PREFIX + userId)
+  const client = getClient()
+  const raw = await client.get(WALLET_PREFIX + userId)
+  return deserialize(raw)
 }
 
 export async function getAllAccounts() {
-  checkRedis()
-  const ids = await redis.smembers(ACCOUNTS_KEY)
+  const client = getClient()
+  const ids = await client.smembers(ACCOUNTS_KEY)
   const accounts = []
   for (const id of ids) {
-    const user = await redis.get(USER_PREFIX + id)
+    const raw = await client.get(USER_PREFIX + id)
+    const user = deserialize(raw)
     if (user) {
       accounts.push({ id: user.id, name: user.name, email: user.email })
     }
