@@ -4,7 +4,7 @@ const STORES = [
   {
     id: 'shopee',
     name: 'Shopee',
-    logo: 'https://logo.clearbit.com/shopee.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64',
     fallbackIcon: '🛒',
     color: '#ee4d2d',
     categories: ['Moda', 'Eletrônicos', 'Casa']
@@ -12,7 +12,7 @@ const STORES = [
   {
     id: 'magalu',
     name: 'Magazine Luiza',
-    logo: 'https://logo.clearbit.com/magazineluiza.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=magazineluiza.com.br&sz=64',
     fallbackIcon: '📱',
     color: '#0054a0',
     categories: ['Eletrônicos', 'Eletrodomésticos', 'Celulares']
@@ -20,7 +20,7 @@ const STORES = [
   {
     id: 'amazon',
     name: 'Amazon Brasil',
-    logo: 'https://logo.clearbit.com/amazon.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=amazon.com.br&sz=64',
     fallbackIcon: '📦',
     color: '#ff9900',
     categories: ['Livros', 'Eletrônicos', 'Casa']
@@ -28,7 +28,7 @@ const STORES = [
   {
     id: 'mercadolivre',
     name: 'Mercado Livre',
-    logo: 'https://logo.clearbit.com/mercadolivre.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=mercadolivre.com.br&sz=64',
     fallbackIcon: '🟡',
     color: '#ffe600',
     categories: ['Variados', 'Tecnologia', 'Moda']
@@ -36,7 +36,7 @@ const STORES = [
   {
     id: 'americanas',
     name: 'Americanas',
-    logo: 'https://logo.clearbit.com/americanas.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=americanas.com.br&sz=64',
     fallbackIcon: '🔴',
     color: '#cc0000',
     categories: ['Variados', 'Casa', 'Eletrônicos']
@@ -44,7 +44,7 @@ const STORES = [
   {
     id: 'ifood',
     name: 'iFood',
-    logo: 'https://logo.clearbit.com/ifood.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=ifood.com.br&sz=64',
     fallbackIcon: '🍔',
     color: '#ea1d2c',
     categories: ['Alimentação', 'Restaurantes']
@@ -52,7 +52,7 @@ const STORES = [
   {
     id: 'uber-eats',
     name: 'Uber Eats',
-    logo: 'https://logo.clearbit.com/ubereats.com',
+    logo: 'https://www.google.com/s2/favicons?domain=ubereats.com&sz=64',
     fallbackIcon: '🛵',
     color: '#06c167',
     categories: ['Alimentação', 'Restaurantes']
@@ -60,7 +60,7 @@ const STORES = [
   {
     id: 'netshoes',
     name: 'Netshoes',
-    logo: 'https://logo.clearbit.com/netshoes.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=netshoes.com.br&sz=64',
     fallbackIcon: '👟',
     color: '#005b9e',
     categories: ['Esportes', 'Moda']
@@ -68,7 +68,7 @@ const STORES = [
   {
     id: 'submarino',
     name: 'Submarino',
-    logo: 'https://logo.clearbit.com/submarino.com.br',
+    logo: 'https://www.google.com/s2/favicons?domain=submarino.com.br&sz=64',
     fallbackIcon: '🔵',
     color: '#003c8f',
     categories: ['Eletrônicos', 'Casa', 'Livros']
@@ -76,7 +76,7 @@ const STORES = [
   {
     id: 'aliexpress',
     name: 'AliExpress',
-    logo: 'https://logo.clearbit.com/aliexpress.com',
+    logo: 'https://www.google.com/s2/favicons?domain=aliexpress.com&sz=64',
     fallbackIcon: '🌍',
     color: '#ff4747',
     categories: ['Variados', 'Eletrônicos', 'Moda']
