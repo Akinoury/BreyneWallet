@@ -1,10 +1,12 @@
 import { handleOptions, setCorsHeaders } from '../_lib/cors.js'
 
+const FAV = 'https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://'
+
 const STORES = [
   {
     id: 'shopee',
     name: 'Shopee',
-    logo: 'https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64',
+    logo: FAV + 'shopee.com.br&size=128',
     fallbackIcon: '🛒',
     color: '#ee4d2d',
     categories: ['Moda', 'Eletrônicos', 'Casa']
@@ -12,7 +14,7 @@ const STORES = [
   {
     id: 'magalu',
     name: 'Magazine Luiza',
-    logo: 'https://www.google.com/s2/favicons?domain=magazineluiza.com.br&sz=64',
+    logo: FAV + 'magazineluiza.com.br&size=128',
     fallbackIcon: '📱',
     color: '#0054a0',
     categories: ['Eletrônicos', 'Eletrodomésticos', 'Celulares']
@@ -20,7 +22,7 @@ const STORES = [
   {
     id: 'amazon',
     name: 'Amazon Brasil',
-    logo: 'https://www.google.com/s2/favicons?domain=amazon.com.br&sz=64',
+    logo: FAV + 'amazon.com.br&size=128',
     fallbackIcon: '📦',
     color: '#ff9900',
     categories: ['Livros', 'Eletrônicos', 'Casa']
@@ -28,7 +30,7 @@ const STORES = [
   {
     id: 'mercadolivre',
     name: 'Mercado Livre',
-    logo: 'https://www.google.com/s2/favicons?domain=mercadolivre.com.br&sz=64',
+    logo: FAV + 'mercadolivre.com.br&size=128',
     fallbackIcon: '🟡',
     color: '#ffe600',
     categories: ['Variados', 'Tecnologia', 'Moda']
@@ -36,7 +38,7 @@ const STORES = [
   {
     id: 'americanas',
     name: 'Americanas',
-    logo: 'https://www.google.com/s2/favicons?domain=americanas.com.br&sz=64',
+    logo: FAV + 'americanas.com.br&size=128',
     fallbackIcon: '🔴',
     color: '#cc0000',
     categories: ['Variados', 'Casa', 'Eletrônicos']
@@ -44,7 +46,7 @@ const STORES = [
   {
     id: 'ifood',
     name: 'iFood',
-    logo: 'https://www.google.com/s2/favicons?domain=ifood.com.br&sz=64',
+    logo: FAV + 'ifood.com.br&size=128',
     fallbackIcon: '🍔',
     color: '#ea1d2c',
     categories: ['Alimentação', 'Restaurantes']
@@ -52,7 +54,7 @@ const STORES = [
   {
     id: 'uber-eats',
     name: 'Uber Eats',
-    logo: 'https://www.google.com/s2/favicons?domain=ubereats.com&sz=64',
+    logo: FAV + 'ubereats.com&size=128',
     fallbackIcon: '🛵',
     color: '#06c167',
     categories: ['Alimentação', 'Restaurantes']
@@ -60,7 +62,7 @@ const STORES = [
   {
     id: 'netshoes',
     name: 'Netshoes',
-    logo: 'https://www.google.com/s2/favicons?domain=netshoes.com.br&sz=64',
+    logo: FAV + 'netshoes.com.br&size=128',
     fallbackIcon: '👟',
     color: '#005b9e',
     categories: ['Esportes', 'Moda']
@@ -68,7 +70,7 @@ const STORES = [
   {
     id: 'submarino',
     name: 'Submarino',
-    logo: 'https://www.google.com/s2/favicons?domain=submarino.com.br&sz=64',
+    logo: FAV + 'submarino.com.br&size=128',
     fallbackIcon: '🔵',
     color: '#003c8f',
     categories: ['Eletrônicos', 'Casa', 'Livros']
@@ -76,7 +78,7 @@ const STORES = [
   {
     id: 'aliexpress',
     name: 'AliExpress',
-    logo: 'https://www.google.com/s2/favicons?domain=aliexpress.com&sz=64',
+    logo: FAV + 'aliexpress.com&size=128',
     fallbackIcon: '🌍',
     color: '#ff4747',
     categories: ['Variados', 'Eletrônicos', 'Moda']
