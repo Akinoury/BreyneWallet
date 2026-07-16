@@ -121,10 +121,7 @@ onMounted(async () => {
   }
 
   if (hasBiometricCredential.value) {
-    const accounts = biometricService.getSavedAccounts()
-    if (accounts.length > 0) {
-      bioStatusLabel.value = `Olá, ${accounts[0].name}! Toque para autenticar`
-    }
+    bioStatusLabel.value = 'Toque para autenticar'
   } else {
     bioStatusLabel.value = 'Autenticação Biométrica'
   }
