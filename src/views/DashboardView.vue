@@ -446,24 +446,6 @@
           </div>
         </div>
 
-        <!-- Renda Passiva 10/20/30 -->
-        <div class="sim-card">
-          <span class="sim-card-label">Renda Passiva (Selic)</span>
-          <div style="display: flex; gap: 1.2rem; justify-content: center; margin-top: 0.5rem;">
-            <div style="text-align: center;">
-              <div style="font-size: 0.65rem; color: var(--text-secondary);">10 anos</div>
-              <div style="font-weight: bold; color: #5a2882; font-size: 0.95rem;">R$ {{ formatCurrency(speculativeData.incomeAt10y) }}/mês</div>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 0.65rem; color: var(--text-secondary);">20 anos</div>
-              <div style="font-weight: bold; color: #5a2882; font-size: 0.95rem;">R$ {{ formatCurrency(speculativeData.incomeAt20y) }}/mês</div>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 0.65rem; color: var(--text-secondary);">30 anos</div>
-              <div style="font-weight: bold; color: #5a2882; font-size: 0.95rem;">R$ {{ formatCurrency(speculativeData.incomeAt30y) }}/mês</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- CHARTS SECTION -->
@@ -738,16 +720,12 @@ const speculativeData = computed(() => {
   const balanceAtN = calculateAccumulation(N)
   const totalInterestEarned = Math.max(0, balanceAtN - totalContributions)
 
-  const incomeAt10y = calculateAccumulation(120) * r
   const incomeAt20y = calculateAccumulation(240) * r
-  const incomeAt30y = calculateAccumulation(360) * r
 
   return {
     totalContributions: Number(totalContributions.toFixed(2)),
     totalInterestEarned: Number(totalInterestEarned.toFixed(2)),
-    incomeAt10y: Number(incomeAt10y.toFixed(2)),
     incomeAt20y: Number(incomeAt20y.toFixed(2)),
-    incomeAt30y: Number(incomeAt30y.toFixed(2)),
     targetWealth: Number(targetWealth.toFixed(2))
   }
 })
