@@ -14,6 +14,13 @@
           >
             📅 {{ sortRecent ? 'Mais Recentes' : 'Todas' }}
           </button>
+          <button
+            class="sort-btn verified-filter"
+            :class="{ active: onlyVerified }"
+            @click="onlyVerified = !onlyVerified; applyFilters()"
+          >
+            ✓ Verificados
+          </button>
         </div>
       </div>
 
@@ -136,6 +143,7 @@ const allCoupons = ref([])
 const filteredCoupons = ref([])
 const selectedStore = ref(null)
 const sortRecent = ref(true)
+const onlyVerified = ref(false)
 const loading = ref(true)
 const error = ref('')
 const copied = ref('')
@@ -160,6 +168,9 @@ function applyFilters() {
   let result = [...allCoupons.value]
   if (selectedStore.value) {
     result = result.filter(c => c.storeId === selectedStore.value)
+  }
+  if (onlyVerified.value) {
+    result = result.filter(c => c.id?.startsWith('cupomdesconto'))
   }
   if (sortRecent.value) {
     result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -256,6 +267,12 @@ onMounted(async () => {
   background: var(--text-primary);
   color: #fff;
   border-color: var(--text-primary);
+}
+
+.verified-filter.active {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  color: #fff;
 }
 
 .store-chips {
