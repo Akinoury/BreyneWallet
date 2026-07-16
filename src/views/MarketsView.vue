@@ -3,7 +3,7 @@
     <div class="markets-header flex-between">
       <div>
         <h2>📈 Mercados</h2>
-        <p>Cotações ao vivo das principais bolsas e moedas.</p>
+        <p>Cotações ao vivo das principais bolsas, FIIs, ETFs e moedas.</p>
       </div>
       <button class="btn-back" @click="$router.push('/investments')">← Voltar</button>
     </div>
@@ -14,114 +14,155 @@
         <span class="ticker-value" :class="t.change >= 0 ? 'up' : 'down'">{{ t.value }}</span>
         <span class="ticker-change" :class="t.change >= 0 ? 'up' : 'down'">{{ t.change >= 0 ? '+' : '' }}{{ t.change }}%</span>
       </div>
+      <div v-if="tickers.length === 0 && loaded" class="ticker-empty">Sem dados</div>
     </div>
 
-    <div class="exchange-chips">
-      <button
-        class="chip"
-        :class="{ active: selectedExchange === null }"
-        @click="selectedExchange = null"
-      >Todas</button>
-      <button
-        v-for="ex in exchanges"
-        :key="ex.key"
-        class="chip"
-        :class="{ active: selectedExchange === ex.key }"
-        @click="selectedExchange = ex.key"
-      >{{ ex.label }}</button>
+    <div class="filter-section">
+      <div class="filter-group">
+        <span class="filter-label">Bolsa</span>
+        <div class="chip-row">
+          <button class="chip" :class="{ active: filterExchange === null }" @click="filterExchange = null">Todas</button>
+          <button v-for="ex in exchanges" :key="ex.key" class="chip" :class="{ active: filterExchange === ex.key }" @click="filterExchange = ex.key">{{ ex.label }}</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Tipo</span>
+        <div class="chip-row">
+          <button class="chip" :class="{ active: filterType === null }" @click="filterType = null">Todos</button>
+          <button v-for="t in assetTypes" :key="t.key" class="chip" :class="{ active: filterType === t.key }" @click="filterType = t.key">{{ t.label }}</button>
+        </div>
+      </div>
     </div>
 
     <div v-if="loading" class="loading-state">Carregando mercados...</div>
     <div v-else-if="error" class="alert-box alert-error">{{ error }}</div>
 
-    <div v-else class="stocks-grid">
-      <button
-        v-for="s in filteredStocks"
-        :key="s.symbol"
-        class="stock-card glass-panel"
-        @click="openDetail(s)"
-      >
-        <div class="stock-symbol">{{ s.symbol.replace('.SA','').replace('.IR','') }}</div>
-        <div class="stock-name">{{ s.shortName || s.symbol }}</div>
-        <div class="stock-price" :class="s.change >= 0 ? 'up' : 'down'">
-          {{ s.currency }} {{ formatPrice(s.price) }}
-        </div>
-        <div class="stock-change" :class="s.change >= 0 ? 'up' : 'down'">
-          {{ s.change >= 0 ? '+' : '' }}{{ s.changePercent?.toFixed(2) }}%
-        </div>
-        <div class="stock-exchange">{{ getExchangeLabel(s.exchange) }}</div>
-      </button>
-    </div>
+    <template v-else>
+      <div class="result-info">
+        <strong>{{ filteredStocks.length }}</strong> ativo{{ filteredStocks.length !== 1 ? 's' : '' }} encontrado{{ filteredStocks.length !== 1 ? 's' : '' }}
+      </div>
+
+      <div v-if="filteredStocks.length === 0" class="empty-state glass-panel">
+        <span class="empty-icon">📊</span>
+        <p>Nenhum ativo encontrado para este filtro.</p>
+      </div>
+
+      <div v-else class="stocks-grid">
+        <button
+          v-for="s in filteredStocks"
+          :key="s.symbol"
+          class="stock-card glass-panel"
+          @click="openDetail(s)"
+        >
+          <div class="stock-top">
+            <div class="stock-symbol">{{ s.symbol.replace('.SA','').replace('.IR','').replace('.L','') }}</div>
+            <div class="stock-type-badge" :class="s.assetType.toLowerCase()">{{ s.assetType }}</div>
+          </div>
+          <div class="stock-name">{{ s.shortName || s.symbol }}</div>
+          <div class="stock-price-row">
+            <span class="stock-price" :class="s.change >= 0 ? 'up' : 'down'">
+              {{ s.currency === 'BRL' ? 'R$' : s.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(s.price) }}
+            </span>
+            <span class="stock-change" :class="s.change >= 0 ? 'up' : 'down'">
+              {{ s.changePercent >= 0 ? '+' : '' }}{{ s.changePercent?.toFixed(2) }}%
+            </span>
+          </div>
+          <div class="stock-meta">
+            <span class="stock-exchange-label">{{ getExchangeLabel(s.exchange) }}</span>
+            <span class="stock-vol">{{ formatVolume(s.volume) }}</span>
+          </div>
+        </button>
+      </div>
+    </template>
 
     <Teleport to="body">
-      <div v-if="detail" class="modal-overlay" @click.self="detail = null">
+      <div v-if="detail" class="modal-overlay" @click.self="closeDetail">
         <div class="modal-content glass-panel">
-          <button class="modal-close" @click="detail = null">✕</button>
+          <button class="modal-close" @click="closeDetail">✕</button>
+
           <div class="modal-header">
-            <h2>{{ detail.symbol.replace('.SA','').replace('.IR','') }}</h2>
-            <span class="modal-exchange">{{ getExchangeLabel(detail.exchange) }}</span>
+            <div>
+              <h2>{{ detail.symbol.replace('.SA','').replace('.IR','').replace('.L','') }}</h2>
+              <span class="modal-subtitle">{{ detail.longName || detail.shortName }}</span>
+            </div>
+            <div class="modal-badges">
+              <span class="badge-exchange">{{ getExchangeLabel(detail.exchange) }}</span>
+              <span class="badge-type" :class="detail.assetType.toLowerCase()">{{ detail.assetType }}</span>
+            </div>
           </div>
 
           <div class="modal-price-row">
             <span class="modal-price" :class="detail.change >= 0 ? 'up' : 'down'">
-              {{ detail.currency }} {{ formatPrice(detail.price) }}
+              {{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.price) }}
             </span>
             <span class="modal-change" :class="detail.change >= 0 ? 'up' : 'down'">
-              {{ detail.change >= 0 ? '+' : '' }}{{ detail.changePercent?.toFixed(2) }}%
+              {{ detail.changePercent >= 0 ? '+' : '' }}{{ detail.changePercent?.toFixed(2) }}%
             </span>
           </div>
 
           <div class="chart-container">
             <canvas ref="chartCanvas" v-show="chartReady"></canvas>
             <div v-if="chartLoading" class="chart-loading">Carregando gráfico...</div>
+            <div v-if="chartError" class="chart-loading">{{ chartError }}</div>
           </div>
 
           <div class="metrics-grid">
             <div class="metric">
               <span class="metric-label">Abertura</span>
-              <span class="metric-value">{{ detail.currency }} {{ formatPrice(detail.open) }}</span>
+              <span class="metric-value">{{ formatPrice(detail.open) }}</span>
             </div>
             <div class="metric">
-              <span class="metric-label">Fechamento Anterior</span>
-              <span class="metric-value">{{ detail.currency }} {{ formatPrice(detail.prevClose) }}</span>
+              <span class="metric-label">Fech. Anterior</span>
+              <span class="metric-value">{{ formatPrice(detail.prevClose) }}</span>
             </div>
             <div class="metric">
-              <span class="metric-label">Máxima do Dia</span>
-              <span class="metric-value">{{ detail.currency }} {{ formatPrice(detail.high) }}</span>
+              <span class="metric-label">Máxima Dia</span>
+              <span class="metric-value">{{ formatPrice(detail.high) }}</span>
             </div>
             <div class="metric">
-              <span class="metric-label">Mínima do Dia</span>
-              <span class="metric-value">{{ detail.currency }} {{ formatPrice(detail.low) }}</span>
+              <span class="metric-label">Mínima Dia</span>
+              <span class="metric-value">{{ formatPrice(detail.low) }}</span>
             </div>
             <div class="metric">
               <span class="metric-label">Volume</span>
               <span class="metric-value">{{ formatVolume(detail.volume) }}</span>
             </div>
+            <div class="metric" v-if="detail.marketCap">
+              <span class="metric-label">Valor de Mercado</span>
+              <span class="metric-value">{{ formatMarketCap(detail.marketCap) }}</span>
+            </div>
             <div class="metric">
-              <span class="metric-label">Mercado</span>
+              <span class="metric-label">Status</span>
               <span class="metric-value">{{ detail.marketState === 'REGULAR' ? 'Aberto' : 'Fechado' }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Moeda</span>
+              <span class="metric-value">{{ detail.currency }}</span>
             </div>
           </div>
 
           <div class="trade-section">
+            <h4 class="trade-title">Compra / Venda</h4>
             <div class="trade-row">
               <span class="trade-label">Compra (Bid)</span>
-              <span class="trade-value up" v-if="detail.bid">{{ detail.currency }} {{ formatPrice(detail.bid) }}</span>
-              <span class="trade-value" v-else>—</span>
+              <span class="trade-value up" v-if="detail.bid">{{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.bid) }}</span>
+              <span class="trade-value dim" v-else>—</span>
             </div>
             <div class="trade-row">
               <span class="trade-label">Venda (Ask)</span>
-              <span class="trade-value down" v-if="detail.ask">{{ detail.currency }} {{ formatPrice(detail.ask) }}</span>
-              <span class="trade-value" v-else>—</span>
+              <span class="trade-value down" v-if="detail.ask">{{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.ask) }}</span>
+              <span class="trade-value dim" v-else>—</span>
+            </div>
+            <div class="trade-row">
+              <span class="trade-label">Spread</span>
+              <span class="trade-value" v-if="detail.bid && detail.ask">{{ formatPrice(detail.ask - detail.bid) }}</span>
+              <span class="trade-value dim" v-else>—</span>
             </div>
           </div>
 
-          <a
-            :href="`https://finance.yahoo.com/quote/${detail.symbol}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-yahoo"
-          >Ver no Yahoo Finance →</a>
+          <a :href="`https://finance.yahoo.com/quote/${detail.symbol}`" target="_blank" rel="noopener noreferrer" class="btn-yahoo">
+            Ver no Yahoo Finance →
+          </a>
         </div>
       </div>
     </Teleport>
@@ -137,9 +178,7 @@ import {
 
 Chart.register(LineElement, PointElement, LineController, LinearScale, CategoryScale, Filler, Tooltip)
 
-const YAHOO = 'https://query1.finance.yahoo.com/v8/finance/chart'
-const AWESOME_API = 'https://economia.awesomeapi.com.br/last'
-const COINGECKO = 'https://api.coingecko.com/api/v3/simple/price'
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const exchanges = [
   { key: 'NASDAQ', label: 'NASDAQ' },
@@ -148,27 +187,36 @@ const exchanges = [
   { key: 'IRL', label: 'Irlanda' }
 ]
 
-const SYMBOLS = {
-  NASDAQ: ['AAPL','MSFT','GOOGL','AMZN','NVDA','META','TSLA','NFLX'],
-  NYSE: ['BRK-B','JPM','V','JNJ','WMT','KO','DIS','BA'],
-  B3: ['PETR4.SA','VALE3.SA','ITUB4.SA','BBAS3.SA','BBDC4.SA','ABEV3.SA','WEGE3.SA','ELET3.SA'],
-  IRL: ['CRH','DCC','KRX','FLTR','IQQQ.IR','ISF.IR','JAM.L','RCP.L']
-}
+const assetTypes = [
+  { key: 'Ações', label: 'Ações' },
+  { key: 'FIIs', label: 'FIIs' },
+  { key: 'ETFs', label: 'ETFs' },
+  { key: 'REITs', label: 'REITs' }
+]
 
-const tickers = ref([])
 const stocks = ref([])
+const tickers = ref([])
 const loading = ref(true)
+const loaded = ref(false)
 const error = ref('')
-const selectedExchange = ref(null)
+const filterExchange = ref(null)
+const filterType = ref(null)
 const detail = ref(null)
 const chartCanvas = ref(null)
-let chartInstance = null
 const chartLoading = ref(false)
 const chartReady = ref(false)
+const chartError = ref('')
+let chartInstance = null
 
 const filteredStocks = computed(() => {
-  if (!selectedExchange.value) return stocks.value
-  return stocks.value.filter(s => s.exchange === selectedExchange.value)
+  let result = stocks.value
+  if (filterExchange.value) {
+    result = result.filter(s => s.exchange === filterExchange.value)
+  }
+  if (filterType.value) {
+    result = result.filter(s => s.assetType === filterType.value)
+  }
+  return result
 })
 
 function getExchangeLabel(key) {
@@ -177,9 +225,7 @@ function getExchangeLabel(key) {
 
 function formatPrice(v) {
   if (v == null || isNaN(v)) return '—'
-  if (v >= 100) return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  if (v >= 1) return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return v.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 6 })
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 6 })
 }
 
 function formatVolume(v) {
@@ -190,110 +236,64 @@ function formatVolume(v) {
   return v.toLocaleString('pt-BR')
 }
 
-function getCurrency(exchange) {
-  if (exchange === 'B3') return 'R$'
-  if (exchange === 'IRL') return '€'
-  return 'US$'
+function formatMarketCap(v) {
+  if (!v) return '—'
+  if (v >= 1e12) return 'US$ ' + (v / 1e12).toFixed(2) + 'T'
+  if (v >= 1e9) return 'US$ ' + (v / 1e9).toFixed(2) + 'B'
+  if (v >= 1e6) return 'US$ ' + (v / 1e6).toFixed(2) + 'M'
+  return 'US$ ' + v.toLocaleString('pt-BR')
 }
 
-async function fetchTickers() {
+function closeDetail() {
+  detail.value = null
+}
+
+async function fetchAll() {
+  loading.value = true
+  error.value = ''
+  loaded.value = false
+
   try {
-    const [forexRes, cryptoRes] = await Promise.all([
-      fetch(`${AWESOME_API}/USD-BRL,EUR-BRL,JPY-BRL`).then(r => r.json()),
-      fetch(`${COINGECKO}?ids=bitcoin,ethereum,binancecoin&vs_currencies=brl&include_24hr_change=true`).then(r => r.json())
-    ])
+    const res = await fetch(`${API_BASE}/api/markets`)
+    if (!res.ok) throw new Error('Erro ao carregar dados')
+    const data = await res.json()
+
+    stocks.value = data.stocks || []
 
     const items = []
-    const usdBrl = parseFloat(forexRes.USDBRL?.bid || 0)
-    const eurBrl = parseFloat(forexRes.EURBRL?.bid || 0)
-    const jpyBrl = parseFloat(forexRes.JPYBRL?.bid || 0)
+    const f = data.forex || {}
+    if (f.USDBRL) items.push({ label: 'USD/BRL', value: `R$ ${parseFloat(f.USDBRL.bid).toFixed(4)}`, change: parseFloat(f.USDBRL.pctChange || 0).toFixed(2) })
+    if (f.EURBRL) items.push({ label: 'EUR/BRL', value: `R$ ${parseFloat(f.EURBRL.bid).toFixed(4)}`, change: parseFloat(f.EURBRL.pctChange || 0).toFixed(2) })
+    if (f.JPYBRL) items.push({ label: 'JPY/BRL', value: `R$ ${parseFloat(f.JPYBRL.bid).toFixed(4)}`, change: parseFloat(f.JPYBRL.pctChange || 0).toFixed(2) })
 
-    if (usdBrl) {
-      items.push({ label: 'USD/BRL', value: `R$ ${usdBrl.toFixed(4)}`, change: parseFloat(forexRes.USDBRL?.pctChange || 0) })
-    }
-    if (eurBrl) {
-      items.push({ label: 'EUR/BRL', value: `R$ ${eurBrl.toFixed(4)}`, change: parseFloat(forexRes.EURBRL?.pctChange || 0) })
-    }
-    if (jpyBrl) {
-      items.push({ label: 'JPY/BRL', value: `R$ ${jpyBrl.toFixed(4)}`, change: parseFloat(forexRes.JPYBRL?.pctChange || 0) })
-    }
-    if (cryptoRes.bitcoin) {
-      items.push({ label: 'BTC/BRL', value: `R$ ${cryptoRes.bitcoin.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: cryptoRes.bitcoin.brl_24h_change?.toFixed(2) || 0 })
-    }
-    if (cryptoRes.ethereum) {
-      items.push({ label: 'ETH/BRL', value: `R$ ${cryptoRes.ethereum.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: cryptoRes.ethereum.brl_24h_change?.toFixed(2) || 0 })
-    }
-    if (cryptoRes.binancecoin) {
-      items.push({ label: 'BNB/BRL', value: `R$ ${cryptoRes.binancecoin.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: cryptoRes.binancecoin.brl_24h_change?.toFixed(2) || 0 })
-    }
+    const c = data.crypto || {}
+    if (c.bitcoin) items.push({ label: 'BTC/BRL', value: `R$ ${c.bitcoin.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.bitcoin.brl_24h_change || 0).toFixed(2) })
+    if (c.ethereum) items.push({ label: 'ETH/BRL', value: `R$ ${c.ethereum.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ethereum.brl_24h_change || 0).toFixed(2) })
+    if (c.binancecoin) items.push({ label: 'BNB/BRL', value: `R$ ${c.binancecoin.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.binancecoin.brl_24h_change || 0).toFixed(2) })
 
     tickers.value = items
+  } catch (e) {
+    error.value = 'Erro ao carregar dados dos mercados. Tente novamente.'
+  } finally {
+    loading.value = false
+    loaded.value = true
+  }
+}
+
+async function fetchChart(symbol) {
+  chartLoading.value = true
+  chartReady.value = false
+  chartError.value = ''
+
+  try {
+    const res = await fetch(`${API_BASE}/api/markets?chart=${symbol}&range=1mo`)
+    if (!res.ok) throw new Error('Falha ao carregar')
+    return await res.json()
   } catch {
-    tickers.value = []
+    chartError.value = 'Gráfico indisponível'
+    chartLoading.value = false
+    return null
   }
-}
-
-async function fetchStockQuotes() {
-  const allSymbols = Object.values(SYMBOLS).flat()
-  const results = []
-
-  const batchSize = 5
-  for (let i = 0; i < allSymbols.length; i += batchSize) {
-    const batch = allSymbols.slice(i, i + batchSize)
-    const batchResults = await Promise.allSettled(
-      batch.map(async (symbol) => {
-        const url = `${YAHOO}/${symbol}?range=5d&interval=1d`
-        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
-        if (!res.ok) return null
-        const data = await res.json()
-        const q = data.chart?.result?.[0]?.meta
-        const quotes = data.chart?.result?.[0]?.indicators?.quote?.[0]
-        if (!q) return null
-
-        const prices = q.regularMarketPrice != null ? [q.regularMarketPrice] : []
-        const prevClose = q.chartPreviousClose || q.previousClose || 0
-        const change = prices.length > 0 ? prices[0] - prevClose : 0
-        const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
-
-        let exchange = 'NASDAQ'
-        if (symbol.endsWith('.SA')) exchange = 'B3'
-        else if (symbol.endsWith('.IR')) exchange = 'IRL'
-        else if (symbol.endsWith('.L')) exchange = 'IRL'
-        else if (['BRK-B','JPM','V','JNJ','WMT','KO','DIS','BA'].includes(symbol)) exchange = 'NYSE'
-
-        return {
-          symbol,
-          exchange,
-          shortName: q.shortName || q.symbol,
-          price: prices[0] || 0,
-          change,
-          changePercent,
-          prevClose,
-          open: q.regularMarketOpen || 0,
-          high: q.regularMarketDayHigh || 0,
-          low: q.regularMarketDayLow || 0,
-          volume: q.regularMarketVolume || 0,
-          bid: q.bid || null,
-          ask: q.ask || null,
-          marketState: q.marketState || 'CLOSED',
-          currency: getCurrency(exchange),
-          data: data.chart?.result?.[0]
-        }
-      })
-    )
-    for (const r of batchResults) {
-      if (r.status === 'fulfilled' && r.value) results.push(r.value)
-    }
-  }
-
-  stocks.value = results
-}
-
-async function fetchChartData(symbol) {
-  const url = `${YAHOO}/${symbol}?range=1mo&interval=1d`
-  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
-  if (!res.ok) throw new Error('Falha ao carregar gráfico')
-  return res.json()
 }
 
 function renderChart(data) {
@@ -302,41 +302,41 @@ function renderChart(data) {
 
   const timestamps = data.chart?.result?.[0]?.timestamp || []
   const quotes = data.chart?.result?.[0]?.indicators?.quote?.[0]
-  const closes = quotes?.close || []
+  const closes = quotes?.close?.filter(c => c != null) || []
 
-  const labels = timestamps.map(t => {
-    const d = new Date(t * 1000)
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-  })
-  const prices = closes.filter(c => c != null)
-
-  if (prices.length === 0) {
+  if (closes.length < 2) {
+    chartError.value = 'Dados insuficientes para o gráfico'
     chartLoading.value = false
-    chartReady.value = false
     return
   }
 
-  const min = Math.min(...prices)
-  const max = Math.max(...prices)
+  const labels = timestamps.slice(-closes.length).map(t => {
+    const d = new Date(t * 1000)
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  })
+
+  const min = Math.min(...closes)
+  const max = Math.max(...closes)
   const padding = (max - min) * 0.1 || max * 0.05
+  const up = closes[0] <= closes[closes.length - 1]
 
   chartInstance = new Chart(chartCanvas.value, {
     type: 'line',
     data: {
-      labels: labels.slice(-prices.length),
+      labels,
       datasets: [{
         label: 'Fechamento',
-        data: prices,
-        borderColor: prices[0] <= prices[prices.length - 1] ? '#06c167' : '#e60014',
+        data: closes,
+        borderColor: up ? '#06c167' : '#e60014',
         backgroundColor: (ctx) => {
-          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300)
-          g.addColorStop(0, prices[0] <= prices[prices.length - 1] ? 'rgba(6,193,103,0.2)' : 'rgba(230,0,20,0.2)')
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220)
+          g.addColorStop(0, up ? 'rgba(6,193,103,0.2)' : 'rgba(230,0,20,0.2)')
           g.addColorStop(1, 'rgba(0,0,0,0)')
           return g
         },
         fill: true,
         tension: 0.3,
-        pointRadius: 2,
+        pointRadius: 1,
         borderWidth: 2
       }]
     },
@@ -345,11 +345,11 @@ function renderChart(data) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { enabled: true } },
       scales: {
-        x: { display: true, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+        x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 9 } } },
         y: {
-          min: min - padding,
+          min: Math.max(0, min - padding),
           max: max + padding,
-          ticks: { font: { size: 10 }, callback: v => v.toFixed(2) }
+          ticks: { font: { size: 9 }, callback: v => v.toFixed(2) }
         }
       }
     }
@@ -361,16 +361,10 @@ function renderChart(data) {
 
 async function openDetail(stock) {
   detail.value = { ...stock }
-  chartLoading.value = true
-  chartReady.value = false
-
-  try {
-    const data = await fetchChartData(stock.symbol)
+  const data = await fetchChart(stock.symbol)
+  if (data) {
     await nextTick()
     renderChart(data)
-  } catch {
-    chartLoading.value = false
-    chartReady.value = false
   }
 }
 
@@ -378,18 +372,13 @@ watch(detail, (val) => {
   if (!val) {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null }
     chartReady.value = false
+    chartLoading.value = false
+    chartError.value = ''
   }
 })
 
-onMounted(async () => {
-  loading.value = true
-  try {
-    await Promise.all([fetchTickers(), fetchStockQuotes()])
-  } catch (e) {
-    error.value = 'Erro ao carregar dados dos mercados.'
-  } finally {
-    loading.value = false
-  }
+onMounted(() => {
+  fetchAll()
 })
 </script>
 
@@ -416,6 +405,7 @@ onMounted(async () => {
   font-family: inherit;
   color: var(--text-primary);
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .btn-back:hover {
   background: var(--text-primary);
@@ -424,12 +414,14 @@ onMounted(async () => {
 
 .ticker-bar {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
   overflow-x: auto;
   flex-wrap: nowrap;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.ticker-bar::-webkit-scrollbar { display: none; }
 
 .ticker-item {
   flex-shrink: 0;
@@ -438,11 +430,46 @@ onMounted(async () => {
   align-items: center;
   padding: 0.25rem 0.75rem;
   border-right: 1px solid var(--border-color);
-  min-width: 100px;
+  min-width: 95px;
 }
 .ticker-item:last-child { border-right: none; }
 
 .ticker-label {
+  font-size: 0.68rem;
+  font-weight: bold;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ticker-value {
+  font-size: 0.8rem;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+  margin-top: 0.15rem;
+}
+.ticker-change {
+  font-size: 0.68rem;
+  font-weight: bold;
+}
+.ticker-empty {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  padding: 0.25rem 0;
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filter-label {
   font-size: 0.7rem;
   font-weight: bold;
   color: var(--text-secondary);
@@ -450,48 +477,26 @@ onMounted(async () => {
   letter-spacing: 0.3px;
 }
 
-.ticker-value {
-  font-size: 0.82rem;
-  font-weight: bold;
-  font-family: "Courier New", monospace;
-  margin-top: 0.15rem;
-}
-
-.ticker-change {
-  font-size: 0.7rem;
-  font-weight: bold;
-}
-
-.up { color: #06c167; }
-.down { color: #e60014; }
-
-.exchange-chips {
+.chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .chip {
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: 3px;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.78rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
   font-weight: bold;
   cursor: pointer;
   font-family: inherit;
   color: var(--text-primary);
   transition: all 0.15s;
 }
-.chip:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-.chip.active {
-  background: var(--text-primary);
-  color: #fff;
-  border-color: var(--text-primary);
-}
+.chip:hover { border-color: var(--accent-color); color: var(--accent-color); }
+.chip.active { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
 
 .loading-state {
   text-align: center;
@@ -500,67 +505,114 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 
-.stocks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
+.result-info {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
-@media (max-width: 600px) {
-  .stocks-grid { grid-template-columns: repeat(2, 1fr); }
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+}
+.empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.stocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .stocks-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
 }
 
 .stock-card {
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: 3px;
-  padding: 1rem;
-  text-align: center;
+  padding: 0.85rem;
+  text-align: left;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 .stock-card:hover {
   border-color: var(--accent-color);
   transform: translateY(-2px);
 }
 
-.stock-symbol {
-  font-size: 1.05rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  margin-bottom: 0.2rem;
+.stock-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
 }
 
+.stock-symbol {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.stock-type-badge {
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 0.1rem 0.35rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.stock-type-badge.ações { background: rgba(0,84,160,0.1); color: #0054a0; }
+.stock-type-badge.fiis { background: rgba(6,193,103,0.1); color: #06c167; }
+.stock-type-badge.etfs { background: rgba(255,153,0,0.1); color: #cc7a00; }
+.stock-type-badge.reits { background: rgba(230,0,20,0.1); color: #e60014; }
+
 .stock-name {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
-  margin-bottom: 0.5rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.stock-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
 .stock-price {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: bold;
   font-family: "Courier New", monospace;
 }
 
 .stock-change {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: bold;
-  margin-top: 0.15rem;
 }
 
-.stock-exchange {
-  font-size: 0.65rem;
+.up { color: #06c167; }
+.down { color: #e60014; }
+
+.stock-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
   color: var(--text-secondary);
-  margin-top: 0.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  margin-top: 0.2rem;
 }
 
+/* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -570,12 +622,13 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .modal-content {
-  max-width: 500px;
+  max-width: 480px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 92vh;
   overflow-y: auto;
   padding: 1.5rem;
   position: relative;
@@ -591,27 +644,46 @@ onMounted(async () => {
   cursor: pointer;
   color: var(--text-secondary);
   font-family: inherit;
+  line-height: 1;
 }
 
 .modal-header {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
 }
-.modal-header h2 {
-  font-size: 1.3rem;
-  margin: 0;
+.modal-header h2 { font-size: 1.3rem; margin: 0; }
+.modal-subtitle { font-size: 0.78rem; color: var(--text-secondary); display: block; margin-top: 0.1rem; }
+
+.modal-badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
-.modal-exchange {
-  font-size: 0.7rem;
+.badge-exchange {
+  font-size: 0.62rem;
+  font-weight: bold;
   color: var(--text-secondary);
   background: #f5f0e6;
-  padding: 0.15rem 0.5rem;
-  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
+.badge-type {
+  font-size: 0.62rem;
+  font-weight: bold;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.badge-type.ações { background: rgba(0,84,160,0.1); color: #0054a0; }
+.badge-type.fiis { background: rgba(6,193,103,0.1); color: #06c167; }
+.badge-type.etfs { background: rgba(255,153,0,0.1); color: #cc7a00; }
+.badge-type.reits { background: rgba(230,0,20,0.1); color: #e60014; }
 
 .modal-price-row {
   display: flex;
@@ -621,18 +693,18 @@ onMounted(async () => {
 }
 
 .modal-price {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: bold;
   font-family: "Courier New", monospace;
 }
 
 .modal-change {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: bold;
 }
 
 .chart-container {
-  height: 220px;
+  height: 200px;
   margin-bottom: 1rem;
   position: relative;
 }
@@ -650,25 +722,25 @@ onMounted(async () => {
 .metrics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.05rem;
 }
 
 .metric-label {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
 .metric-value {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: bold;
   font-family: "Courier New", monospace;
 }
@@ -679,23 +751,30 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
+.trade-title {
+  font-size: 0.82rem;
+  margin: 0 0 0.4rem;
+  font-weight: bold;
+}
+
 .trade-row {
   display: flex;
   justify-content: space-between;
-  padding: 0.25rem 0;
+  padding: 0.2rem 0;
 }
 
 .trade-label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   font-weight: bold;
 }
 
 .trade-value {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: bold;
   font-family: "Courier New", monospace;
 }
+.trade-value.dim { color: var(--text-secondary); }
 
 .btn-yahoo {
   display: block;
@@ -712,7 +791,5 @@ onMounted(async () => {
   text-decoration: none;
   transition: background 0.15s;
 }
-.btn-yahoo:hover {
-  background: #0f2740;
-}
+.btn-yahoo:hover { background: #0f2740; }
 </style>
