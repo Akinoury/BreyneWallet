@@ -1,8 +1,11 @@
 import bcrypt from 'bcryptjs'
 import { verifyToken } from '../_lib/jwt.js'
 import { findUserById, updateUserPassword } from '../_lib/db.js'
+import { handleOptions, setCorsHeaders } from '../_lib/cors.js'
 
 export default async function handler(req, res) {
+  if (handleOptions(req, res)) return
+  setCorsHeaders(res)
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }

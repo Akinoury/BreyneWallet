@@ -2031,6 +2031,12 @@ input:checked + .toggle-slider-sm:before {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.chart-card canvas {
+  max-width: 100%;
 }
 
 .chart-wide {
