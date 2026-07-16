@@ -374,7 +374,6 @@ export const useWalletStore = defineStore('wallet', () => {
     try {
       localStorage.removeItem('breyne_user')
       localStorage.removeItem('breyne_bio_enabled')
-      localStorage.removeItem('breyne_bio_tokens')
     } catch {}
   }
 
