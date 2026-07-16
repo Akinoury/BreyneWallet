@@ -185,10 +185,10 @@ export const useWalletStore = defineStore('wallet', () => {
     useManualLimit.value = w.useManualLimit ?? useManualLimit.value
     expenseTaxRate.value = w.expenseTaxRate ?? expenseTaxRate.value
     emergencyFund.value = w.emergencyFund ?? emergencyFund.value
-    if (w.investments?.length > 0 || !investments.value?.length) {
+    if (w.investments !== undefined) {
       investments.value = w.investments ?? investments.value
     }
-    if (w.transactions?.length > 0 || !transactions.value?.length) {
+    if (w.transactions !== undefined) {
       transactions.value = w.transactions ?? transactions.value
     }
     profilePhotoUrl.value = w.profilePhotoUrl ?? profilePhotoUrl.value
