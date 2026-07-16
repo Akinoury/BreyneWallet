@@ -238,12 +238,7 @@ function isExpired(iso) {
 }
 
 function getStore(storeId) {
-  const s = stores.value.find(s => s.id === storeId)
-  if (!s) return s
-  if (s.id === 'submarino' || s.id?.toLowerCase().includes('submarino')) {
-    return { ...s, name: 'Submarino', color: '#004b8d', logo: `${FAV}submarino.com.br&size=128` }
-  }
-  return s
+  return stores.value.find(s => s.id === storeId)
 }
 
 function applyFilters() {
@@ -295,13 +290,22 @@ onMounted(async () => {
     const res = await fetch(`${API_BASE}/api/coupons?${params}`)
     if (!res.ok) throw new Error('Erro ao carregar cupons')
     const data = await res.json()
-    stores.value = (data.stores || []).map(s => {
-      if (s.id === 'submarino' || s.name?.toLowerCase().includes('submarino')) {
-        return { ...s, name: 'Submarino', color: '#004b8d', logo: `${FAV}submarino.com.br&size=128`, fallbackIcon: '🔵' }
+    stores.value = (data.stores || []).filter(s => s.id !== 'submarino').map(s => {
+      if (s.name?.toLowerCase().includes('submarino')) {
+        return { ...s, id: 'submarino', name: 'Submarino', color: '#004b8d', logo: `${FAV}submarino.com.br&size=128`, fallbackIcon: '🔵' }
       }
       return s
     })
-    allCoupons.value = data.coupons
+    if (!stores.value.find(s => s.id === 'submarino')) {
+      stores.value.push({ id: 'submarino', name: 'Submarino', color: '#004b8d', logo: `${FAV}submarino.com.br&size=128`, fallbackIcon: '🔵' })
+    }
+    allCoupons.value = (data.coupons || []).map(c => {
+      const texto = ((c.title || '') + ' ' + (c.description || '')).toLowerCase()
+      if (texto.includes('submarino') && c.storeId !== 'submarino') {
+        return { ...c, storeId: 'submarino' }
+      }
+      return c
+    })
     applyFilters()
   } catch (e) {
     error.value = 'Não foi possível carregar os cupons. Tente novamente mais tarde.'
