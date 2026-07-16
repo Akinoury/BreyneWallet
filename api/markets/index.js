@@ -51,10 +51,14 @@ export default async function handler(req, res) {
 
 async function fetchJSON(url) {
   const ac = new AbortController()
-  const timer = setTimeout(() => ac.abort(), 12000)
+  const timer = setTimeout(() => ac.abort(), 10000)
   try {
     const r = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json,text/html,*/*',
+        'Referer': 'https://finance.yahoo.com/'
+      },
       signal: ac.signal
     })
     clearTimeout(timer)
@@ -96,41 +100,91 @@ function getCurrency(exchange) {
 }
 
 async function fetchQuotes(symbols) {
-  const batchSize = 50
   const results = []
+  const batchSize = 50
 
   for (let i = 0; i < symbols.length; i += batchSize) {
     const batch = symbols.slice(i, i + batchSize)
     const url = `${YAHOO_QUOTE}?symbols=${batch.join(',')}`
     const data = await fetchJSON(url)
 
-    if (data?.quoteResponse?.result) {
+    if (data?.quoteResponse?.result?.length) {
       for (const q of data.quoteResponse.result) {
         const exchange = getExchange(q.symbol)
-        results.push({
-          symbol: q.symbol,
-          exchange,
-          assetType: classify(q.symbol, exchange),
-          shortName: q.shortName || q.symbol,
-          longName: q.longName || '',
-          price: q.regularMarketPrice ?? q.regularMarketPreviousClose ?? 0,
-          change: q.regularMarketChange ?? 0,
-          changePercent: q.regularMarketChangePercent ?? 0,
-          prevClose: q.regularMarketPreviousClose ?? q.regularMarketPrice ?? 0,
-          open: q.regularMarketOpen ?? 0,
-          high: q.regularMarketDayHigh ?? 0,
-          low: q.regularMarketDayLow ?? 0,
-          volume: q.regularMarketVolume ?? 0,
-          marketCap: q.marketCap ?? 0,
-          bid: q.bid ?? null,
-          ask: q.ask ?? null,
-          marketState: q.marketState || 'CLOSED',
-          currency: getCurrency(exchange)
-        })
+        results.push(formatQuote(q, exchange))
       }
+    } else {
+      const fallback = await fetchQuotesChart(batch)
+      results.push(...fallback)
     }
   }
 
+  return results
+}
+
+function formatQuote(q, exchange) {
+  return {
+    symbol: q.symbol,
+    exchange,
+    assetType: classify(q.symbol, exchange),
+    shortName: q.shortName || q.symbol,
+    longName: q.longName || '',
+    price: q.regularMarketPrice ?? q.regularMarketPreviousClose ?? 0,
+    change: q.regularMarketChange ?? 0,
+    changePercent: q.regularMarketChangePercent ?? 0,
+    prevClose: q.regularMarketPreviousClose ?? q.regularMarketPrice ?? 0,
+    open: q.regularMarketOpen ?? 0,
+    high: q.regularMarketDayHigh ?? 0,
+    low: q.regularMarketDayLow ?? 0,
+    volume: q.regularMarketVolume ?? 0,
+    marketCap: q.marketCap ?? 0,
+    bid: q.bid ?? null,
+    ask: q.ask ?? null,
+    marketState: q.marketState || 'CLOSED',
+    currency: getCurrency(exchange)
+  }
+}
+
+async function fetchQuotesChart(symbols) {
+  const results = []
+  for (let i = 0; i < symbols.length; i += 20) {
+    const batch = symbols.slice(i, i + 20)
+    const batchResults = await Promise.allSettled(
+      batch.map(async (symbol) => {
+        const data = await fetchJSON(`${YAHOO_CHART}/${symbol}?range=2d&interval=1d`)
+        if (!data?.chart?.result?.[0]) return null
+        const meta = data.chart.result[0].meta
+        const price = meta.regularMarketPrice ?? meta.chartPreviousClose ?? 0
+        const prevClose = meta.chartPreviousClose ?? price
+        const change = price - prevClose
+        const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
+        const exchange = getExchange(symbol)
+        return {
+          symbol: symbol.toUpperCase(),
+          exchange,
+          assetType: classify(symbol, exchange),
+          shortName: meta.shortName || symbol,
+          longName: meta.longName || '',
+          price,
+          change,
+          changePercent,
+          prevClose,
+          open: meta.regularMarketOpen || 0,
+          high: meta.regularMarketDayHigh || 0,
+          low: meta.regularMarketDayLow || 0,
+          volume: meta.regularMarketVolume || 0,
+          marketCap: meta.marketCap || 0,
+          bid: meta.bid || null,
+          ask: meta.ask || null,
+          marketState: meta.marketState || 'CLOSED',
+          currency: getCurrency(exchange)
+        }
+      })
+    )
+    for (const r of batchResults) {
+      if (r.status === 'fulfilled' && r.value) results.push(r.value)
+    }
+  }
   return results
 }
 
