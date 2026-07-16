@@ -359,6 +359,7 @@ export const useWalletStore = defineStore('wallet', () => {
     if (result.success) {
       currentUser.value = result.user
       isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
+      await loadWalletState()
     }
     return result
   }

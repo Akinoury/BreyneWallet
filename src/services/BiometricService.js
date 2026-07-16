@@ -263,6 +263,7 @@ class BiometricService {
         const cache = this.#getCache()
         cache.push(cacheEntry)
         this.#setCache(cache)
+        this.saveAccount({ id: userId, name: userName, email: userEmail })
       }
 
       return { success: true, message: 'Biometria cadastrada com sucesso!' }
