@@ -18,19 +18,23 @@
     </div>
 
     <div class="filter-section">
-      <div class="filter-group">
-        <span class="filter-label">Bolsa</span>
-        <div class="chip-row">
-          <button class="chip" :class="{ active: filterExchange === null }" @click="filterExchange = null">Todas</button>
-          <button v-for="ex in exchanges" :key="ex.key" class="chip" :class="{ active: filterExchange === ex.key }" @click="filterExchange = ex.key">{{ ex.label }}</button>
+      <div class="filter-blocks">
+        <div class="filter-group">
+          <span class="filter-label">Bolsa</span>
+          <div class="chip-row">
+            <button v-for="ex in exchanges" :key="ex.key" class="chip" :class="{ active: selectedExchanges.includes(ex.key) }" @click="toggleExchange(ex.key)">{{ ex.label }}</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Tipo</span>
+          <div class="chip-row">
+            <button v-for="t in assetTypes" :key="t.key" class="chip" :class="{ active: selectedTypes.includes(t.key) }" @click="toggleType(t.key)">{{ t.label }}</button>
+          </div>
         </div>
       </div>
-      <div class="filter-group">
-        <span class="filter-label">Tipo</span>
-        <div class="chip-row">
-          <button class="chip" :class="{ active: filterType === null }" @click="filterType = null">Todos</button>
-          <button v-for="t in assetTypes" :key="t.key" class="chip" :class="{ active: filterType === t.key }" @click="filterType = t.key">{{ t.label }}</button>
-        </div>
+      <div class="search-group">
+        <input v-model="searchQuery" placeholder="Buscar ativo…" class="search-input" @keyup.enter="lookupTicker" />
+        <button class="search-btn" @click="lookupTicker" title="Procurar ticker">🔍</button>
       </div>
     </div>
 
@@ -98,6 +102,10 @@
             <span class="modal-change" :class="detail.change >= 0 ? 'up' : 'down'">
               {{ detail.changePercent >= 0 ? '+' : '' }}{{ detail.changePercent?.toFixed(2) }}%
             </span>
+          </div>
+
+          <div class="chart-bar">
+            <button v-for="r in chartRanges" :key="r.key" class="range-chip" :class="{ active: chartRange === r.key }" @click="setChartRange(r.key)">{{ r.label }}</button>
           </div>
 
           <div class="chart-container">
@@ -194,33 +202,62 @@ const assetTypes = [
   { key: 'REITs', label: 'REITs' }
 ]
 
+const chartRanges = [
+  { key: '5d', label: '1S' },
+  { key: '1mo', label: '1M' },
+  { key: '1y', label: '1A' },
+  { key: '10y', label: '10A' }
+]
+
 const stocks = ref([])
 const tickers = ref([])
 const loading = ref(true)
 const loaded = ref(false)
 const error = ref('')
-const filterExchange = ref(null)
-const filterType = ref(null)
+const selectedExchanges = ref([])
+const selectedTypes = ref([])
+const searchQuery = ref('')
 const detail = ref(null)
 const chartCanvas = ref(null)
 const chartLoading = ref(false)
 const chartReady = ref(false)
 const chartError = ref('')
+const chartRange = ref('1mo')
 let chartInstance = null
+let chartRequestId = 0
 
 const filteredStocks = computed(() => {
   let result = stocks.value
-  if (filterExchange.value) {
-    result = result.filter(s => s.exchange === filterExchange.value)
+  if (selectedExchanges.value.length) {
+    result = result.filter(s => selectedExchanges.value.includes(s.exchange))
   }
-  if (filterType.value) {
-    result = result.filter(s => s.assetType === filterType.value)
+  if (selectedTypes.value.length) {
+    result = result.filter(s => selectedTypes.value.includes(s.assetType))
+  }
+  if (searchQuery.value) {
+    const q = searchQuery.value.toUpperCase()
+    result = result.filter(s =>
+      s.symbol.toUpperCase().includes(q) ||
+      (s.shortName && s.shortName.toUpperCase().includes(q))
+    )
   }
   return result
 })
 
 function getExchangeLabel(key) {
   return exchanges.find(e => e.key === key)?.label || key
+}
+
+function toggleExchange(key) {
+  const idx = selectedExchanges.value.indexOf(key)
+  if (idx >= 0) selectedExchanges.value.splice(idx, 1)
+  else selectedExchanges.value.push(key)
+}
+
+function toggleType(key) {
+  const idx = selectedTypes.value.indexOf(key)
+  if (idx >= 0) selectedTypes.value.splice(idx, 1)
+  else selectedTypes.value.push(key)
 }
 
 function formatPrice(v) {
@@ -252,14 +289,11 @@ async function fetchAll() {
   loading.value = true
   error.value = ''
   loaded.value = false
-
   try {
     const res = await fetch(`${API_BASE}/api/markets`)
     if (!res.ok) throw new Error('Erro ao carregar dados')
     const data = await res.json()
-
     stocks.value = data.stocks || []
-
     const items = []
     const f = data.forex || {}
     if (f.USDBRL) items.push({ label: 'USD/BRL', value: `R$ ${parseFloat(f.USDBRL.bid).toFixed(4)}`, change: parseFloat(f.USDBRL.pctChange || 0).toFixed(2) })
@@ -270,7 +304,6 @@ async function fetchAll() {
       const brlUsd = 1 / parseFloat(f.USDBRL.bid)
       items.push({ label: 'BRL/USD', value: `$ ${brlUsd.toFixed(6)}`, change: 0 })
     }
-
     const c = data.crypto || {}
     if (c.bitcoin) items.push({ label: 'BTC/USD', value: `$ ${c.bitcoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.bitcoin.usd_24h_change || 0).toFixed(2) })
     if (c.ethereum) items.push({ label: 'ETH/USD', value: `$ ${c.ethereum.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ethereum.usd_24h_change || 0).toFixed(2) })
@@ -279,9 +312,8 @@ async function fetchAll() {
     if (c.ripple) items.push({ label: 'XRP/USD', value: `$ ${c.ripple.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ripple.usd_24h_change || 0).toFixed(2) })
     if (c.cardano) items.push({ label: 'ADA/USD', value: `$ ${c.cardano.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.cardano.usd_24h_change || 0).toFixed(2) })
     if (c.dogecoin) items.push({ label: 'DOGE/USD', value: `$ ${c.dogecoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.dogecoin.usd_24h_change || 0).toFixed(2) })
-
     tickers.value = items
-  } catch (e) {
+  } catch {
     error.value = 'Erro ao carregar dados dos mercados. Tente novamente.'
   } finally {
     loading.value = false
@@ -289,46 +321,46 @@ async function fetchAll() {
   }
 }
 
-async function fetchChart(symbol) {
+async function loadChart() {
+  if (!detail.value) return
+  const id = ++chartRequestId
   chartLoading.value = true
   chartReady.value = false
   chartError.value = ''
-
   try {
-    const res = await fetch(`${API_BASE}/api/markets?chart=${symbol}&range=1mo`)
-    if (!res.ok) throw new Error('Falha ao carregar')
-    return await res.json()
+    const res = await fetch(`${API_BASE}/api/markets?chart=${detail.value.symbol}&range=${chartRange.value}`)
+    if (!res.ok) throw new Error('Falha')
+    const data = await res.json()
+    if (id !== chartRequestId) return
+    await nextTick()
+    renderChart(data)
   } catch {
-    chartError.value = 'Gráfico indisponível'
-    chartLoading.value = false
-    return null
+    if (id === chartRequestId) {
+      chartError.value = 'Gráfico indisponível'
+      chartLoading.value = false
+    }
   }
 }
 
 function renderChart(data) {
   if (!chartCanvas.value) return
   if (chartInstance) { chartInstance.destroy(); chartInstance = null }
-
   const timestamps = data.chart?.result?.[0]?.timestamp || []
   const quotes = data.chart?.result?.[0]?.indicators?.quote?.[0]
   const closes = quotes?.close?.filter(c => c != null) || []
-
   if (closes.length < 2) {
     chartError.value = 'Dados insuficientes para o gráfico'
     chartLoading.value = false
     return
   }
-
   const labels = timestamps.slice(-closes.length).map(t => {
     const d = new Date(t * 1000)
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   })
-
   const min = Math.min(...closes)
   const max = Math.max(...closes)
   const padding = (max - min) * 0.1 || max * 0.05
   const up = closes[0] <= closes[closes.length - 1]
-
   chartInstance = new Chart(chartCanvas.value, {
     type: 'line',
     data: {
@@ -363,18 +395,35 @@ function renderChart(data) {
       }
     }
   })
-
   chartLoading.value = false
   chartReady.value = true
 }
 
 async function openDetail(stock) {
   detail.value = { ...stock }
-  const data = await fetchChart(stock.symbol)
-  if (data) {
-    await nextTick()
-    renderChart(data)
-  }
+  chartRange.value = '1mo'
+  await loadChart()
+}
+
+async function setChartRange(range) {
+  chartRange.value = range
+  if (detail.value) await loadChart()
+}
+
+async function lookupTicker() {
+  const q = searchQuery.value.trim().toUpperCase()
+  if (!q) return
+  const exists = stocks.value.find(s => s.symbol.toUpperCase() === q)
+  if (exists) { searchQuery.value = ''; return }
+  try {
+    const res = await fetch(`${API_BASE}/api/markets?symbols=${q}`)
+    if (!res.ok) return
+    const data = await res.json()
+    if (data.stocks?.length) {
+      stocks.value.unshift(data.stocks[0])
+      searchQuery.value = ''
+    }
+  } catch {}
 }
 
 watch(detail, (val) => {
@@ -468,8 +517,16 @@ onMounted(() => {
 
 .filter-section {
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-blocks {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
+  flex: 1;
 }
 
 .filter-group {
@@ -506,6 +563,41 @@ onMounted(() => {
 }
 .chip:hover { border-color: var(--accent-color); color: var(--accent-color); }
 .chip.active { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+
+.search-group {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #fff;
+  outline: none;
+  width: 160px;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--accent-color); }
+.search-input::placeholder { color: var(--text-secondary); }
+
+.search-btn {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+.search-btn:hover { border-color: var(--accent-color); }
 
 .loading-state {
   text-align: center;
@@ -698,7 +790,7 @@ onMounted(() => {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .modal-price {
@@ -711,6 +803,27 @@ onMounted(() => {
   font-size: 0.85rem;
   font-weight: bold;
 }
+
+.chart-bar {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.range-chip {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+.range-chip:hover { border-color: var(--accent-color); color: var(--accent-color); }
+.range-chip.active { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
 
 .chart-container {
   height: 200px;
