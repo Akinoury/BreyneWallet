@@ -56,7 +56,9 @@ export default async function handler(req, res) {
   const { symbols, chart, range } = req.query
 
   if (chart) {
-    const data = await fetchJSON(`${YAHOO_CHART}/${chart}?range=${range || '1mo'}&interval=1d`, 12000)
+    const intervals = { '10y': '1mo' }
+    const interval = intervals[range] || '1d'
+    const data = await fetchJSON(`${YAHOO_CHART}/${chart}?range=${range || '1mo'}&interval=${interval}`, 12000)
     return res.json(data || { error: 'Chart data not available' })
   }
 
