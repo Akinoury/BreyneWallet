@@ -453,10 +453,6 @@
             <span class="spec-label">Renda Passiva em 20 Anos</span>
             <span class="spec-value text-purple">R$ {{ formatCurrency(speculativeData.incomeAt20y) }} / mês</span>
           </div>
-          <div class="spec-card">
-            <span class="spec-label">Patrimônio Real na Independência</span>
-            <span class="spec-value">R$ {{ formatCurrency(speculativeData.targetWealth) }}</span>
-          </div>
         </div>
       </div>
 
