@@ -33,7 +33,8 @@
           :style="selectedStore === s.id ? { borderColor: s.color, color: s.color } : {}"
           @click="selectedStore = s.id; applyFilters()"
         >
-          {{ s.icon }} {{ s.name }}
+          <span class="chip-icon">{{ s.icon }}</span>
+          {{ s.name }}
         </button>
       </div>
     </div>
@@ -59,11 +60,14 @@
       >
         <div class="card-store-bar" :style="{ background: getStore(c.storeId)?.color || '#888' }"></div>
         <div class="card-body">
-          <div class="card-top">
-            <span class="store-badge">
-              {{ getStore(c.storeId)?.icon }} {{ getStore(c.storeId)?.name }}
-            </span>
-            <span class="discount-badge">{{ c.discount }}</span>
+          <div class="card-store-row">
+            <span class="store-logo">{{ getStore(c.storeId)?.icon }}</span>
+            <div class="card-top">
+              <span class="store-badge">
+                {{ getStore(c.storeId)?.name }}
+              </span>
+              <span class="discount-badge">{{ c.discount }}</span>
+            </div>
           </div>
 
           <h4 class="card-title">{{ c.title }}</h4>
@@ -222,6 +226,11 @@ onMounted(async () => {
   gap: 0.5rem;
 }
 
+.chip-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
 .store-chip {
   background: #ffffff;
   border: 1px solid var(--border-color);
@@ -234,6 +243,9 @@ onMounted(async () => {
   color: var(--text-primary);
   transition: all 0.15s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .store-chip:hover {
@@ -299,7 +311,25 @@ onMounted(async () => {
   gap: 0.6rem;
 }
 
+.card-store-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.store-logo {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .card-top {
+  flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;

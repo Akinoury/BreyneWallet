@@ -5,10 +5,10 @@
       <span><span class="logo-accent">Breyne</span>Wallet</span>
     </div>
     <nav>
-      <router-link to="/cupons" class="nav-link">🏷️ Cupons</router-link>
       <router-link to="/" class="nav-link">Home</router-link>
       <router-link to="/transactions" class="nav-link">Despesas</router-link>
       <router-link to="/investments" class="nav-link">Investimentos</router-link>
+      <router-link to="/cupons" class="nav-link">Cupons</router-link>
       
       <!-- DROPDOWN MENU -->
       <div class="user-menu-container" v-click-outside="closeDropdown">
