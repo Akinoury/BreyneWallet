@@ -1,13 +1,13 @@
-<template>
+﻿<template>
   <div class="dashboard-wrapper animate-fade-in">
     <!-- WELCOME BAR -->
     <div class="welcome-bar glass-panel flex-between">
       <div>
-        <h2>Olá, {{ store.currentUser?.name || 'Investidor' }}!</h2>
-        <p>Saia do sistema de endividamento e começe a controlar sua vida.</p>
+        <h2>OlÃ¡, {{ store.currentUser?.name || 'Investidor' }}!</h2>
+        <p>Saia do sistema de endividamento e comeÃ§e a controlar sua vida.</p>
       </div>
       <div class="salary-control-card">
-        <label for="salary-input">Salário Atual</label>
+        <label for="salary-input">SalÃ¡rio Atual</label>
         <div class="salary-input-group">
           <span class="currency-prefix">R$</span>
           <input 
@@ -27,7 +27,7 @@
     <!-- QUICK STATUS CARDS -->
     <div class="status-grid">
       <div :class="['status-card', 'glass-panel', 'border-blue', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
-        <span class="card-label">Gasto × Limite ({{ store.consumptionRate }}%)</span>
+        <span class="card-label">Gasto Ã— Limite ({{ store.consumptionRate }}%)</span>
         <div class="card-limit-stacked">
           <span class="card-limit-value card-limit-spent">R$ {{ formatCurrency(store.totalReturn) }}</span>
           <div class="card-limit-divider">
@@ -38,12 +38,12 @@
           <span class="card-limit-value card-limit-max">R$ {{ formatCurrency(store.limitConsumption) }}</span>
         </div>
         <span class="card-sub text-blue">
-          {{ store.totalReturn > store.limitConsumption ? '⬆ Excedeu o Limite' : '✅ Retorno Total ao Fundo' }}
+          {{ store.totalReturn > store.limitConsumption ? 'â¬† Excedeu o Limite' : 'âœ… Retorno Total ao Fundo' }}
         </span>
       </div>
 
       <div :class="['status-card', 'glass-panel', 'border-purple', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
-        <span class="card-label">Disponível para Investir Neste Mês</span>
+        <span class="card-label">DisponÃ­vel para Investir Neste MÃªs</span>
         <div class="card-limit-stacked">
           <span class="card-limit-value card-invest-planned">R$ {{ formatCurrency(store.availableToInvest) }}</span>
           <div class="card-limit-divider">
@@ -55,8 +55,8 @@
         </div>
         <span class="card-sub text-purple">
           {{ store.penaltyValue > 0
-            ? `⬆ Planejado R$ ${formatCurrency(store.investedValue)} − Penalidades`
-            : `✅ Planejado (${store.investmentRate}%): R$ ${formatCurrency(store.investedValue)}`
+            ? `â¬† Planejado R$ ${formatCurrency(store.investedValue)} âˆ’ Penalidades`
+            : `âœ… Planejado (${store.investmentRate}%): R$ ${formatCurrency(store.investedValue)}`
           }}
         </span>
       </div>
@@ -79,36 +79,36 @@
           <h3>Tabela de Acerto de Contas</h3>
           <button class="help-trigger-btn" @click="showHelpModal = true" title="Como funciona?" id="btn-help-acerto">?</button>
         </div>
-        <p>Fechamento financeiro do ciclo atual com base no seu salário.</p>
+        <p>Fechamento financeiro do ciclo atual com base no seu salÃ¡rio.</p>
       </div>
 
-      <!-- MODAL: EXPLICAÇÃO DA SISTEMÁTICA -->
+      <!-- MODAL: EXPLICAÃ‡ÃƒO DA SISTEMÃTICA -->
       <Teleport to="body">
         <div v-if="showHelpModal" class="help-modal-overlay" @click.self="showHelpModal = false">
           <div class="help-modal-box">
             <div class="help-modal-header">
-              <h4>💡 Como Funciona o Acerto de Contas?</h4>
-              <button class="help-modal-close" @click="showHelpModal = false" id="btn-help-close">✕</button>
+              <h4>ðŸ’¡ Como Funciona o Acerto de Contas?</h4>
+              <button class="help-modal-close" @click="showHelpModal = false" id="btn-help-close">âœ•</button>
             </div>
-            <p class="help-intro">Esta tabela consolida suas finanças do ciclo com base nas taxas configuradas. Entenda cada etapa:</p>
+            <p class="help-intro">Esta tabela consolida suas finanÃ§as do ciclo com base nas taxas configuradas. Entenda cada etapa:</p>
 
             <div class="help-grid">
               <div class="help-item">
                 <span class="help-badge badge-limit">Limite</span>
                 <strong>Limite de Consumo ({{ store.consumptionRate }}%):</strong>
-                <p>O teto máximo ideal planejado para seus gastos mensais. É calculado sobre o seu salário.</p>
+                <p>O teto mÃ¡ximo ideal planejado para seus gastos mensais. Ã‰ calculado sobre o seu salÃ¡rio.</p>
               </div>
 
               <div class="help-item">
-                <span class="help-badge badge-bonus">Bônus</span>
-                <strong>Bônus de Incentivo ao Investimento ({{ store.investmentBonusRate }}%):</strong>
-                <p>Um valor obrigatório direcionado aos seus investimentos. Conta como gasto no consumo do mês, mas <strong>não sofre cobrança de juros</strong>.</p>
+                <span class="help-badge badge-bonus">BÃ´nus</span>
+                <strong>BÃ´nus de Incentivo ao Investimento ({{ store.investmentBonusRate }}%):</strong>
+                <p>Um valor obrigatÃ³rio direcionado aos seus investimentos. Conta como gasto no consumo do mÃªs, mas <strong>nÃ£o sofre cobranÃ§a de juros</strong>.</p>
               </div>
 
               <div class="help-item">
                 <span class="help-badge badge-juros">Juros</span>
                 <strong>Juros Correntes ({{ store.expenseTaxRate }}%):</strong>
-                <p>Uma taxa aplicada apenas sobre Compras e Passivos para incentivar a redução do consumo desnecessário. O Bônus de Incentivo é isento.</p>
+                <p>Uma taxa aplicada apenas sobre Compras e Passivos para incentivar a reduÃ§Ã£o do consumo desnecessÃ¡rio. O BÃ´nus de Incentivo Ã© isento.</p>
               </div>
 
               <div class="help-item">
@@ -119,7 +119,7 @@
             </div>
 
             <div class="help-summary-text">
-              🎯 <strong>Retorno Total ao Fundo:</strong> Consumo (gastos + bônus) + Juros sobre gastos + Excedente + Penalidade sobre excedente. Este é o valor a ser devolvido ao fundo para manter suas finanças em equilíbrio.
+              ðŸŽ¯ <strong>Retorno Total ao Fundo:</strong> Consumo (gastos + bÃ´nus) + Juros sobre gastos + Excedente + Penalidade sobre excedente. Este Ã© o valor a ser devolvido ao fundo para manter suas finanÃ§as em equilÃ­brio.
             </div>
           </div>
         </div>
@@ -128,35 +128,35 @@
       <table class="settlement-table">
         <thead>
           <tr>
-            <th>Descrição</th>
-            <th>Fórmula</th>
+            <th>DescriÃ§Ã£o</th>
+            <th>FÃ³rmula</th>
             <th class="text-right">Valor</th>
           </tr>
         </thead>
         <tbody>
           <!-- ENTRADAS -->
           <tr class="row-section-header">
-            <td colspan="3">📊 Entradas</td>
+            <td colspan="3">ðŸ“Š Entradas</td>
           </tr>
           <tr>
-            <td>Salário Base</td>
-            <td class="formula">Salário do usuário</td>
+            <td>SalÃ¡rio Base</td>
+            <td class="formula">SalÃ¡rio do usuÃ¡rio</td>
             <td class="text-right text-bold">R$ {{ formatCurrency(store.salary) }}</td>
           </tr>
           <tr>
             <td>Limite de Consumo</td>
-            <td class="formula">Salário × {{ store.consumptionRate }}%</td>
+            <td class="formula">SalÃ¡rio Ã— {{ store.consumptionRate }}%</td>
             <td class="text-right text-blue">R$ {{ formatCurrency(store.limitConsumption) }}</td>
           </tr>
           <tr>
             <td>Valor Investido</td>
-            <td class="formula">Salário × {{ store.investmentRate }}%</td>
+            <td class="formula">SalÃ¡rio Ã— {{ store.investmentRate }}%</td>
             <td class="text-right text-purple">R$ {{ formatCurrency(store.investedValue) }}</td>
           </tr>
 
           <!-- GASTOS -->
           <tr class="row-section-header">
-            <td colspan="3">💸 Gastos do Ciclo</td>
+            <td colspan="3">ðŸ’¸ Gastos do Ciclo</td>
           </tr>
           <tr>
             <td>Total de Compras</td>
@@ -174,18 +174,18 @@
             <td class="text-right text-bold">R$ {{ formatCurrency(store.gastosCorrentes) }}</td>
           </tr>
           <tr>
-            <td>Bônus de Incentivo</td>
-            <td class="formula">Valor Investido × {{ store.investmentBonusRate }}%</td>
+            <td>BÃ´nus de Incentivo</td>
+            <td class="formula">Valor Investido Ã— {{ store.investmentBonusRate }}%</td>
             <td class="text-right text-purple">R$ {{ formatCurrency(store.investmentBonus) }}</td>
           </tr>
           <tr>
             <td>Consumo Atual</td>
-            <td class="formula">Gastos + Bônus</td>
+            <td class="formula">Gastos + BÃ´nus</td>
             <td class="text-right text-bold">R$ {{ formatCurrency(store.consumoAtual) }}</td>
           </tr>
           <tr class="row-limit-usage" :class="{ 'limit-exceeded': percentLimitUsed > 100 }">
             <td>Uso do Limite Atual</td>
-            <td class="formula">Consumo ÷ Limite</td>
+            <td class="formula">Consumo Ã· Limite</td>
             <td class="text-right text-bold">
               {{ percentLimitUsed.toFixed(1) }}% de uso (Limite: R$ {{ formatCurrency(store.limitConsumption) }})
             </td>
@@ -193,32 +193,32 @@
 
           <!-- PENALIDADES E JUROS -->
           <tr class="row-section-header">
-            <td colspan="3">⚠️ Penalidades e Cobranças</td>
+            <td colspan="3">âš ï¸ Penalidades e CobranÃ§as</td>
           </tr>
           <tr :class="{ 'row-danger': store.exceededValue > 0 }">
             <td>Excedente do Limite</td>
-            <td class="formula">(Consumo + Juros) − Limite (se > 0)</td>
+            <td class="formula">(Consumo + Juros) âˆ’ Limite (se > 0)</td>
             <td class="text-right" :class="store.exceededValue > 0 ? 'text-danger text-bold' : 'text-success'">
               R$ {{ formatCurrency(store.exceededValue) }}
             </td>
           </tr>
           <tr :class="{ 'row-danger': store.penaltyValue > 0 }">
             <td>Penalidade ({{ store.penaltyRate }}%)</td>
-            <td class="formula">Excedente × {{ store.penaltyRate }}%</td>
+            <td class="formula">Excedente Ã— {{ store.penaltyRate }}%</td>
             <td class="text-right" :class="store.penaltyValue > 0 ? 'text-danger text-bold' : ''">
               R$ {{ formatCurrency(store.penaltyValue) }}
             </td>
           </tr>
           <tr>
             <td>Juros Correntes ({{ store.expenseTaxRate }}%)</td>
-            <td class="formula">Gastos Correntes × {{ store.expenseTaxRate }}%</td>
+            <td class="formula">Gastos Correntes Ã— {{ store.expenseTaxRate }}%</td>
             <td class="text-right text-orange">
               R$ {{ formatCurrency(store.currentInterest) }}
             </td>
           </tr>
           <!-- TOTAL FINAL -->
           <tr class="row-total">
-            <td>✅ Retorno Total ao Fundo</td>
+            <td>âœ… Retorno Total ao Fundo</td>
             <td class="formula">Consumo + Juros + Excedente + Penalidade</td>
             <td class="text-right text-success text-xxl">R$ {{ formatCurrency(store.totalReturn) }}</td>
           </tr>
@@ -235,8 +235,8 @@
       <!-- FUND CARD -->
       <div class="emergency-fund-card glass-panel">
         <div class="flex-between" style="margin-bottom: 1rem;">
-          <h3>Fundo de Emergência</h3>
-          <span class="fund-badge">Reserva de Segurança</span>
+          <h3>Fundo de EmergÃªncia</h3>
+          <span class="fund-badge">Reserva de SeguranÃ§a</span>
         </div>
 
         <div class="fund-balance-display">
@@ -247,7 +247,7 @@
         <!-- PROGRESS BAR TOWARDS IDEAL GOAL (6 MONTHS OF SALARY) -->
         <div class="fund-progress-area">
           <div class="flex-between fund-progress-labels">
-            <span>Meta Ideal (6 Salários):</span>
+            <span>Meta Ideal (6 SalÃ¡rios):</span>
             <span class="text-bold">R$ {{ formatCurrency(idealFundGoal) }}</span>
           </div>
           <div class="meta-progress-bar">
@@ -300,7 +300,7 @@
             </div>
             <div class="mini-val-group">
               <div class="tx-val-row">
-                <span class="tx-interest-arrow">↑{{ store.expenseTaxRate }}%</span>
+                <span class="tx-interest-arrow">â†‘{{ store.expenseTaxRate }}%</span>
                 <span class="tx-val-original">R$ {{ formatCurrency(t.amount) }}</span>
               </div>
               <span class="tx-val-counted">R$ {{ formatCurrency(t.amount * (1 + store.expenseTaxRate / 100)) }}</span>
@@ -314,8 +314,8 @@
     <div class="simulator-section glass-panel">
       <div class="simulator-header flex-between" style="margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
-          <h3>🔮 Simulador de Rentabilidade Selic & Liberdade Financeira</h3>
-          <p>Monitore suas projeções de rentabilidade e descubra quando alcançará a sua independência.</p>
+          <h3>ðŸ”® Simulador de Rentabilidade Selic & Liberdade Financeira</h3>
+          <p>Monitore suas projeÃ§Ãµes de rentabilidade e descubra quando alcanÃ§arÃ¡ a sua independÃªncia.</p>
         </div>
         <div class="selic-badge-container">
           <span class="selic-badge">
@@ -364,7 +364,7 @@
               class="input-field-inline"
             />
           </div>
-          <small class="help-text">Salário base de referência: R$ {{ formatCurrency(store.salary) }}</small>
+          <small class="help-text">SalÃ¡rio base de referÃªncia: R$ {{ formatCurrency(store.salary) }}</small>
         </div>
       </div>
 
@@ -372,7 +372,7 @@
       <div class="simulator-results-grid">
         <!-- Dividend Forecast Card -->
         <div class="sim-card sim-card-dividendos">
-          <span class="sim-card-label">📊 Dividendos Mensais (Fundo)</span>
+          <span class="sim-card-label">ðŸ“Š Dividendos Mensais (Fundo)</span>
           <h4 class="sim-card-value text-accent">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}</h4>
           <span class="sim-card-sub text-muted">
             {{ (monthlyRate * 100).toFixed(2) }}% sobre R$ {{ formatCurrency(store.emergencyFund) }}
@@ -384,7 +384,7 @@
           <span class="sim-card-label">Acumulado em 1 Ano</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(12)) }}</h4>
           <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(12) * monthlyRate) }} / mês
+            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(12) * monthlyRate) }} / mÃªs
           </span>
         </div>
 
@@ -393,7 +393,7 @@
           <span class="sim-card-label">Acumulado em 5 Anos</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(60)) }}</h4>
           <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(60) * monthlyRate) }} / mês
+            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(60) * monthlyRate) }} / mÃªs
           </span>
         </div>
 
@@ -402,7 +402,7 @@
           <span class="sim-card-label">Acumulado em 10 Anos</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(120)) }}</h4>
           <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(120) * monthlyRate) }} / mês
+            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(120) * monthlyRate) }} / mÃªs
           </span>
         </div>
 
@@ -411,53 +411,45 @@
           <span class="sim-card-label">Tempo para Liberdade Financeira</span>
           
           <div v-if="financialIndependenceYears.alreadyReached">
-            <h4 class="sim-card-value text-success">Conquistado! 🚀</h4>
-            <span class="sim-card-sub text-success">Seu fundo atual já gera R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}/mês.</span>
+            <h4 class="sim-card-value text-success">Conquistado! ðŸš€</h4>
+            <span class="sim-card-sub text-success">Seu fundo atual jÃ¡ gera R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}/mÃªs.</span>
           </div>
           <div v-else-if="financialIndependenceYears.unreachable">
-            <h4 class="sim-card-value text-muted">Aporte Necessário ⚠️</h4>
+            <h4 class="sim-card-value text-muted">Aporte NecessÃ¡rio âš ï¸</h4>
             <span class="sim-card-sub">Insira um valor de aporte maior que zero para simular.</span>
           </div>
           <div v-else>
             <h4 class="sim-card-value text-purple">
               {{ financialIndependenceYears.years }} {{ financialIndependenceYears.years === 1 ? 'ano' : 'anos' }}
               <span v-if="financialIndependenceYears.months > 0">
-                e {{ financialIndependenceYears.months }} {{ financialIndependenceYears.months === 1 ? 'mês' : 'meses' }}
+                e {{ financialIndependenceYears.months }} {{ financialIndependenceYears.months === 1 ? 'mÃªs' : 'meses' }}
               </span>
             </h4>
             <span class="sim-card-sub text-purple">
-              Patrimônio Alvo: <strong>R$ {{ formatCurrency(financialIndependenceYears.targetWealth) }}</strong>
+              PatrimÃ´nio Alvo: <strong>R$ {{ formatCurrency(financialIndependenceYears.targetWealth) }}</strong>
             </span>
           </div>
         </div>
       </div>
 
-      <!-- SPECULATIVE NUMBERS PANEL (antes dos gráficos) -->
+      <!-- SPECULATIVE NUMBERS PANEL (antes dos grÃ¡ficos) -->
       <div class="speculative-panel">
-        <h4 class="charts-title">🔬 Números Especulativos</h4>
+        <h4 class="charts-title">ðŸ”¬ NÃºmeros Especulativos</h4>
         <div class="speculative-grid">
           <div class="spec-card">
-            <span class="spec-label">Total Aportado até Independência</span>
+            <span class="spec-label">Total Aportado atÃ© IndependÃªncia</span>
             <span class="spec-value">R$ {{ formatCurrency(speculativeData.totalContributions) }}</span>
           </div>
           <div class="spec-card">
-            <span class="spec-label">Juros Acumulados até Independência</span>
+            <span class="spec-label">Juros Acumulados atÃ© IndependÃªncia</span>
             <span class="spec-value text-success">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</span>
           </div>
           <div class="spec-card">
-            <span class="spec-label">Renda Passiva em 10 Anos</span>
-            <span class="spec-value text-purple">R$ {{ formatCurrency(speculativeData.incomeAt10y) }} / mês</span>
-          </div>
-          <div class="spec-card">
             <span class="spec-label">Renda Passiva em 20 Anos</span>
-            <span class="spec-value text-purple">R$ {{ formatCurrency(speculativeData.incomeAt20y) }} / mês</span>
+            <span class="spec-value text-purple">R$ {{ formatCurrency(speculativeData.incomeAt20y) }} / mÃªs</span>
           </div>
           <div class="spec-card">
-            <span class="spec-label">Poder de Compra Ajustado (inflação 4% a.a.)</span>
-            <span class="spec-value text-muted">R$ {{ formatCurrency(speculativeData.inflationAdjusted) }} / mês</span>
-          </div>
-          <div class="spec-card">
-            <span class="spec-label">Patrimônio Real na Independência</span>
+            <span class="spec-label">PatrimÃ´nio Real na IndependÃªncia</span>
             <span class="spec-value">R$ {{ formatCurrency(speculativeData.targetWealth) }}</span>
           </div>
         </div>
@@ -465,60 +457,16 @@
 
       <!-- CHARTS SECTION -->
       <div class="charts-section">
-        <h4 class="charts-title">📈 Projeções Gráficas</h4>
+        <h4 class="charts-title">ðŸ“ˆ ProjeÃ§Ãµes GrÃ¡ficas</h4>
 
         <div class="charts-grid">
-          <!-- Monthly Overview Card -->
+                    <!-- Inflation-Adjusted Chart -->
           <div class="chart-card glass-panel">
             <div class="chart-card-header">
-              <span class="chart-card-label">Resumo do Mês</span>
-              <small class="chart-card-sub">Situação atual do seu orçamento</small>
+              <span class="chart-card-label">Poder de Compra vs. Juros Nominais (30 anos)</span>
+              <small class="chart-card-sub">Saldo Nominal x Poder de Compra Ajustado (Inflação {{ inflationRate }}% a.a.)</small>
             </div>
-            <div class="monthly-overview">
-              <div class="monthly-section">
-                <div class="monthly-section-title">Consumo</div>
-                <div class="monthly-bar-wrap">
-                  <div class="monthly-bar-bg">
-                    <div class="monthly-bar-fill" :style="{ width: percentLimitUsed + '%', background: percentLimitUsed > 90 ? '#e60014' : percentLimitUsed > 70 ? '#cc7a00' : '#06c167' }"></div>
-                  </div>
-                  <div class="monthly-bar-labels">
-                    <span>R$ {{ formatCurrency(store.consumoAtual + store.currentInterest) }}</span>
-                    <span>de R$ {{ formatCurrency(store.limitConsumption) }}</span>
-                  </div>
-                </div>
-                <div class="monthly-stats">
-                  <div class="monthly-stat">
-                    <span class="monthly-stat-label">Gastos Correntes</span>
-                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.gastosCorrentes) }}</span>
-                  </div>
-                  <div class="monthly-stat">
-                    <span class="monthly-stat-label">Juros</span>
-                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.currentInterest) }}</span>
-                  </div>
-                  <div class="monthly-stat">
-                    <span class="monthly-stat-label">Bônus Invest.</span>
-                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.investmentBonus) }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="monthly-divider"></div>
-              <div class="monthly-section">
-                <div class="monthly-section-title">Investimento</div>
-                <div class="monthly-stats">
-                  <div class="monthly-stat">
-                    <span class="monthly-stat-label">Planejado ({{ store.investmentRate }}%)</span>
-                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.investedValue) }}</span>
-                  </div>
-                  <div class="monthly-stat">
-                    <span class="monthly-stat-label">Disponível</span>
-                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.availableToInvest) }}</span>
-                  </div>
-                </div>
-                <div v-if="store.exceededValue > 0" class="monthly-penalty-note">
-                  ⚠️ R$ {{ formatCurrency(store.exceededValue + store.penaltyValue) }} em penitências
-                </div>
-              </div>
-            </div>
+            <canvas id="chart-inflation" height="200"></canvas>
           </div>
 
           <!-- Monthly Income Bar Chart -->
@@ -545,8 +493,8 @@
 
     <!-- EXPENSE CATEGORY ANALYSIS -->
     <div class="simulator-section glass-panel">
-      <h4 class="charts-title">📊 Análise de Gastos Mensais</h4>
-      <p style="margin-bottom: 1.5rem;">Comparação entre gastos ativos (compras) e passivos vs. distribuição por categoria no ciclo atual.</p>
+      <h4 class="charts-title">ðŸ“Š AnÃ¡lise de Gastos Mensais</h4>
+      <p style="margin-bottom: 1.5rem;">ComparaÃ§Ã£o entre gastos ativos (compras) e passivos vs. distribuiÃ§Ã£o por categoria no ciclo atual.</p>
       <div class="charts-grid">
         <div class="chart-card glass-panel">
           <canvas id="chart-expense-category" height="260"></canvas>
@@ -582,10 +530,11 @@ const store = useWalletStore()
 const fundTxAmount = ref(null)
 const showHelpModal = ref(false)
 
-// Projeção e Simulação da Selic / Liberdade Financeira
+// ProjeÃ§Ã£o e SimulaÃ§Ã£o da Selic / Liberdade Financeira
 const targetPassiveIncome = ref(0)
 
-const selicRate = ref(10.75) // Fallback inicial padrão
+const selicRate = ref(10.75)
+const inflationRate = ref(4)
 const isFetchingSelic = ref(false)
 
 const monthlyRate = computed(() => {
@@ -610,11 +559,25 @@ const fetchSelicRate = async () => {
   }
 }
 
+const fetchInflationRate = async () => {
+  try {
+    const res = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/1?formato=json')
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0 && data[0].valor) {
+        inflationRate.value = Number(data[0].valor.replace(',', '.'))
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao carregar inflaÃ§Ã£o do Banco Central:', err)
+  }
+}
+
 onMounted(async () => {
   await store.loadFromLocalStorage()
   if (!store.monthlyContribution) store.monthlyContribution = store.investedValue
   targetPassiveIncome.value = store.salary
-  await fetchSelicRate()
+  await Promise.all([fetchSelicRate(), fetchInflationRate()])
   renderCharts()
 })
 
@@ -654,7 +617,7 @@ function onSalaryBlur() {
   store.saveToLocalStorage()
 }
 
-// Meta ideal do fundo de emergência: 6 meses de salário
+// Meta ideal do fundo de emergÃªncia: 6 meses de salÃ¡rio
 const idealFundGoal = computed(() => {
   return store.salary * 6
 })
@@ -764,32 +727,24 @@ const speculativeData = computed(() => {
   const balanceAtN = calculateAccumulation(N)
   const totalInterestEarned = Math.max(0, balanceAtN - totalContributions)
 
-  const incomeAt10y = calculateAccumulation(120) * r
   const incomeAt20y = calculateAccumulation(240) * r
-
-  // Poder de compra ajustado pela inflação de 4% a.a. sobre a renda passiva na independência
-  const inflationYears = fi.years || 0
-  const inflationFactor = Math.pow(1 + 0.04, inflationYears)
-  const targetIncome = Number(targetPassiveIncome.value) || 0
-  const inflationAdjusted = inflationFactor > 0 ? targetIncome / inflationFactor : targetIncome
 
   return {
     totalContributions: Number(totalContributions.toFixed(2)),
     totalInterestEarned: Number(totalInterestEarned.toFixed(2)),
-    incomeAt10y: Number(incomeAt10y.toFixed(2)),
     incomeAt20y: Number(incomeAt20y.toFixed(2)),
-    inflationAdjusted: Number(inflationAdjusted.toFixed(2)),
     targetWealth: Number(targetWealth.toFixed(2))
   }
 })
 
 // -------------------------------------------------------
-// Chart.js — 3 charts
+// Chart.js â€” 4 charts
 // -------------------------------------------------------
 let chartIncome = null
 let chartStacked = null
 let chartExpenseCategory = null
 let chartExpenseBreakdown = null
+let chartInflation = null
 
 const buildChartData = () => {
   const r  = monthlyRate.value
@@ -856,7 +811,7 @@ const renderCharts = async () => {
       responsive: true,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês` } }
+        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mÃªs` } }
       },
       scales: {
         y: { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
@@ -1000,8 +955,76 @@ const renderCharts = async () => {
       }
     })
   }
+
+  // ---- Chart 6: Inflation-Adjusted ----
+  const cvInflation = document.getElementById('chart-inflation')
+  if (cvInflation) {
+    if (chartInflation) chartInflation.destroy()
+    const inflRate = Number(inflationRate.value) || 4
+    const monthlyInfl = Math.pow(1 + inflRate / 100, 1 / 12) - 1
+    const realBalances = balances.map((bal, i) => {
+      const years = i
+      const factor = Math.pow(1 + inflRate / 100, years)
+      return Number((bal / factor).toFixed(2))
+    })
+    chartInflation = new Chart(cvInflation, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Saldo Nominal (R$)',
+            data: balances,
+            borderColor: '#1e3a5f',
+            backgroundColor: 'rgba(30,58,95,0.08)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.35,
+            pointRadius: 2
+          },
+          {
+            label: 'Poder de Compra Real (R$)',
+            data: realBalances,
+            borderColor: '#2d6a4f',
+            backgroundColor: 'rgba(45,106,79,0.08)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.35,
+            pointRadius: 2,
+            borderDash: [5, 3]
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { family: 'Georgia, serif', size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const label = ctx.dataset.label || ''
+                const val = Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                return ` ${label}: R$ ${val}`
+              },
+              afterBody: items => {
+                if (items.length === 2) {
+                  const diff = items[0].raw - items[1].raw
+                  return `\nPerda para inflaÃ§Ã£o: R$ ${diff.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                }
+                return ''
+              }
+            }
+          }
+        },
+        scales: {
+          y: { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
+          x: { grid: { display: false } }
+        }
+      }
+    })
+  }
 }
-watch([selicRate, () => store.monthlyContribution, targetPassiveIncome, () => store.emergencyFund, () => store.transactions], () => {
+watch([selicRate, inflationRate, () => store.monthlyContribution, targetPassiveIncome, () => store.emergencyFund, () => store.transactions], () => {
   renderCharts()
 }, { debounce: 300 })
 
@@ -2040,91 +2063,6 @@ input:checked + .toggle-slider-sm:before {
   max-width: 100%;
 }
 
-.monthly-overview {
-  display: flex;
-  gap: 1rem;
-}
-.monthly-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-}
-.monthly-section-title {
-  font-size: 0.7rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--text-secondary);
-}
-.monthly-bar-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.monthly-bar-bg {
-  height: 14px;
-  background: #ede7d7;
-  border-radius: 3px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-}
-.monthly-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
-.monthly-bar-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  font-weight: bold;
-}
-.monthly-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.monthly-stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.78rem;
-}
-.monthly-stat-label {
-  color: var(--text-secondary);
-}
-.monthly-stat-value {
-  font-weight: bold;
-  font-family: "Courier New", monospace;
-}
-.monthly-divider {
-  width: 1px;
-  background: var(--border-color);
-  flex-shrink: 0;
-}
-.monthly-penalty-note {
-  font-size: 0.72rem;
-  color: var(--danger-color);
-  font-weight: bold;
-  background: rgba(230,0,20,0.06);
-  padding: 0.3rem 0.5rem;
-  border-radius: 3px;
-  border: 1px solid rgba(230,0,20,0.12);
-}
-
-@media (max-width: 600px) {
-  .monthly-overview {
-    flex-direction: column;
-  }
-  .monthly-divider {
-    width: 100%;
-    height: 1px;
-  }
-}
-
 .chart-wide {
   margin-bottom: 1.25rem;
 }
@@ -2217,3 +2155,4 @@ input:checked + .toggle-slider-sm:before {
   .help-modal-box { padding: 1.25rem; margin: 0.5rem; }
 }
 </style>
+
