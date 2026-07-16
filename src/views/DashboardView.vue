@@ -468,45 +468,54 @@
         <h4 class="charts-title">📈 Projeções Gráficas</h4>
 
         <div class="charts-grid">
-          <!-- Progress Dashboard Card -->
+          <!-- Monthly Overview Card -->
           <div class="chart-card glass-panel">
             <div class="chart-card-header">
-              <span class="chart-card-label">Progresso para Liberdade Financeira</span>
-              <small class="chart-card-sub">Situação atual da sua jornada</small>
+              <span class="chart-card-label">Resumo do Mês</span>
+              <small class="chart-card-sub">Situação atual do seu orçamento</small>
             </div>
-            <div class="progress-dash-body">
-              <div class="progress-ring-wrap">
-                <svg viewBox="0 0 120 120" class="progress-ring">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="#ede7d7" stroke-width="10" />
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent-color)" stroke-width="10"
-                    stroke-linecap="round"
-                    :stroke-dasharray="`${progressPct * 3.14} 314`"
-                    transform="rotate(-90 60 60)"
-                    class="progress-ring-fill"
-                  />
-                  <text x="60" y="52" text-anchor="middle" class="progress-ring-pct">{{ progressPct.toFixed(0) }}%</text>
-                  <text x="60" y="72" text-anchor="middle" class="progress-ring-label">da meta</text>
-                </svg>
-                <div v-if="financialIndependenceYears.alreadyReached" class="progress-badge reached">✅ Atingida</div>
-                <div v-else-if="financialIndependenceYears.unreachable" class="progress-badge unreachable">⚠️ Inatingível</div>
-                <div v-else class="progress-badge eta">{{ financialIndependenceYears.years }}a {{ financialIndependenceYears.months }}m</div>
+            <div class="monthly-overview">
+              <div class="monthly-section">
+                <div class="monthly-section-title">Consumo</div>
+                <div class="monthly-bar-wrap">
+                  <div class="monthly-bar-bg">
+                    <div class="monthly-bar-fill" :style="{ width: percentLimitUsed + '%', background: percentLimitUsed > 90 ? '#e60014' : percentLimitUsed > 70 ? '#cc7a00' : '#06c167' }"></div>
+                  </div>
+                  <div class="monthly-bar-labels">
+                    <span>R$ {{ formatCurrency(store.consumoAtual + store.currentInterest) }}</span>
+                    <span>de R$ {{ formatCurrency(store.limitConsumption) }}</span>
+                  </div>
+                </div>
+                <div class="monthly-stats">
+                  <div class="monthly-stat">
+                    <span class="monthly-stat-label">Gastos Correntes</span>
+                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.gastosCorrentes) }}</span>
+                  </div>
+                  <div class="monthly-stat">
+                    <span class="monthly-stat-label">Juros</span>
+                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.currentInterest) }}</span>
+                  </div>
+                  <div class="monthly-stat">
+                    <span class="monthly-stat-label">Bônus Invest.</span>
+                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.investmentBonus) }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="progress-metrics">
-                <div class="progress-metric">
-                  <span class="progress-metric-label">Fundo de Emergência</span>
-                  <span class="progress-metric-value">R$ {{ formatCurrency(store.emergencyFund) }}</span>
+              <div class="monthly-divider"></div>
+              <div class="monthly-section">
+                <div class="monthly-section-title">Investimento</div>
+                <div class="monthly-stats">
+                  <div class="monthly-stat">
+                    <span class="monthly-stat-label">Planejado ({{ store.investmentRate }}%)</span>
+                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.investedValue) }}</span>
+                  </div>
+                  <div class="monthly-stat">
+                    <span class="monthly-stat-label">Disponível</span>
+                    <span class="monthly-stat-value">R$ {{ formatCurrency(store.availableToInvest) }}</span>
+                  </div>
                 </div>
-                <div class="progress-metric">
-                  <span class="progress-metric-label">Aporte Mensal</span>
-                  <span class="progress-metric-value">R$ {{ formatCurrency(store.monthlyContribution) }}</span>
-                </div>
-                <div class="progress-metric">
-                  <span class="progress-metric-label">Patrimônio Alvo</span>
-                  <span class="progress-metric-value">R$ {{ formatCurrency(financialIndependenceYears.targetWealth) }}</span>
-                </div>
-                <div class="progress-metric">
-                  <span class="progress-metric-label">Renda Passiva Hoje</span>
-                  <span class="progress-metric-value">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}/mês</span>
+                <div v-if="store.exceededValue > 0" class="monthly-penalty-note">
+                  ⚠️ R$ {{ formatCurrency(store.exceededValue + store.penaltyValue) }} em penitências
                 </div>
               </div>
             </div>
@@ -737,12 +746,6 @@ const financialIndependenceYears = computed(() => {
   const years = Math.floor(months / 12)
   const remainingMonths = months % 12
   return { years, months: remainingMonths, totalMonths: months, targetWealth, unreachable: false }
-})
-
-const progressPct = computed(() => {
-  const target = financialIndependenceYears.value?.targetWealth || 1
-  const current = Number(store.emergencyFund) || 0
-  return Math.min(100, (current / target) * 100)
 })
 
 // -------------------------------------------------------
@@ -2037,94 +2040,88 @@ input:checked + .toggle-slider-sm:before {
   max-width: 100%;
 }
 
-.progress-dash-body {
+.monthly-overview {
   display: flex;
-  gap: 1.25rem;
-  align-items: center;
+  gap: 1rem;
 }
-.progress-ring-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
-.progress-ring {
-  width: 120px;
-  height: 120px;
-  display: block;
-}
-.progress-ring-fill {
-  transition: stroke-dasharray 0.5s ease;
-}
-.progress-ring-pct {
-  font-size: 1.2rem;
-  font-weight: bold;
-  fill: var(--text-primary);
-  font-family: "Courier New", monospace;
-}
-.progress-ring-label {
-  font-size: 0.6rem;
-  fill: var(--text-secondary);
-}
-.progress-badge {
-  font-size: 0.72rem;
-  font-weight: bold;
-  padding: 0.15rem 0.6rem;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-.progress-badge.reached {
-  background: rgba(6,193,103,0.1);
-  color: #06c167;
-}
-.progress-badge.unreachable {
-  background: rgba(230,0,20,0.1);
-  color: #e60014;
-}
-.progress-badge.eta {
-  background: rgba(0,84,160,0.1);
-  color: #0054a0;
-}
-.progress-metrics {
+.monthly-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
 }
-.progress-metric {
+.monthly-section-title {
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+.monthly-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.monthly-bar-bg {
+  height: 14px;
+  background: #ede7d7;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+.monthly-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.monthly-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.monthly-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.monthly-stat {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  border-bottom: 1px solid var(--border-color);
+  font-size: 0.78rem;
 }
-.progress-metric:last-child { border-bottom: none; }
-.progress-metric-label {
-  font-size: 0.72rem;
+.monthly-stat-label {
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  font-weight: bold;
 }
-.progress-metric-value {
-  font-size: 0.82rem;
+.monthly-stat-value {
   font-weight: bold;
   font-family: "Courier New", monospace;
-  text-align: right;
+}
+.monthly-divider {
+  width: 1px;
+  background: var(--border-color);
   flex-shrink: 0;
+}
+.monthly-penalty-note {
+  font-size: 0.72rem;
+  color: var(--danger-color);
+  font-weight: bold;
+  background: rgba(230,0,20,0.06);
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  border: 1px solid rgba(230,0,20,0.12);
 }
 
 @media (max-width: 600px) {
-  .progress-dash-body {
+  .monthly-overview {
     flex-direction: column;
-    align-items: stretch;
   }
-  .progress-ring-wrap {
-    align-self: center;
+  .monthly-divider {
+    width: 100%;
+    height: 1px;
   }
 }
 
