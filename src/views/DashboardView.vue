@@ -299,11 +299,16 @@
               <span class="mini-desc">{{ t.description }}</span>
             </div>
             <div class="mini-val-group">
-              <div class="tx-val-row">
-                <span class="tx-interest-arrow">↑{{ store.expenseTaxRate }}%</span>
-                <span class="tx-val-original">R$ {{ formatCurrency(t.amount) }}</span>
-              </div>
-              <span class="tx-val-counted">R$ {{ formatCurrency(t.amount * (1 + store.expenseTaxRate / 100)) }}</span>
+              <template v-if="t.type === 'fund_deposit' || t.type === 'fund_withdraw' || t.type === 'fund_interest'">
+                <span class="tx-val-counted">R$ {{ formatCurrency(t.amount) }}</span>
+              </template>
+              <template v-else>
+                <div class="tx-val-row">
+                  <span class="tx-interest-arrow">↑{{ store.expenseTaxRate }}%</span>
+                  <span class="tx-val-original">R$ {{ formatCurrency(t.amount) }}</span>
+                </div>
+                <span class="tx-val-counted">R$ {{ formatCurrency(t.amount * (1 + store.expenseTaxRate / 100)) }}</span>
+              </template>
             </div>
           </div>
         </div>
