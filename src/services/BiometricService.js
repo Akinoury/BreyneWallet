@@ -39,6 +39,85 @@ function clearTokens() {
   localStorage.removeItem(STORAGE_KEYS.TOKENS)
 }
 
+function getRpId() {
+  return window.location.hostname || 'localhost'
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent
+  if (/Windows/.test(ua)) return 'Windows Hello'
+  if (/Mac OS/.test(ua)) return 'Touch ID'
+  if (/Linux/.test(ua) && /CrOS/.test(ua)) return 'ChromeOS'
+  if (/Linux/.test(ua)) return 'Linux (PIN)'
+  if (/Android/.test(ua)) return 'Android Biométrico'
+  if (/iPhone|iPad|iPod/.test(ua)) return 'Face ID / Touch ID'
+  return 'Autenticador do Navegador'
+}
+
+function base64url(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function base64urlToBytes(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/')
+  while (str.length % 4) str += '='
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0)).buffer
+}
+
+async function isWebAuthnAvailable() {
+  if (typeof window === 'undefined' || !window.PublicKeyCredential) return false
+  try {
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+  } catch {
+    return false
+  }
+}
+
+async function webAuthnCreate(userId, userEmail, userName) {
+  const challenge = crypto.getRandomValues(new Uint8Array(32))
+  const credential = await navigator.credentials.create({
+    publicKey: {
+      challenge,
+      rp: { name: 'BreyneWallet', id: getRpId() },
+      user: {
+        id: new TextEncoder().encode(userId),
+        name: userEmail,
+        displayName: userName
+      },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 },
+        { type: 'public-key', alg: -257 }
+      ],
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',
+        userVerification: 'required',
+        residentKey: 'discouraged'
+      },
+      timeout: 60000,
+      attestation: 'none'
+    }
+  })
+  return credential
+}
+
+async function webAuthnGet(credentialId) {
+  const challenge = crypto.getRandomValues(new Uint8Array(32))
+  const assertion = await navigator.credentials.get({
+    publicKey: {
+      challenge,
+      allowCredentials: [{
+        type: 'public-key',
+        id: typeof credentialId === 'string' ? base64urlToBytes(credentialId) : credentialId,
+        transports: ['internal']
+      }],
+      userVerification: 'required',
+      timeout: 60000
+    }
+  })
+  return assertion
+}
+
 class BiometricService {
   #getCache() {
     try {
@@ -77,30 +156,41 @@ class BiometricService {
   async isSupported() {
     const p = getPlugin()
     if (p) { try { const r = await p.isAvailable(); return !!r.isAvailable } catch { return false } }
-    return !!loadTokens()
+    return isWebAuthnAvailable()
   }
 
   async isAvailable() { return this.isSupported() }
 
   async hasCredential(userId) {
-    if (this.#getCache().some(c => c.user_id === userId)) {
-      if (!getPlugin() && !loadTokens()) {
-        this.#setCache(this.#getCache().filter(c => c.user_id !== userId))
-        return false
-      }
-      return true
+    const cache = this.#getCache()
+    const match = cache.find(c => c.user_id === userId && !c.revoked)
+    if (!match) return false
+
+    if (match.credential_type === 'webauthn') {
+      const tokens = loadTokens()
+      return !!tokens && tokens.user_id === userId
     }
-    const p = getPlugin()
-    if (p) { try { const creds = await p.getCredentials({ server: SERVER_ID }); return !!creds?.password } catch { return false } }
-    return !!loadTokens()
+
+    if (match.credential_type === 'native') {
+      const p = getPlugin()
+      if (p) { try { const creds = await p.getCredentials({ server: SERVER_ID }); return !!creds?.password } catch { return false } }
+      return false
+    }
+
+    return false
   }
 
   async listCredentials(userId) {
-    const cache = this.#getCache().filter(c => c.user_id === userId && !c.revoked)
-    if (!getPlugin() && cache.length > 0 && !loadTokens()) {
-      this.#setCache(this.#getCache().filter(c => c.user_id !== userId))
-      return []
+    let cache = this.#getCache().filter(c => c.user_id === userId && !c.revoked)
+
+    if (!getPlugin()) {
+      const tokens = loadTokens()
+      if (cache.length > 0 && !tokens) {
+        this.#setCache(this.#getCache().filter(c => c.user_id !== userId))
+        return []
+      }
     }
+
     return cache
   }
 
@@ -115,14 +205,16 @@ class BiometricService {
         return { success: false, message: 'Faça login antes de cadastrar a biometria.' }
       }
 
-      const tokenData = JSON.stringify({
+      const tokenData = {
         token: jwt,
         user_id: userId,
         email: userEmail,
         name: userName
-      })
+      }
 
       const p = getPlugin()
+      let cacheEntry = null
+
       if (p) {
         await p.verifyIdentity({
           reason: 'Confirme sua identidade para cadastrar a biometria',
@@ -133,33 +225,53 @@ class BiometricService {
 
         await p.setCredentials({
           username: userEmail,
-          password: tokenData,
+          password: JSON.stringify(tokenData),
           server: SERVER_ID
         })
+
+        cacheEntry = {
+          id: uid(),
+          user_id: userId,
+          credential_id: 'bio-' + uid(),
+          device_name: 'Dispositivo Móvel',
+          credential_type: 'native',
+          created_at: new Date().toISOString(),
+          last_used_at: new Date().toISOString(),
+          synced: true
+        }
+      } else if (await isWebAuthnAvailable()) {
+        const credential = await webAuthnCreate(userId, userEmail, userName)
+
+        saveTokens(tokenData)
+
+        cacheEntry = {
+          id: 'wa-' + uid(),
+          user_id: userId,
+          credential_id: credential.id,
+          device_name: getDeviceName(),
+          credential_type: 'webauthn',
+          webauthn_id: credential.id,
+          created_at: new Date().toISOString(),
+          last_used_at: new Date().toISOString(),
+          synced: true
+        }
       } else {
-        saveTokens({ token: jwt, user_id: userId, email: userEmail, name: userName })
+        return { success: false, message: 'Autenticação biométrica não disponível neste dispositivo.' }
       }
+
+      if (cacheEntry) {
+        const cache = this.#getCache()
+        cache.push(cacheEntry)
+        this.#setCache(cache)
+      }
+
+      return { success: true, message: 'Biometria cadastrada com sucesso!' }
     } catch (err) {
       return { success: false, message: err?.message || 'Falha ao cadastrar biometria.' }
     }
-
-    const entryId = uid()
-    const cacheEntry = {
-      id: entryId,
-      user_id: userId,
-      credential_id: 'bio-' + entryId,
-      device_name: getPlugin() ? 'Android' : 'Navegador',
-      created_at: new Date().toISOString(),
-      last_used_at: new Date().toISOString(),
-      synced: true
-    }
-    const cache = this.#getCache()
-    cache.push(cacheEntry)
-    this.#setCache(cache)
-    return { success: true, message: 'Biometria cadastrada com sucesso!' }
   }
 
-  async authenticate() {
+  async authenticate(userIds) {
     try {
       const p = getPlugin()
       let tokenData = null
@@ -178,10 +290,24 @@ class BiometricService {
         }
         try { tokenData = JSON.parse(credentials.password) } catch { tokenData = null }
       } else {
+        const cache = this.#getCache()
+        const ids = Array.isArray(userIds) && userIds.length > 0 ? userIds : cache.map(c => c.user_id)
+        const webauthnCred = cache.find(c =>
+          c.credential_type === 'webauthn' && !c.revoked && ids.includes(c.user_id)
+        )
+        if (!webauthnCred) {
+          return { success: false, message: 'Nenhuma credencial biométrica encontrada. Cadastre a biometria primeiro.' }
+        }
+
+        await webAuthnGet(webauthnCred.webauthn_id)
+
         tokenData = loadTokens()
         if (!tokenData) {
-          return { success: false, message: 'Nenhuma credencial encontrada. Cadastre a biometria primeiro.' }
+          return { success: false, message: 'Sessão expirada. Faça login novamente.' }
         }
+
+        webauthnCred.last_used_at = new Date().toISOString()
+        this.#setCache(cache)
       }
 
       if (!tokenData?.token) {

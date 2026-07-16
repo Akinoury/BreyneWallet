@@ -68,7 +68,7 @@
           <div class="flex-between">
             <div>
               <span class="bio-reg-title">Ativar Login Biométrico</span>
-              <p class="bio-reg-desc">Permite acessar rapidamente via impressão digital</p>
+              <p class="bio-reg-desc">Acesse rapidamente com Windows Hello, Touch ID ou impressão digital</p>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" v-model="enableBiometrics" @change="handleBioToggle" />
@@ -76,26 +76,15 @@
             </label>
           </div>
 
-          <!-- SCANNER SIMULATOR FOR REGISTRATION -->
-          <div v-if="showBioScanner" class="scanner-setup-area animate-fade-in">
-            <div class="biometric-container">
-              <span class="bio-label">{{ bioStatusLabel }}</span>
-              <div 
-                class="fingerprint-scanner" 
-                :class="{ 
-                  'scanning': isScanning, 
-                  'success': scanSuccess, 
-                  'error-scanner': scanError 
-                }"
-                @click="startBioRegistration"
-              >
-                <!-- SVG Impressão Digital -->
-                <svg class="fingerprint-icon" viewBox="0 0 24 24">
-                  <path d="M12,2A10,10,0,0,0,2,12a9.89,9.89,0,0,0,2.19,6.17,1,1,0,1,0,1.62-1.18,7.92,7.92,0,0,1-1.81-4.99,8,8,0,0,1,16,0,7.91,7.91,0,0,1-1.63,4.89,1,1,0,0,0,1.57,1.24A9.89,9.89,0,0,0,22,12,10,10,0,0,0,12,2Zm0,4a6,6,0,0,0-6,6,5.88,5.88,0,0,0,1,3.25,1,1,0,0,0,1.67-1.1,3.87,3.87,0,0,1-.67-2.15,4,4,0,0,1,8,0,3.82,3.82,0,0,1-.83,2.37,1,1,0,0,0,.16,1.4,1,1,0,0,0,1.4-.16A5.82,5.82,0,0,0,18,12,6,6,0,0,0,12,6Zm0,4a2,2,0,0,0-2,2,1.91,1.91,0,0,0,.29,1,1,0,0,0,1.71-1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,.29,1,2,2,0,0,0,0-4Z"/>
-                </svg>
-                <div class="scanning-line"></div>
-              </div>
-              <small class="bio-help">Toque para cadastrar sua digital de teste</small>
+          <div v-if="enableBiometrics" class="bio-info animate-fade-in">
+            <div class="bio-info-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 0 0-10 10c0 2.4.85 4.6 2.26 6.33a1 1 0 0 0 1.57-1.24A7.94 7.94 0 0 1 4 12a8 8 0 0 1 16 0c0 1.8-.6 3.47-1.62 4.8a1 1 0 0 0 1.56 1.26A9.95 9.95 0 0 0 22 12 10 10 0 0 0 12 2zm0 4a4 4 0 0 0-4 4c0 1.12.46 2.13 1.2 2.85a1 1 0 0 0 1.4-1.4A1.95 1.95 0 0 1 10 10a2 2 0 0 1 4 0c0 .56-.23 1.06-.6 1.42a1 1 0 0 0 1.4 1.4A3.95 3.95 0 0 0 16 10a4 4 0 0 0-4-4z"/>
+              </svg>
+            </div>
+            <div class="bio-info-text">
+              <strong>Biometria será cadastrada após criar a conta.</strong>
+              <p>Você precisará autenticar com seu dispositivo (digital, rosto ou PIN) para vincular sua conta.</p>
             </div>
           </div>
         </div>
@@ -127,46 +116,20 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const enableBiometrics = ref(false)
-const showBioScanner = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 const isLoading = ref(false)
+const bioSupported = ref(false)
 
-// Biometric states
-const isScanning = ref(false)
-const scanSuccess = ref(false)
-const scanError = ref(false)
-const bioStatusLabel = ref('Registrar Impressão Digital')
-const biometricsCompleted = ref(false)
-
-const handleBioToggle = () => {
+const handleBioToggle = async () => {
   if (enableBiometrics.value) {
-    showBioScanner.value = true
-    biometricsCompleted.value = false
-    bioStatusLabel.value = 'Toque no sensor para escanear'
-  } else {
-    showBioScanner.value = false
-    biometricsCompleted.value = false
+    bioSupported.value = await biometricService.isSupported()
+    if (!bioSupported.value) {
+      enableBiometrics.value = false
+      errorMsg.value = 'Biometria não disponível neste dispositivo.'
+      setTimeout(() => { errorMsg.value = '' }, 4000)
+    }
   }
-}
-
-const startBioRegistration = () => {
-  if (isScanning.value || biometricsCompleted.value) return
-
-  isScanning.value = true
-  scanSuccess.value = false
-  scanError.value = false
-  bioStatusLabel.value = 'Analisando padrões da digital...'
-
-  setTimeout(() => {
-    isScanning.value = false
-    scanSuccess.value = true
-    biometricsCompleted.value = true
-    bioStatusLabel.value = 'Digital Cadastrada!'
-    
-    // Som premium de confirmação
-    playBeep(1200, 'sine', 0.2)
-  }, 2000)
 }
 
 const handleRegister = async () => {
@@ -180,11 +143,6 @@ const handleRegister = async () => {
 
   if (password.value.length < 6) {
     errorMsg.value = 'A senha deve ter pelo menos 6 caracteres.'
-    return
-  }
-
-  if (enableBiometrics.value && !biometricsCompleted.value) {
-    errorMsg.value = 'Por favor, finalize o escaneamento da impressão digital ou desmarque a biometria.'
     return
   }
 
@@ -202,6 +160,7 @@ const handleRegister = async () => {
     if (result.success) {
       if (result.autoSignedIn && enableBiometrics.value) {
         successMsg.value = 'Conta criada! Configurando biometria...'
+        await new Promise(r => setTimeout(r, 500))
         const bioResult = await store.enrollBiometric()
         if (bioResult.success) {
           successMsg.value = 'Conta criada e biometria cadastrada!'
@@ -228,25 +187,6 @@ const handleRegister = async () => {
     isLoading.value = false
     errorMsg.value = err.message || 'Erro ao registrar usuário.'
   }
-}
-
-const playBeep = (freq, type, duration) => {
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-    const oscillator = audioCtx.createOscillator()
-    const gainNode = audioCtx.createGain()
-    
-    oscillator.type = type
-    oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime)
-    gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime)
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration)
-    
-    oscillator.connect(gainNode)
-    gainNode.connect(audioCtx.destination)
-    
-    oscillator.start()
-    oscillator.stop(audioCtx.currentTime + duration)
-  } catch (e) {}
 }
 </script>
 
@@ -386,20 +326,37 @@ input:checked + .toggle-slider:before {
   background-color: #ffffff;
 }
 
-.scanner-setup-area {
+.bio-info {
   margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f3f7fa;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
 }
 
-.bio-label {
-  font-size: 0.85rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.bio-info-icon {
+  flex-shrink: 0;
+  color: var(--accent-color);
+  margin-top: 1px;
 }
 
-.bio-help {
-  font-size: 0.75rem;
+.bio-info-text {
+  font-size: 0.82rem;
   color: var(--text-secondary);
-  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+.bio-info-text strong {
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.bio-info-text p {
+  margin: 0;
 }
 
 .auth-form {
