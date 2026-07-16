@@ -268,13 +268,13 @@ function getExchangeLabel(key) {
 function toggleExchange(key) {
   const idx = selectedExchanges.value.indexOf(key)
   if (idx >= 0) selectedExchanges.value.splice(idx, 1)
-  else selectedExchanges.value.push(key)
+  else if (selectedExchanges.value.length < 3) selectedExchanges.value.push(key)
 }
 
 function toggleType(key) {
   const idx = selectedTypes.value.indexOf(key)
   if (idx >= 0) selectedTypes.value.splice(idx, 1)
-  else selectedTypes.value.push(key)
+  else if (selectedTypes.value.length < 3) selectedTypes.value.push(key)
 }
 
 function formatPrice(v) {
