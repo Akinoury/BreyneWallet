@@ -258,38 +258,36 @@
     </div>
   </div>
 
-  <!-- EDIT MODAL (outside wrapper for full-screen coverage) -->
-  <teleport to="body">
-    <div v-if="editingAsset" class="edit-modal-overlay" @click.self="cancelEdit">
-      <div class="edit-modal glass-panel">
-        <button class="edit-modal-close" @click="cancelEdit">✕</button>
-        <h3 class="edit-modal-title">Editar Aporte</h3>
-        <div class="edit-modal-body">
-          <div class="edit-modal-field">
-            <label class="edit-modal-label">Ticket</label>
-            <span class="edit-modal-ticket">{{ editingAsset.name }}</span>
-          </div>
-          <div class="edit-modal-field">
-            <label class="edit-modal-label">Valor</label>
-            <div class="edit-modal-amount-wrap">
-              <span class="edit-modal-currency-tag">{{ editingAsset.type === 'international' ? 'US$' : 'R$' }}</span>
-              <input type="number" v-model.number="editAmount" step="0.01" class="edit-modal-input" />
-            </div>
-          </div>
-          <div class="edit-modal-field">
-            <label class="edit-modal-label">Classe</label>
-            <select v-model="editCategory" class="edit-modal-select">
-              <option v-for="opt in editCategoryOptions" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
+  <!-- EDIT MODAL -->
+  <div v-if="editingAsset" class="edit-modal-overlay" @click.self="cancelEdit">
+    <div class="edit-modal glass-panel animate-fade-in">
+      <button class="edit-modal-close" @click="cancelEdit">✕</button>
+      <h3 class="edit-modal-title">Editar Aporte</h3>
+      <div class="edit-modal-body">
+        <div class="edit-modal-field">
+          <label class="edit-modal-label">Ticket</label>
+          <span class="edit-modal-ticket">{{ editingAsset.name }}</span>
+        </div>
+        <div class="edit-modal-field">
+          <label class="edit-modal-label">Valor</label>
+          <div class="edit-modal-amount-wrap">
+            <span class="edit-modal-currency-tag">{{ editingAsset.type === 'international' ? 'US$' : 'R$' }}</span>
+            <input type="number" v-model.number="editAmount" step="0.01" class="edit-modal-input" />
           </div>
         </div>
-        <div class="edit-modal-actions">
-          <button class="btn-cancel-modal" @click="cancelEdit">Cancelar</button>
-          <button class="btn-save-modal" @click="saveEdit">Salvar</button>
+        <div class="edit-modal-field">
+          <label class="edit-modal-label">Classe</label>
+          <select v-model="editCategory" class="edit-modal-select">
+            <option v-for="opt in editCategoryOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
         </div>
       </div>
+      <div class="edit-modal-actions">
+        <button class="btn-cancel-modal" @click="cancelEdit">Cancelar</button>
+        <button class="btn-save-modal" @click="saveEdit">Salvar</button>
+      </div>
     </div>
-  </teleport>
+  </div>
 </template>
 
 <script setup>

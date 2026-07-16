@@ -468,13 +468,48 @@
         <h4 class="charts-title">📈 Projeções Gráficas</h4>
 
         <div class="charts-grid">
-          <!-- Wealth Accumulation Line Chart -->
+          <!-- Progress Dashboard Card -->
           <div class="chart-card glass-panel">
             <div class="chart-card-header">
-              <span class="chart-card-label">Acumulação de Patrimônio (30 anos)</span>
-              <small class="chart-card-sub">Saldo vs. Meta de Independência</small>
+              <span class="chart-card-label">Progresso para Liberdade Financeira</span>
+              <small class="chart-card-sub">Situação atual da sua jornada</small>
             </div>
-            <canvas id="chart-accumulation" height="200"></canvas>
+            <div class="progress-dash-body">
+              <div class="progress-ring-wrap">
+                <svg viewBox="0 0 120 120" class="progress-ring">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#ede7d7" stroke-width="10" />
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--accent-color)" stroke-width="10"
+                    stroke-linecap="round"
+                    :stroke-dasharray="`${progressPct * 3.14} 314`"
+                    transform="rotate(-90 60 60)"
+                    class="progress-ring-fill"
+                  />
+                  <text x="60" y="52" text-anchor="middle" class="progress-ring-pct">{{ progressPct.toFixed(0) }}%</text>
+                  <text x="60" y="72" text-anchor="middle" class="progress-ring-label">da meta</text>
+                </svg>
+                <div v-if="financialIndependenceYears.alreadyReached" class="progress-badge reached">✅ Atingida</div>
+                <div v-else-if="financialIndependenceYears.unreachable" class="progress-badge unreachable">⚠️ Inatingível</div>
+                <div v-else class="progress-badge eta">{{ financialIndependenceYears.years }}a {{ financialIndependenceYears.months }}m</div>
+              </div>
+              <div class="progress-metrics">
+                <div class="progress-metric">
+                  <span class="progress-metric-label">Fundo de Emergência</span>
+                  <span class="progress-metric-value">R$ {{ formatCurrency(store.emergencyFund) }}</span>
+                </div>
+                <div class="progress-metric">
+                  <span class="progress-metric-label">Aporte Mensal</span>
+                  <span class="progress-metric-value">R$ {{ formatCurrency(store.monthlyContribution) }}</span>
+                </div>
+                <div class="progress-metric">
+                  <span class="progress-metric-label">Patrimônio Alvo</span>
+                  <span class="progress-metric-value">R$ {{ formatCurrency(financialIndependenceYears.targetWealth) }}</span>
+                </div>
+                <div class="progress-metric">
+                  <span class="progress-metric-label">Renda Passiva Hoje</span>
+                  <span class="progress-metric-value">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}/mês</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Monthly Income Bar Chart -->
@@ -704,6 +739,12 @@ const financialIndependenceYears = computed(() => {
   return { years, months: remainingMonths, totalMonths: months, targetWealth, unreachable: false }
 })
 
+const progressPct = computed(() => {
+  const target = financialIndependenceYears.value?.targetWealth || 1
+  const current = Number(store.emergencyFund) || 0
+  return Math.min(100, (current / target) * 100)
+})
+
 // -------------------------------------------------------
 // Speculative numbers
 // -------------------------------------------------------
@@ -742,7 +783,6 @@ const speculativeData = computed(() => {
 // -------------------------------------------------------
 // Chart.js — 3 charts
 // -------------------------------------------------------
-let chartAccumulation = null
 let chartIncome = null
 let chartStacked = null
 let chartExpenseCategory = null
@@ -778,10 +818,9 @@ const buildChartData = () => {
 const renderCharts = async () => {
   await nextTick()
 
-  const cvAccum  = document.getElementById('chart-accumulation')
   const cvIncome = document.getElementById('chart-income')
   const cvStack  = document.getElementById('chart-stacked')
-  if (!cvAccum || !cvIncome || !cvStack) return
+  if (!cvIncome || !cvStack) return
 
   const { labels, balances, contributions, interests, incomes, targetWealth } = buildChartData()
 
@@ -793,47 +832,6 @@ const renderCharts = async () => {
     cream:  '#f5f0e6',
     border: '#d4c9a8'
   }
-
-  // ---- Chart 1: Accumulation Line ----
-  if (chartAccumulation) chartAccumulation.destroy()
-  chartAccumulation = new Chart(cvAccum, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Saldo Acumulado (R$)',
-          data: balances,
-          borderColor: palette.navy,
-          backgroundColor: 'rgba(30,58,95,0.08)',
-          borderWidth: 2,
-          pointRadius: 3,
-          fill: true,
-          tension: 0.35
-        },
-        {
-          label: `Meta Independência (R$ ${Number(targetWealth).toLocaleString('pt-BR', {maximumFractionDigits: 0})})`,
-          data: labels.map(() => targetWealth),
-          borderColor: palette.gold,
-          borderWidth: 1.5,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          fill: false
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { family: 'Georgia, serif', size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` } }
-      },
-      scales: {
-        y: { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
-        x: { grid: { display: false } }
-      }
-    }
-  })
 
   // ---- Chart 2: Monthly Income Bar ----
   const milestones = [1, 2, 5, 10, 15, 20, 25, 30]
@@ -2037,6 +2035,97 @@ input:checked + .toggle-slider-sm:before {
 
 .chart-card canvas {
   max-width: 100%;
+}
+
+.progress-dash-body {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+.progress-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.progress-ring {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+.progress-ring-fill {
+  transition: stroke-dasharray 0.5s ease;
+}
+.progress-ring-pct {
+  font-size: 1.2rem;
+  font-weight: bold;
+  fill: var(--text-primary);
+  font-family: "Courier New", monospace;
+}
+.progress-ring-label {
+  font-size: 0.6rem;
+  fill: var(--text-secondary);
+}
+.progress-badge {
+  font-size: 0.72rem;
+  font-weight: bold;
+  padding: 0.15rem 0.6rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.progress-badge.reached {
+  background: rgba(6,193,103,0.1);
+  color: #06c167;
+}
+.progress-badge.unreachable {
+  background: rgba(230,0,20,0.1);
+  color: #e60014;
+}
+.progress-badge.eta {
+  background: rgba(0,84,160,0.1);
+  color: #0054a0;
+}
+.progress-metrics {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.progress-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.progress-metric:last-child { border-bottom: none; }
+.progress-metric-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: bold;
+}
+.progress-metric-value {
+  font-size: 0.82rem;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .progress-dash-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .progress-ring-wrap {
+    align-self: center;
+  }
 }
 
 .chart-wide {
