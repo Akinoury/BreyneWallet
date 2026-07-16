@@ -207,7 +207,7 @@ const cuponomiaStores = [
   { id: 'amazon',        name: 'Amazon Brasil',   icon: '📦', color: '#ff9900', url: `${CUPONOMIA_BASE}/amazon`,        logo: `${FAV}amazon.com.br&size=128` },
   { id: 'mercadolivre',  name: 'Mercado Livre',   icon: '🟡', color: '#ffe600', url: `${CUPONOMIA_BASE}/mercadolivre`,   logo: `${FAV}mercadolivre.com.br&size=128` },
   { id: 'americanas',    name: 'Americanas',      icon: '🔴', color: '#cc0000', url: `${CUPONOMIA_BASE}/americanas`,     logo: `${FAV}americanas.com.br&size=128` },
-  { id: 'submarino',     name: 'Submarino',       icon: '🔵', color: '#004b8d', url: `${CUPONOMIA_BASE}/submarino`,      logo: 'https://logo.clearbit.com/submarino.com.br' },
+  { id: 'submarino',     name: 'Submarino',       icon: '🔵', color: '#004b8d', url: `${CUPONOMIA_BASE}/submarino`,      logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtZlV4NwSrStUXYlN8Om6VPBLoafv8ffm8D5wE3P3QlPMxQkyRU1KeqBF_&s=10' },
   { id: 'ifood',         name: 'iFood',           icon: '🍔', color: '#ea1d2c', url: `${CUPONOMIA_BASE}/ifood`,          logo: `${FAV}ifood.com.br&size=128` },
   { id: 'netshoes',      name: 'Netshoes',        icon: '👟', color: '#005b9e', url: `${CUPONOMIA_BASE}/netshoes`,       logo: `${FAV}netshoes.com.br&size=128` },
   { id: 'aliexpress',    name: 'AliExpress',      icon: '🌍', color: '#ff4747', url: `${CUPONOMIA_BASE}/aliexpress`,     logo: `${FAV}aliexpress.com&size=128` },
@@ -292,12 +292,12 @@ onMounted(async () => {
     const data = await res.json()
     stores.value = (data.stores || []).filter(s => s.id !== 'submarino' && s.id !== 'uber-eats').map(s => {
       if (s.name?.toLowerCase().includes('submarino')) {
-        return { ...s, id: 'submarino', name: 'Submarino', color: '#004b8d', logo: 'https://logo.clearbit.com/submarino.com.br', fallbackIcon: '🔵' }
+        return { ...s, id: 'submarino', name: 'Submarino', color: '#004b8d', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtZlV4NwSrStUXYlN8Om6VPBLoafv8ffm8D5wE3P3QlPMxQkyRU1KeqBF_&s=10', fallbackIcon: '🔵' }
       }
       return s
     })
     if (!stores.value.find(s => s.id === 'submarino')) {
-      stores.value.push({ id: 'submarino', name: 'Submarino', color: '#004b8d', logo: 'https://logo.clearbit.com/submarino.com.br', fallbackIcon: '🔵' })
+      stores.value.push({ id: 'submarino', name: 'Submarino', color: '#004b8d', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtZlV4NwSrStUXYlN8Om6VPBLoafv8ffm8D5wE3P3QlPMxQkyRU1KeqBF_&s=10', fallbackIcon: '🔵' })
     }
     allCoupons.value = (data.coupons || []).filter(c => {
       const id = c.storeId?.toLowerCase() || ''

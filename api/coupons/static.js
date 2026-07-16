@@ -76,7 +76,7 @@ const STORES = [
   {
     id: 'submarino',
     name: 'Submarino',
-    logo: 'https://logo.clearbit.com/submarino.com.br',
+    logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtZlV4NwSrStUXYlN8Om6VPBLoafv8ffm8D5wE3P3QlPMxQkyRU1KeqBF_&s=10',
     fallbackIcon: '🔵',
     color: '#003c8f',
     url: 'https://submarino.com.br',
