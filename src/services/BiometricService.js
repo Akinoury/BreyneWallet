@@ -180,6 +180,19 @@ class BiometricService {
     return false
   }
 
+  async hasAnyCredential() {
+    const active = this.#getCache().filter(c => !c.revoked)
+    if (active.length === 0) return false
+    for (const c of active) {
+      if (await this.hasCredential(c.user_id)) return true
+    }
+    return false
+  }
+
+  getCachedUserIds() {
+    return [...new Set(this.#getCache().filter(c => !c.revoked).map(c => c.user_id))]
+  }
+
   async listCredentials(userId) {
     let cache = this.#getCache().filter(c => c.user_id === userId && !c.revoked)
 

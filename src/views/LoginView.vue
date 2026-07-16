@@ -116,6 +116,8 @@ onMounted(async () => {
   if (userIds.length > 0) {
     const results = await Promise.all(userIds.map(uid => biometricService.hasCredential(uid)))
     hasBiometricCredential.value = results.some(Boolean)
+  } else {
+    hasBiometricCredential.value = await biometricService.hasAnyCredential()
   }
 
   if (hasBiometricCredential.value) {
@@ -166,14 +168,18 @@ const triggerBiometricScan = async () => {
 
   const userIds = biometricService.getSavedAccountIds()
   if (userIds.length === 0) {
-    scanError.value = true
-    bioStatusLabel.value = 'Nenhuma conta cadastrada!'
-    errorMsg.value = 'Faça login com e-mail e senha primeiro.'
-    setTimeout(() => {
-      scanError.value = false
-      bioStatusLabel.value = 'Autenticação Biométrica'
-    }, 4000)
-    return
+    const cachedIds = biometricService.getCachedUserIds()
+    if (cachedIds.length === 0) {
+      scanError.value = true
+      bioStatusLabel.value = 'Nenhuma conta cadastrada!'
+      errorMsg.value = 'Faça login com e-mail e senha primeiro.'
+      setTimeout(() => {
+        scanError.value = false
+        bioStatusLabel.value = 'Autenticação Biométrica'
+      }, 4000)
+      return
+    }
+    userIds.push(...cachedIds)
   }
 
   isScanning.value = true
