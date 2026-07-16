@@ -894,40 +894,66 @@ function exportCSV() {
 .edit-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.45);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 .edit-modal {
   max-width: 380px;
   width: 100%;
-  padding: 1.5rem;
+  padding: 1.75rem 1.5rem 1.25rem;
   position: relative;
   text-align: left;
+  animation: scaleIn 0.2s ease;
 }
 .edit-modal-close {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   color: var(--text-secondary);
   font-family: inherit;
   line-height: 1;
+  border-radius: 50%;
+  transition: all 0.15s;
+}
+.edit-modal-close:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--text-primary);
 }
 .edit-modal-title {
-  font-size: 1.1rem;
-  margin: 0 0 1.25rem;
+  font-size: 1.15rem;
+  margin: 0 0 1.5rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.edit-modal-title::before {
+  content: "✏️";
+  font-size: 1rem;
 }
 .edit-modal-body {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.15rem;
 }
 .edit-modal-field {
   display: flex;
@@ -935,94 +961,115 @@ function exportCSV() {
   gap: 0.3rem;
 }
 .edit-modal-label {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   color: var(--text-secondary);
 }
 .edit-modal-ticket {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  color: var(--text-primary);
+  color: var(--accent-color);
+  background: rgba(0,84,160,0.06);
+  padding: 0.45rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0,84,160,0.12);
+  letter-spacing: 0.5px;
 }
 .edit-modal-amount-wrap {
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 4px;
   overflow: hidden;
-  height: 42px;
+  height: 44px;
+  transition: border-color 0.15s;
+}
+.edit-modal-amount-wrap:focus-within {
+  border-color: var(--accent-color);
 }
 .edit-modal-currency-tag {
-  padding: 0 0.75rem;
+  padding: 0 0.85rem;
   font-size: 0.85rem;
   font-weight: bold;
   display: flex;
   align-items: center;
   background: #f5f0e6;
-  border-right: 1px solid var(--border-color);
+  border-right: 1.5px solid var(--border-color);
   color: var(--text-primary);
+  min-width: 40px;
+  justify-content: center;
 }
 .edit-modal-input {
   border: none;
   outline: none;
-  padding: 0 0.75rem;
+  padding: 0 0.85rem;
   flex: 1;
   font-family: "Times New Roman", Times, Georgia, serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   background: #fff;
   color: var(--text-primary);
 }
 .edit-modal-select {
-  border: 1px solid var(--border-color);
-  border-radius: 3px;
-  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0 0.75rem;
   font-size: 0.9rem;
   font-family: inherit;
   background: #fff;
   color: var(--text-primary);
   outline: none;
-  height: 42px;
+  height: 44px;
   box-sizing: border-box;
   cursor: pointer;
+  transition: border-color 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  padding-right: 2rem;
 }
 .edit-modal-select:focus { border-color: var(--accent-color); }
 .edit-modal-actions {
   display: flex;
   gap: 0.75rem;
-  margin-top: 1.25rem;
+  margin-top: 1.5rem;
   justify-content: flex-end;
 }
 .btn-cancel-modal {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: transparent;
-  border-radius: 3px;
-  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  padding: 0.55rem 1.25rem;
   font-size: 0.82rem;
   font-weight: bold;
   cursor: pointer;
   font-family: inherit;
   color: var(--text-secondary);
   transition: all 0.15s;
+  min-width: 90px;
 }
 .btn-cancel-modal:hover {
-  border-color: var(--text-primary);
+  border-color: #bbb;
   color: var(--text-primary);
+  background: rgba(0,0,0,0.02);
 }
 .btn-save-modal {
   border: none;
   background: var(--text-primary);
   color: #fff;
-  border-radius: 3px;
-  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  padding: 0.55rem 1.25rem;
   font-size: 0.82rem;
   font-weight: bold;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
+  min-width: 90px;
 }
-.btn-save-modal:hover { background: #0f2740; }
+.btn-save-modal:hover { background: #0f2740; transform: translateY(-1px); }
+.btn-save-modal:active { transform: translateY(0); }
 
 /* Pie chart card */
 .pie-chart-card {
