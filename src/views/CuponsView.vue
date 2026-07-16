@@ -33,7 +33,7 @@
           Todas
         </button>
         <button
-          v-for="s in stores"
+          v-for="s in visibleStores"
           :key="s.id"
           class="store-chip"
           :class="{ active: selectedStore === s.id }"
@@ -50,6 +50,13 @@
             <span class="chip-fallback" style="display:none">{{ s.fallbackIcon }}</span>
           </span>
           {{ s.name }}
+        </button>
+        <button
+          v-if="hiddenStores.length > 0"
+          class="store-chip show-more-chip"
+          @click="showAllStores = !showAllStores"
+        >
+          {{ showAllStores ? '− Ver menos' : `+${hiddenStores.length} Ver mais` }}
         </button>
       </div>
     </div>
@@ -131,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useWalletStore } from '../stores/walletStore'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
@@ -144,9 +151,20 @@ const filteredCoupons = ref([])
 const selectedStore = ref(null)
 const sortRecent = ref(true)
 const onlyVerified = ref(false)
+const showAllStores = ref(false)
 const loading = ref(true)
 const error = ref('')
 const copied = ref('')
+
+const famousStoreIds = ['shopee','magalu','amazon','mercadolivre','americanas','ifood','uber-eats','netshoes','aliexpress','casasbahia']
+const visibleStores = computed(() => {
+  if (showAllStores.value) return stores.value
+  return stores.value.filter(s => famousStoreIds.includes(s.id))
+})
+const hiddenStores = computed(() => {
+  if (showAllStores.value) return []
+  return stores.value.filter(s => !famousStoreIds.includes(s.id))
+})
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('pt-BR')
@@ -249,6 +267,12 @@ onMounted(async () => {
   color: var(--text-secondary);
 }
 
+.sort-control {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .sort-btn {
   background: #ffffff;
   border: 1px solid var(--border-color);
@@ -324,6 +348,17 @@ onMounted(async () => {
 .store-chip.active {
   background: #fdfcf7;
   border-color: var(--text-primary);
+}
+
+.show-more-chip {
+  border-style: dashed;
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.show-more-chip:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .loading-state {
