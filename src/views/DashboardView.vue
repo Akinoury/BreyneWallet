@@ -385,11 +385,11 @@
           <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.6rem;">
             <div style="text-align: center;">
               <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
-              <h4 class="sim-card-value" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
+              <h4 class="sim-card-value" style="font-size: 1.1rem; white-space: nowrap;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
             </div>
             <div style="text-align: center;">
               <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
-              <h4 class="sim-card-value text-success" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</h4>
+              <h4 class="sim-card-value text-success" style="font-size: 1.1rem; white-space: nowrap;">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</h4>
             </div>
           </div>
         </div>
