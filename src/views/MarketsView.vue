@@ -264,12 +264,21 @@ async function fetchAll() {
     const f = data.forex || {}
     if (f.USDBRL) items.push({ label: 'USD/BRL', value: `R$ ${parseFloat(f.USDBRL.bid).toFixed(4)}`, change: parseFloat(f.USDBRL.pctChange || 0).toFixed(2) })
     if (f.EURBRL) items.push({ label: 'EUR/BRL', value: `R$ ${parseFloat(f.EURBRL.bid).toFixed(4)}`, change: parseFloat(f.EURBRL.pctChange || 0).toFixed(2) })
+    if (f.GBPBRL) items.push({ label: 'GBP/BRL', value: `R$ ${parseFloat(f.GBPBRL.bid).toFixed(4)}`, change: parseFloat(f.GBPBRL.pctChange || 0).toFixed(2) })
     if (f.JPYBRL) items.push({ label: 'JPY/BRL', value: `R$ ${parseFloat(f.JPYBRL.bid).toFixed(4)}`, change: parseFloat(f.JPYBRL.pctChange || 0).toFixed(2) })
+    if (f.USDBRL) {
+      const brlUsd = 1 / parseFloat(f.USDBRL.bid)
+      items.push({ label: 'BRL/USD', value: `$ ${brlUsd.toFixed(6)}`, change: 0 })
+    }
 
     const c = data.crypto || {}
-    if (c.bitcoin) items.push({ label: 'BTC/BRL', value: `R$ ${c.bitcoin.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.bitcoin.brl_24h_change || 0).toFixed(2) })
-    if (c.ethereum) items.push({ label: 'ETH/BRL', value: `R$ ${c.ethereum.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ethereum.brl_24h_change || 0).toFixed(2) })
-    if (c.binancecoin) items.push({ label: 'BNB/BRL', value: `R$ ${c.binancecoin.brl?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.binancecoin.brl_24h_change || 0).toFixed(2) })
+    if (c.bitcoin) items.push({ label: 'BTC/USD', value: `$ ${c.bitcoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.bitcoin.usd_24h_change || 0).toFixed(2) })
+    if (c.ethereum) items.push({ label: 'ETH/USD', value: `$ ${c.ethereum.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ethereum.usd_24h_change || 0).toFixed(2) })
+    if (c.binancecoin) items.push({ label: 'BNB/USD', value: `$ ${c.binancecoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.binancecoin.usd_24h_change || 0).toFixed(2) })
+    if (c.solana) items.push({ label: 'SOL/USD', value: `$ ${c.solana.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.solana.usd_24h_change || 0).toFixed(2) })
+    if (c.ripple) items.push({ label: 'XRP/USD', value: `$ ${c.ripple.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ripple.usd_24h_change || 0).toFixed(2) })
+    if (c.cardano) items.push({ label: 'ADA/USD', value: `$ ${c.cardano.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.cardano.usd_24h_change || 0).toFixed(2) })
+    if (c.dogecoin) items.push({ label: 'DOGE/USD', value: `$ ${c.dogecoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.dogecoin.usd_24h_change || 0).toFixed(2) })
 
     tickers.value = items
   } catch (e) {
