@@ -1,51 +1,4 @@
-import { Redis } from '@upstash/redis'
-import IORedis from 'ioredis'
-
-function createClient() {
-  const url = process.env.REDIS_URL || process.env.KV_REST_API_URL
-  const token = process.env.KV_REST_API_TOKEN
-
-  if (!url) {
-    const restUrl = process.env.UPSTASH_REDIS_REST_URL
-    const restToken = process.env.UPSTASH_REDIS_REST_TOKEN
-    if (restUrl) {
-      return { type: 'rest', client: new Redis({ url: restUrl, token: restToken || '' }) }
-    }
-    throw new Error('Nenhuma configuração Redis encontrada.')
-  }
-
-  if (url.startsWith('redis://')) {
-    return { type: 'redis', client: new IORedis(url, { maxRetriesPerRequest: 1, retryStrategy: () => null }) }
-  }
-
-  return { type: 'rest', client: new Redis({ url, token: token || '' }) }
-}
-
-let connection
-try {
-  connection = createClient()
-} catch (e) {
-  console.error('Redis init error:', e)
-  connection = null
-}
-
-function getClient() {
-  if (!connection) throw new Error('Redis não configurado.')
-  return connection.client
-}
-
-function isRedis() {
-  return connection?.type === 'redis'
-}
-
-function isRest() {
-  return connection?.type === 'rest'
-}
-
-const USER_PREFIX = 'user:'
-const WALLET_PREFIX = 'wallet:'
-const ACCOUNTS_KEY = 'breyne_accounts'
-const EMAIL_PREFIX = 'email:'
+import { put, get } from '@vercel/blob'
 
 function serialize(obj) {
   return JSON.stringify(obj)
@@ -53,97 +6,95 @@ function serialize(obj) {
 
 function deserialize(str) {
   if (!str) return null
-  if (typeof str === 'object' && str.type === 'Buffer') {
-    str = Buffer.from(str.data || str).toString()
-  }
-  if (Buffer.isBuffer(str)) str = str.toString()
-  if (typeof str !== 'string') return str
   try { return JSON.parse(str) } catch { return str }
 }
 
+function userPath(id) {
+  return `u/${id}.json`
+}
+
+function emailPath(email) {
+  return `e/${email.toLowerCase()}.json`
+}
+
+function walletPath(userId) {
+  return `w/${userId}.json`
+}
+
+const ACCOUNTS_PATH = '_accounts.json'
+
+async function putJSON(path, data) {
+  await put(path, serialize(data), {
+    access: 'private',
+    contentType: 'application/json',
+    addRandomSuffix: false
+  })
+}
+
+async function getJSON(path) {
+  const blob = await get(path)
+  if (!blob) return null
+  const text = await blob.text()
+  return deserialize(text)
+}
+
 export async function createUser(id, name, email, passwordHash) {
-  const client = getClient()
   const user = { id, name, email, passwordHash, createdAt: new Date().toISOString() }
-  const userStr = serialize(user)
-  if (isRedis()) {
-    await client.set(USER_PREFIX + id, userStr)
-    await client.sadd(ACCOUNTS_KEY, id)
-    await client.set(EMAIL_PREFIX + email.toLowerCase(), id)
-  } else {
-    await client.set(USER_PREFIX + id, user)
-    await client.sadd(ACCOUNTS_KEY, id)
-    await client.set(EMAIL_PREFIX + email.toLowerCase(), id)
-  }
+
+  await putJSON(userPath(id), user)
+  await putJSON(emailPath(email), id)
+
+  const accounts = await getJSON(ACCOUNTS_PATH) || []
+  accounts.push({ id: user.id, name: user.name, email: user.email })
+  await putJSON(ACCOUNTS_PATH, accounts)
+
   return { id, name, email, createdAt: user.createdAt }
 }
 
 export async function findUserByEmail(email) {
-  const client = getClient()
-  const id = await client.get(EMAIL_PREFIX + email.toLowerCase())
+  const id = await getJSON(emailPath(email))
   if (!id) return null
-  const raw = await client.get(USER_PREFIX + id)
-  return deserialize(raw)
+  return getJSON(userPath(id))
 }
 
 export async function findUserById(id) {
-  const client = getClient()
-  const raw = await client.get(USER_PREFIX + id)
-  return deserialize(raw)
+  return getJSON(userPath(id))
 }
 
 export async function updateUserName(userId, newName) {
-  const client = getClient()
-  const raw = await client.get(USER_PREFIX + userId)
-  const user = deserialize(raw)
+  const user = await getJSON(userPath(userId))
   if (!user) return null
+
   user.name = newName
-  if (isRedis()) {
-    await client.set(USER_PREFIX + userId, serialize(user))
-  } else {
-    await client.set(USER_PREFIX + userId, user)
+  await putJSON(userPath(userId), user)
+
+  const accounts = await getJSON(ACCOUNTS_PATH) || []
+  const idx = accounts.findIndex(a => a.id === userId)
+  if (idx !== -1) {
+    accounts[idx].name = newName
+    await putJSON(ACCOUNTS_PATH, accounts)
   }
+
   return { id: user.id, name: user.name, email: user.email }
 }
 
 export async function updateUserPassword(userId, newPasswordHash) {
-  const client = getClient()
-  const raw = await client.get(USER_PREFIX + userId)
-  const user = deserialize(raw)
+  const user = await getJSON(userPath(userId))
   if (!user) return false
+
   user.passwordHash = newPasswordHash
-  if (isRedis()) {
-    await client.set(USER_PREFIX + userId, serialize(user))
-  } else {
-    await client.set(USER_PREFIX + userId, user)
-  }
+  await putJSON(userPath(userId), user)
   return true
 }
 
 export async function saveWallet(userId, walletData) {
-  const client = getClient()
-  if (isRedis()) {
-    await client.set(WALLET_PREFIX + userId, serialize(walletData))
-  } else {
-    await client.set(WALLET_PREFIX + userId, walletData)
-  }
+  await putJSON(walletPath(userId), walletData)
 }
 
 export async function loadWallet(userId) {
-  const client = getClient()
-  const raw = await client.get(WALLET_PREFIX + userId)
-  return deserialize(raw)
+  return getJSON(walletPath(userId))
 }
 
 export async function getAllAccounts() {
-  const client = getClient()
-  const ids = await client.smembers(ACCOUNTS_KEY)
-  const accounts = []
-  for (const id of ids) {
-    const raw = await client.get(USER_PREFIX + id)
-    const user = deserialize(raw)
-    if (user) {
-      accounts.push({ id: user.id, name: user.name, email: user.email })
-    }
-  }
-  return accounts
+  return getJSON(ACCOUNTS_PATH) || []
 }
