@@ -26,8 +26,14 @@ const router = createRouter({
     },
     {
       path: '/',
-      name: 'dashboard',
+      name: 'home',
       component: DashboardView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/cupons',
+      name: 'cupons',
+      component: () => import('../views/CuponsView.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -62,7 +68,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !hasToken) {
     next({ name: 'login' })
   } else if (authRoutes.includes(to.name) && hasToken) {
-    next({ name: 'dashboard' })
+    next({ name: 'home' })
   } else {
     next()
   }
