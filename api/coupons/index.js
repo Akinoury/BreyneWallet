@@ -127,16 +127,17 @@ function generateCoupons(store, count) {
     const validDays = randomBetween(7, 60)
     const code = `${verbs[randomBetween(0, verbs.length - 1)]}${pct}${store.id.toUpperCase().slice(0, 3)}`
     const category = store.categories[randomBetween(0, store.categories.length - 1)]
+    const minPurchase = randomBetween(5, 30) * 10
     coupons.push({
       id: `${store.id}-${i}`,
       storeId: store.id,
       title: `${pct}% OFF em ${category}`,
-      description: `Ganhe ${pct}% de desconto em produtos selecionados da ${store.name}. Válido para compras acima de R$ ${randomBetween(50, 300)},00.`,
+      description: `Ganhe ${pct}% de desconto em produtos selecionados da ${store.name}. Válido para compras acima de R$ ${minPurchase},00.`,
       code,
       couponUrl: buildCouponUrl(store, category),
       discount: `${pct}%`,
       discountType: 'percent',
-      minPurchase: randomBetween(0, 200) * 10,
+      minPurchase,
       expiresAt: new Date(now + validDays * 86400000).toISOString(),
       createdAt: new Date(now - daysAgo * 86400000).toISOString(),
       usedCount: randomBetween(0, 5000),
