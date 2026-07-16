@@ -43,17 +43,18 @@
 
     <template v-else>
       <div class="result-info">
-        <strong>{{ filteredStocks.length }}</strong> ativo{{ filteredStocks.length !== 1 ? 's' : '' }} encontrado{{ filteredStocks.length !== 1 ? 's' : '' }}
+        <strong>{{ displayStocks.length }}</strong> ativo{{ displayStocks.length !== 1 ? 's' : '' }} encontrado{{ displayStocks.length !== 1 ? 's' : '' }}
+        <button v-if="showShowAll" class="link-btn" @click="showAll = true">— mostrar todos os {{ filteredStocks.length }}</button>
       </div>
 
-      <div v-if="filteredStocks.length === 0" class="empty-state glass-panel">
+      <div v-if="displayStocks.length === 0" class="empty-state glass-panel">
         <span class="empty-icon">📊</span>
         <p>Nenhum ativo encontrado para este filtro.</p>
       </div>
 
       <div v-else class="stocks-grid">
         <button
-          v-for="s in filteredStocks"
+          v-for="s in displayStocks"
           :key="s.symbol"
           class="stock-card glass-panel"
           @click="openDetail(s)"
@@ -217,6 +218,7 @@ const error = ref('')
 const selectedExchanges = ref([])
 const selectedTypes = ref([])
 const searchQuery = ref('')
+const showAll = ref(false)
 const detail = ref(null)
 const chartCanvas = ref(null)
 const chartLoading = ref(false)
@@ -243,6 +245,21 @@ const filteredStocks = computed(() => {
   }
   return result
 })
+
+const hasFilters = computed(() =>
+  selectedExchanges.value.length > 0 || selectedTypes.value.length > 0 || searchQuery.value
+)
+
+const showShowAll = computed(() =>
+  !hasFilters.value && !showAll.value && filteredStocks.value.length > 50
+)
+
+const displayStocks = computed(() => {
+  if (showShowAll.value) return filteredStocks.value.slice(0, 50)
+  return filteredStocks.value
+})
+
+watch(hasFilters, () => { showAll.value = false })
 
 function getExchangeLabel(key) {
   return exchanges.find(e => e.key === key)?.label || key
@@ -413,8 +430,19 @@ async function setChartRange(range) {
 async function lookupTicker() {
   const q = searchQuery.value.trim().toUpperCase()
   if (!q) return
-  const exists = stocks.value.find(s => s.symbol.toUpperCase() === q)
-  if (exists) { searchQuery.value = ''; return }
+  const idx = stocks.value.findIndex(s => s.symbol.toUpperCase() === q)
+  if (idx >= 0) {
+    const old = stocks.value[idx]
+    stocks.value[idx] = { ...old, price: 0, change: 0, changePercent: 0 }
+    try {
+      const res = await fetch(`${API_BASE}/api/markets?symbols=${q}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.stocks?.length) stocks.value[idx] = data.stocks[0]
+      }
+    } catch {}
+    return
+  }
   try {
     const res = await fetch(`${API_BASE}/api/markets?symbols=${q}`)
     if (!res.ok) return
@@ -609,6 +637,16 @@ onMounted(() => {
 .result-info {
   font-size: 0.78rem;
   color: var(--text-secondary);
+}
+.link-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--accent-color);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 0.5rem;
 }
 
 .empty-state {
