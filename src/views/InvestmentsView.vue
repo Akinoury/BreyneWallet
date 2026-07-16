@@ -489,11 +489,11 @@ const handleSubmit = async () => {
 }
 
 function exportCSV() {
-  const header = 'Ticket;Origem;Classe;Valor;Moeda'
+  const header = 'Ticket,Origem,Classe,Valor,Moeda'
   const rows = store.investments.map(i => {
     const currency = i.type === 'international' ? 'USD' : 'BRL'
-    const value = Number(i.amount).toFixed(2).replace('.', ',')
-    return `${i.name};${i.type};${i.category};${value};${currency}`
+    const value = Number(i.amount).toFixed(2)
+    return `"${i.name}",${i.type},${i.category},${value},${currency}`
   }).join('\n')
   const csv = header + '\n' + rows
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
