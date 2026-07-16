@@ -9,6 +9,7 @@ const STORES = [
     logo: FAV + 'shopee.com.br&size=128',
     fallbackIcon: '🛒',
     color: '#ee4d2d',
+    url: 'https://shopee.com.br',
     categories: ['Moda', 'Eletrônicos', 'Casa']
   },
   {
@@ -17,6 +18,7 @@ const STORES = [
     logo: FAV + 'magazineluiza.com.br&size=128',
     fallbackIcon: '📱',
     color: '#0054a0',
+    url: 'https://magazineluiza.com.br',
     categories: ['Eletrônicos', 'Eletrodomésticos', 'Celulares']
   },
   {
@@ -25,6 +27,7 @@ const STORES = [
     logo: FAV + 'amazon.com.br&size=128',
     fallbackIcon: '📦',
     color: '#ff9900',
+    url: 'https://amazon.com.br',
     categories: ['Livros', 'Eletrônicos', 'Casa']
   },
   {
@@ -33,6 +36,7 @@ const STORES = [
     logo: FAV + 'mercadolivre.com.br&size=128',
     fallbackIcon: '🟡',
     color: '#ffe600',
+    url: 'https://mercadolivre.com.br',
     categories: ['Variados', 'Tecnologia', 'Moda']
   },
   {
@@ -41,6 +45,7 @@ const STORES = [
     logo: FAV + 'americanas.com.br&size=128',
     fallbackIcon: '🔴',
     color: '#cc0000',
+    url: 'https://americanas.com.br',
     categories: ['Variados', 'Casa', 'Eletrônicos']
   },
   {
@@ -49,6 +54,7 @@ const STORES = [
     logo: FAV + 'ifood.com.br&size=128',
     fallbackIcon: '🍔',
     color: '#ea1d2c',
+    url: 'https://ifood.com.br',
     categories: ['Alimentação', 'Restaurantes']
   },
   {
@@ -57,6 +63,7 @@ const STORES = [
     logo: FAV + 'ubereats.com&size=128',
     fallbackIcon: '🛵',
     color: '#06c167',
+    url: 'https://ubereats.com',
     categories: ['Alimentação', 'Restaurantes']
   },
   {
@@ -65,6 +72,7 @@ const STORES = [
     logo: FAV + 'netshoes.com.br&size=128',
     fallbackIcon: '👟',
     color: '#005b9e',
+    url: 'https://netshoes.com.br',
     categories: ['Esportes', 'Moda']
   },
   {
@@ -73,6 +81,7 @@ const STORES = [
     logo: FAV + 'submarino.com.br&size=128',
     fallbackIcon: '🔵',
     color: '#003c8f',
+    url: 'https://submarino.com.br',
     categories: ['Eletrônicos', 'Casa', 'Livros']
   },
   {
@@ -81,6 +90,7 @@ const STORES = [
     logo: FAV + 'aliexpress.com&size=128',
     fallbackIcon: '🌍',
     color: '#ff4747',
+    url: 'https://aliexpress.com',
     categories: ['Variados', 'Eletrônicos', 'Moda']
   }
 ]

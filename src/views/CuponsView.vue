@@ -106,6 +106,15 @@
           <div v-if="c.minPurchase > 0" class="min-purchase">
             Mínimo: R$ {{ formatCurrency(c.minPurchase) }}
           </div>
+
+          <a
+            :href="getStore(c.storeId)?.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-store"
+          >
+            Abrir Loja →
+          </a>
         </div>
       </div>
     </div>
@@ -467,5 +476,26 @@ onMounted(async () => {
   font-size: 0.72rem;
   color: var(--text-secondary);
   font-style: italic;
+}
+
+.btn-store {
+  display: block;
+  text-align: center;
+  background: var(--text-primary);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  text-decoration: none;
+  transition: background 0.15s;
+  margin-top: 0.25rem;
+}
+
+.btn-store:hover {
+  background: #0f2740;
 }
 </style>
