@@ -523,9 +523,12 @@ onMounted(() => {
   overflow-x: auto;
   flex-wrap: nowrap;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  cursor: grab;
 }
-.ticker-bar::-webkit-scrollbar { display: none; }
+.ticker-bar::-webkit-scrollbar { height: 5px; }
+.ticker-bar::-webkit-scrollbar-track { background: transparent; }
+.ticker-bar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
 
 .ticker-item {
   flex-shrink: 0;
