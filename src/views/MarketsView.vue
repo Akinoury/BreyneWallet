@@ -967,4 +967,36 @@ onMounted(() => {
   transition: background 0.15s;
 }
 .btn-yahoo:hover { background: #0f2740; }
+
+@media (max-width: 600px) {
+  .markets-header { flex-direction: column; gap: 0.75rem; }
+  .markets-header h2 { font-size: 1.3rem; margin: 0; }
+  .markets-header p { font-size: 0.82rem; }
+
+  .filter-section { flex-direction: column; align-items: stretch; }
+  .search-group { width: 100%; }
+  .search-input { width: 100%; flex: 1; font-size: 0.82rem; padding: 0.4rem 0.6rem; }
+
+  .stock-card { padding: 0.65rem; gap: 0.2rem; }
+  .stock-symbol { font-size: 0.85rem; }
+  .stock-price { font-size: 0.8rem; }
+  .stock-change { font-size: 0.65rem; }
+  .stock-name { font-size: 0.62rem; }
+  .stock-meta { font-size: 0.58rem; }
+  .stock-type-badge { font-size: 0.55rem; padding: 0.08rem 0.3rem; }
+  .stock-vol { display: none; }
+
+  .stocks-grid { gap: 0.6rem; }
+
+  .modal-content { padding: 1rem; max-width: 100%; margin: 0.5rem; border-radius: 4px; }
+  .modal-price { font-size: 1.2rem; }
+  .modal-header h2 { font-size: 1.1rem; }
+  .modal-subtitle { font-size: 0.7rem; }
+  .modal-price-row { margin-bottom: 0.5rem; }
+  .chart-container { height: 160px; }
+  .metrics-grid { gap: 0.3rem; }
+  .trade-section { padding-top: 0.5rem; }
+  .trade-label { font-size: 0.7rem; }
+  .trade-value { font-size: 0.75rem; }
+}
 </style>

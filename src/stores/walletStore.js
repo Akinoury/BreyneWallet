@@ -291,6 +291,14 @@ export const useWalletStore = defineStore('wallet', () => {
     await saveWalletState()
   }
 
+  async function updateInvestment(id, updates) {
+    const idx = investments.value.findIndex(i => i.id === id)
+    if (idx === -1) return false
+    investments.value[idx] = { ...investments.value[idx], ...updates }
+    await saveWalletState()
+    return true
+  }
+
   async function adjustEmergencyFund(amount, isDeposit) {
     const val = Number(amount)
     if (val <= 0 || isNaN(val)) return false
@@ -493,6 +501,7 @@ export const useWalletStore = defineStore('wallet', () => {
     deleteTransaction,
     addInvestment,
     deleteInvestment,
+    updateInvestment,
     adjustEmergencyFund,
     simulateInterest,
     saveToLocalStorage,

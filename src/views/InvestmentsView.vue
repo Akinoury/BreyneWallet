@@ -5,6 +5,7 @@
         <h2>Carteira de Investimentos</h2>
         <p>Acompanhe e registre a distribuição de seus ativos nacionais e internacionais.</p>
         <button class="btn-markets" @click="$router.push('/markets')">📈 Mercados</button>
+        <button class="btn-export" @click="exportCSV">📥 Exportar CSV</button>
       </div>
       <!-- PORTFOLIO GRAND TOTAL -->
       <div class="grand-total-card glass-panel">
@@ -46,6 +47,23 @@
           US$ {{ formatUsd(store.internationalInvestmentsTotal) }}
           <small class="text-muted"> ≈ R$ {{ formatCurrency(store.internationalInvestmentsTotalBrl) }}</small>
         </span>
+      </div>
+    </div>
+
+    <!-- CATEGORY BREAKDOWN -->
+    <div class="category-breakdown glass-panel">
+      <div class="flex-between">
+        <h3 class="breakdown-title">Distribuição por Classe</h3>
+      </div>
+      <div class="breakdown-list">
+        <div v-for="cat in categoryTotals" :key="cat.label" class="breakdown-row">
+          <span class="breakdown-label">{{ cat.label }}</span>
+          <span class="breakdown-bar-wrap">
+            <span class="breakdown-bar" :style="{ width: cat.pct + '%', background: cat.color }"></span>
+          </span>
+          <span class="breakdown-value">R$ {{ formatCurrency(cat.total) }}</span>
+          <span class="breakdown-pct">{{ cat.pct.toFixed(1) }}%</span>
+        </div>
       </div>
     </div>
 
@@ -155,10 +173,25 @@
             <tbody>
               <tr v-for="i in nationalAssets" :key="i.id">
                 <td class="text-bold">{{ i.name }}</td>
-                <td><span class="badge badge-national">{{ i.category }}</span></td>
-                <td class="text-right text-bold">R$ {{ formatCurrency(i.amount) }}</td>
+                <td>
+                  <span v-if="editingId !== i.id" class="badge badge-national">{{ i.category }}</span>
+                  <select v-else v-model="editCategory" class="select-field edit-select">
+                    <option value="Ações">Ações</option>
+                    <option value="FIIs">FIIs</option>
+                    <option value="Renda Fixa">Renda Fixa</option>
+                    <option value="ETFs">ETFs</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </td>
+                <td class="text-right text-bold">
+                  <span v-if="editingId !== i.id">R$ {{ formatCurrency(i.amount) }}</span>
+                  <input v-else type="number" v-model.number="editAmount" step="0.01" class="input-field edit-input" />
+                </td>
                 <td class="text-center">
+                  <button v-if="editingId !== i.id" class="btn-edit-sm" @click="startEdit(i)">✏️</button>
                   <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)">✕</button>
+                  <button v-if="editingId === i.id" class="btn-save-sm" @click="saveEdit(i)">💾</button>
+                  <button v-if="editingId === i.id" class="btn-cancel-sm" @click="cancelEdit">↩️</button>
                 </td>
               </tr>
             </tbody>
@@ -174,6 +207,9 @@
             <div class="intl-rate-note">
               <span class="pulse-dot-sm"></span>
               Câmbio: US$ 1 = R$ {{ exchangeRate ? exchangeRate.toFixed(4) : '...' }} (Dólar Comercial)
+              <span class="intl-search-wrap">
+                🔍 <input type="text" v-model="intlSearch" placeholder="Filtrar..." class="intl-search-input" />
+              </span>
             </div>
             <table class="assets-table">
               <thead>
@@ -186,13 +222,28 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="i in internationalAssets" :key="i.id">
+                <tr v-for="i in filteredInternational" :key="i.id">
                   <td class="text-bold">{{ i.name }}</td>
-                  <td><span class="badge badge-international">{{ i.category }}</span></td>
-                  <td class="text-right text-bold">US$ {{ formatUsd(i.amount) }}</td>
+                  <td>
+                    <span v-if="editingId !== i.id" class="badge badge-international">{{ i.category }}</span>
+                    <select v-else v-model="editCategory" class="select-field edit-select">
+                      <option value="Stocks">Stocks</option>
+                      <option value="REITs">REITs</option>
+                      <option value="Crypto">Crypto</option>
+                      <option value="ETFs">ETFs</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </td>
+                  <td class="text-right text-bold">
+                    <span v-if="editingId !== i.id">US$ {{ formatUsd(i.amount) }}</span>
+                    <input v-else type="number" v-model.number="editAmount" step="0.01" class="input-field edit-input" />
+                  </td>
                   <td class="text-right text-muted">R$ {{ formatCurrency(i.amount * (exchangeRate || 5.70)) }}</td>
                   <td class="text-center">
+                    <button v-if="editingId !== i.id" class="btn-edit-sm" @click="startEdit(i)">✏️</button>
                     <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)">✕</button>
+                    <button v-if="editingId === i.id" class="btn-save-sm" @click="saveEdit(i)">💾</button>
+                    <button v-if="editingId === i.id" class="btn-cancel-sm" @click="cancelEdit">↩️</button>
                   </td>
                 </tr>
               </tbody>
@@ -216,6 +267,56 @@ const type = ref('national')
 const category = ref('Ações')
 const activeTab = ref('national')
 const exchangeRate = ref(null)
+
+// Edit state
+const editingId = ref(null)
+const editAmount = ref(null)
+const editCategory = ref('')
+
+function startEdit(asset) {
+  editingId.value = asset.id
+  editAmount.value = asset.amount
+  editCategory.value = asset.category
+}
+async function saveEdit(asset) {
+  if (editAmount.value === null || editAmount.value <= 0) return
+  await store.updateInvestment(asset.id, {
+    amount: Number(editAmount.value),
+    category: editCategory.value
+  })
+  editingId.value = null
+}
+function cancelEdit() {
+  editingId.value = null
+}
+
+// Search on international tab
+const intlSearch = ref('')
+
+// Category totals for the breakdown block
+const categoryTotals = computed(() => {
+  const map = {}
+  store.investments.forEach(inv => {
+    const cat = inv.category
+    if (!map[cat]) map[cat] = 0
+    const totalBrl = inv.type === 'international'
+      ? Number(inv.amount) * (exchangeRate.value || 5.70)
+      : Number(inv.amount)
+    map[cat] += totalBrl
+  })
+  const grandTotal = Object.values(map).reduce((a, b) => a + b, 0) || 1
+  const colors = {
+    'Ações': '#0054a0', 'FIIs': '#06c167', 'Renda Fixa': '#cc7a00',
+    'ETFs': '#7b2d8e', 'Stocks': '#1a6b3c', 'REITs': '#e60014',
+    'Crypto': '#f0b90b', 'Outros': '#888'
+  }
+  return Object.entries(map).map(([label, total]) => ({
+    label,
+    total,
+    pct: (total / grandTotal) * 100,
+    color: colors[label] || '#888'
+  })).sort((a, b) => b.total - a.total)
+})
 
 // -------------------------------------------------------
 // Fetch live dólar comercial from BCB AwesomeAPI
@@ -268,6 +369,14 @@ const internationalAssets = computed(() =>
   store.investments.filter(i => i.type === 'international')
 )
 
+const filteredInternational = computed(() => {
+  if (!intlSearch.value) return internationalAssets.value
+  const q = intlSearch.value.toLowerCase()
+  return internationalAssets.value.filter(i =>
+    i.name.toLowerCase().includes(q)
+  )
+})
+
 // Porcentagens de alocação — baseadas em BRL para comparação justa
 const totalInvestedBrl = computed(() =>
   store.nationalInvestmentsTotal + store.internationalInvestmentsTotalBrl || 1
@@ -311,6 +420,27 @@ const handleSubmit = async () => {
   amount.value = null
   type.value = 'national'
   category.value = 'Ações'
+}
+
+function exportCSV() {
+  const header = 'Ticket,Origem,Classe,Valor,Moeda'
+  const rows = store.investments.map(i => {
+    const currency = i.type === 'international' ? 'USD' : 'BRL'
+    const value = i.type === 'international'
+      ? `${Number(i.amount).toFixed(2)}`
+      : `${Number(i.amount).toFixed(2)}`
+    return `${i.name},${i.type},${i.category},${value},${currency}`
+  }).join('\n')
+  const csv = header + '\n' + rows
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'carteira_breyne.csv'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 </script>
 
@@ -651,6 +781,147 @@ const handleSubmit = async () => {
   font-size: 0.88rem;
   line-height: 1.4;
 }
+
+.btn-export {
+  border: 1px solid var(--success-color);
+  color: var(--success-color);
+  background: transparent;
+  border-radius: 3px;
+  padding: 0.35rem 1rem;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 0.5rem;
+  margin-left: 0.5rem;
+  transition: all 0.15s;
+}
+.btn-export:hover {
+  background: var(--success-color);
+  color: #fff;
+}
+
+/* Edit buttons */
+.btn-edit-sm {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.btn-edit-sm:hover { transform: scale(1.2); }
+.btn-save-sm, .btn-cancel-sm {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  margin-left: 0.2rem;
+  transition: all 0.15s;
+}
+.btn-save-sm:hover { border-color: var(--success-color); }
+.btn-cancel-sm:hover { border-color: var(--danger-color); }
+
+.edit-select {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.3rem;
+  font-family: inherit;
+  border: 1px solid var(--accent-color);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--text-primary);
+  max-width: 110px;
+}
+.edit-input {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.3rem;
+  font-family: inherit;
+  border: 1px solid var(--accent-color);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--text-primary);
+  width: 90px;
+  text-align: right;
+}
+
+/* Category breakdown */
+.category-breakdown {
+  padding: 1.25rem;
+  text-align: left;
+}
+.breakdown-title {
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+}
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.breakdown-label {
+  font-weight: bold;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.breakdown-bar-wrap {
+  flex: 1;
+  height: 10px;
+  background: #ede7d7;
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 60px;
+}
+.breakdown-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.breakdown-value {
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+  min-width: 90px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.breakdown-pct {
+  color: var(--text-secondary);
+  min-width: 45px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* International search */
+.intl-search-wrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.intl-search-input {
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #fff;
+  outline: none;
+  width: 100px;
+  transition: border-color 0.15s;
+}
+.intl-search-input:focus { border-color: var(--accent-color); }
+.intl-search-input::placeholder { color: var(--text-secondary); }
 
 @media (max-width: 768px) {
   .form-card, .list-card {
