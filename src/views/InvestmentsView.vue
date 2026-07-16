@@ -50,23 +50,6 @@
       </div>
     </div>
 
-    <!-- CATEGORY BREAKDOWN -->
-    <div class="category-breakdown glass-panel">
-      <div class="flex-between">
-        <h3 class="breakdown-title">Distribuição por Classe</h3>
-      </div>
-      <div class="breakdown-list">
-        <div v-for="cat in categoryTotals" :key="cat.label" class="breakdown-row">
-          <span class="breakdown-label">{{ cat.label }}</span>
-          <span class="breakdown-bar-wrap">
-            <span class="breakdown-bar" :style="{ width: cat.pct + '%', background: cat.color }"></span>
-          </span>
-          <span class="breakdown-value">R$ {{ formatCurrency(cat.total) }}</span>
-          <span class="breakdown-pct">{{ cat.pct.toFixed(1) }}%</span>
-        </div>
-      </div>
-    </div>
-
     <div class="grid-2">
       <!-- FORM TO ADD INVESTMENT -->
       <div class="form-card glass-panel">
@@ -158,8 +141,11 @@
 
         <!-- NATIONAL ASSETS -->
         <div v-if="activeTab === 'national'" class="tab-content animate-fade-in">
-          <div v-if="nationalAssets.length === 0" class="empty-state">
-            <p>Nenhum ativo nacional cadastrado.</p>
+          <div class="tab-search-row">
+            🔍 <input type="text" v-model="nationalSearch" placeholder="Filtrar..." class="tab-search-input" />
+          </div>
+          <div v-if="filteredNational.length === 0" class="empty-state">
+            <p>Nenhum ativo nacional encontrado.</p>
           </div>
           <table v-else class="assets-table">
             <thead>
@@ -171,7 +157,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="i in nationalAssets" :key="i.id">
+              <tr v-for="i in filteredNational" :key="i.id">
                 <td class="text-bold">{{ i.name }}</td>
                 <td>
                   <span v-if="editingId !== i.id" class="badge badge-national">{{ i.category }}</span>
@@ -200,18 +186,13 @@
 
         <!-- INTERNATIONAL ASSETS -->
         <div v-if="activeTab === 'international'" class="tab-content animate-fade-in">
-          <div v-if="internationalAssets.length === 0" class="empty-state">
-            <p>Nenhum ativo internacional cadastrado.</p>
+          <div class="tab-search-row">
+            🔍 <input type="text" v-model="intlSearch" placeholder="Filtrar..." class="tab-search-input" />
           </div>
-          <div v-else>
-            <div class="intl-rate-note">
-              <span class="pulse-dot-sm"></span>
-              Câmbio: US$ 1 = R$ {{ exchangeRate ? exchangeRate.toFixed(4) : '...' }} (Dólar Comercial)
-              <span class="intl-search-wrap">
-                🔍 <input type="text" v-model="intlSearch" placeholder="Filtrar..." class="intl-search-input" />
-              </span>
-            </div>
-            <table class="assets-table">
+          <div v-if="filteredInternational.length === 0" class="empty-state">
+            <p>Nenhum ativo internacional encontrado.</p>
+          </div>
+          <table v-else class="assets-table">
               <thead>
                 <tr>
                   <th>Ticker</th>
@@ -248,6 +229,57 @@
                 </tr>
               </tbody>
             </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DONUT CHART -->
+    <div class="pie-chart-card glass-panel">
+      <div class="pie-chart-header">
+        <h3 class="breakdown-title">Distribuição por Classe</h3>
+      </div>
+      <div class="pie-body">
+        <div class="pie-svg-wrap">
+          <svg viewBox="0 0 200 200" class="pie-svg">
+            <g transform="rotate(-90 100 100)">
+              <circle
+                v-for="seg in pieSegments"
+                :key="seg.label"
+                cx="100" cy="100" r="78"
+                fill="none"
+                :stroke="seg.color"
+                stroke-width="38"
+                :stroke-dasharray="`${seg.dashLen} ${circumference}`"
+                :stroke-dashoffset="seg.dashOffset"
+                class="pie-segment"
+                :class="{ dim: hoveredCat && hoveredCat.label !== seg.label }"
+                @mouseenter="hoveredCat = seg"
+                @mouseleave="hoveredCat = null"
+                @click="hoveredCat = hoveredCat === seg ? null : seg"
+              />
+            </g>
+            <circle cx="100" cy="100" r="55" fill="var(--bg-color, #f5f0e6)" class="pie-hole" />
+            <text x="100" y="96" text-anchor="middle" class="pie-center-label" v-if="!hoveredCat">Total</text>
+            <text x="100" y="116" text-anchor="middle" class="pie-center-value" v-if="!hoveredCat">R$ {{ formatCurrency(pieGrandTotal) }}</text>
+            <text x="100" y="96" text-anchor="middle" class="pie-center-label" v-if="hoveredCat">{{ hoveredCat.label }}</text>
+            <text x="100" y="114" text-anchor="middle" class="pie-center-value" v-if="hoveredCat">R$ {{ formatCurrency(hoveredCat.total) }}</text>
+            <text x="100" y="132" text-anchor="middle" class="pie-center-pct" v-if="hoveredCat">{{ hoveredCat.pct.toFixed(1) }}%</text>
+          </svg>
+        </div>
+        <div class="pie-legend">
+          <div
+            v-for="seg in categoryTotals"
+            :key="seg.label"
+            class="legend-item"
+            :class="{ active: hoveredCat && hoveredCat.label === seg.label }"
+            @mouseenter="hoveredCat = seg"
+            @mouseleave="hoveredCat = null"
+            @click="hoveredCat = hoveredCat === seg ? null : seg"
+          >
+            <span class="legend-dot" :style="{ background: seg.color }"></span>
+            <span class="legend-label">{{ seg.label }}</span>
+            <span class="legend-value">R$ {{ formatCurrency(seg.total) }}</span>
+            <span class="legend-pct">{{ seg.pct.toFixed(1) }}%</span>
           </div>
         </div>
       </div>
@@ -290,8 +322,34 @@ function cancelEdit() {
   editingId.value = null
 }
 
-// Search on international tab
+// Search on both tabs
+const nationalSearch = ref('')
 const intlSearch = ref('')
+
+// Pie chart state
+const hoveredCat = ref(null)
+
+const circumference = 2 * Math.PI * 78 // ≈ 490.09
+
+const pieGrandTotal = computed(() =>
+  store.investments.reduce((sum, i) => {
+    const totalBrl = i.type === 'international'
+      ? Number(i.amount) * (exchangeRate.value || 5.70)
+      : Number(i.amount)
+    return sum + totalBrl
+  }, 0)
+)
+
+const pieSegments = computed(() => {
+  let offset = 0
+  const total = pieGrandTotal.value || 1
+  return categoryTotals.value.map(seg => {
+    const dashLen = (seg.pct / 100) * circumference
+    const segData = { ...seg, dashLen, dashOffset: -offset }
+    offset += dashLen
+    return segData
+  })
+})
 
 // Category totals for the breakdown block
 const categoryTotals = computed(() => {
@@ -368,6 +426,14 @@ const nationalAssets = computed(() =>
 const internationalAssets = computed(() =>
   store.investments.filter(i => i.type === 'international')
 )
+
+const filteredNational = computed(() => {
+  if (!nationalSearch.value) return nationalAssets.value
+  const q = nationalSearch.value.toLowerCase()
+  return nationalAssets.value.filter(i =>
+    i.name.toLowerCase().includes(q)
+  )
+})
 
 const filteredInternational = computed(() => {
   if (!intlSearch.value) return internationalAssets.value
@@ -848,80 +914,142 @@ function exportCSV() {
   text-align: right;
 }
 
-/* Category breakdown */
-.category-breakdown {
+/* Pie chart card */
+.pie-chart-card {
   padding: 1.25rem;
   text-align: left;
 }
+.pie-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
 .breakdown-title {
   font-size: 0.95rem;
-  margin: 0 0 1rem;
+  margin: 0;
 }
-.breakdown-list {
+.pie-body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+}
+.pie-svg-wrap {
+  flex-shrink: 0;
+  width: 200px;
+  height: 200px;
+}
+.pie-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.pie-segment {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.pie-segment.dim { opacity: 0.25; }
+.pie-hole { pointer-events: none; }
+.pie-center-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  fill: var(--text-secondary, #666);
+  pointer-events: none;
+}
+.pie-center-value {
+  font-size: 0.9rem;
+  font-weight: bold;
+  fill: var(--text-primary, #1e3a5f);
+  font-family: "Courier New", monospace;
+  pointer-events: none;
+}
+.pie-center-pct {
+  font-size: 0.75rem;
+  fill: var(--text-secondary, #666);
+  pointer-events: none;
+}
+.pie-legend {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
+  min-width: 0;
 }
-.breakdown-row {
+.legend-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  transition: background 0.15s;
 }
-.breakdown-label {
-  font-weight: bold;
-  min-width: 80px;
-  flex-shrink: 0;
+.legend-item:hover,
+.legend-item.active {
+  background: rgba(0,0,0,0.04);
 }
-.breakdown-bar-wrap {
-  flex: 1;
+.legend-dot {
+  width: 10px;
   height: 10px;
-  background: #ede7d7;
-  border-radius: 2px;
-  overflow: hidden;
-  min-width: 60px;
-}
-.breakdown-bar {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-.breakdown-value {
-  font-weight: bold;
-  font-family: "Courier New", monospace;
-  min-width: 90px;
-  text-align: right;
+  border-radius: 50%;
   flex-shrink: 0;
 }
-.breakdown-pct {
+.legend-label {
+  font-weight: bold;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+.legend-value {
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  text-align: right;
+  flex: 1;
+  min-width: 80px;
+}
+.legend-pct {
   color: var(--text-secondary);
   min-width: 45px;
   text-align: right;
   flex-shrink: 0;
 }
 
-/* International search */
-.intl-search-wrap {
-  margin-left: auto;
+@media (max-width: 600px) {
+  .pie-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pie-svg-wrap {
+    align-self: center;
+    width: 180px;
+    height: 180px;
+  }
+}
+
+/* Tab search */
+.tab-search-row {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  flex-shrink: 0;
+  margin-bottom: 0.75rem;
 }
-.intl-search-input {
+.tab-search-input {
   border: 1px solid var(--border-color);
   border-radius: 2px;
-  padding: 0.2rem 0.4rem;
-  font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
   font-family: inherit;
   color: var(--text-primary);
   background: #fff;
   outline: none;
-  width: 100px;
+  width: 160px;
+  max-width: 100%;
   transition: border-color 0.15s;
+  box-sizing: border-box;
 }
-.intl-search-input:focus { border-color: var(--accent-color); }
-.intl-search-input::placeholder { color: var(--text-secondary); }
+.tab-search-input:focus { border-color: var(--accent-color); }
+.tab-search-input::placeholder { color: var(--text-secondary); }
 
 @media (max-width: 768px) {
   .form-card, .list-card {
