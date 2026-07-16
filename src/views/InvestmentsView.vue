@@ -150,9 +150,9 @@
           <table v-else class="assets-table">
             <thead>
               <tr>
-                <th>Ticker</th>
-                <th>Classe</th>
-                <th class="text-right">Valor (R$)</th>
+                <th class="text-nowrap">Ticker</th>
+                <th class="text-nowrap">Classe</th>
+                <th class="text-right text-nowrap">Valor (R$)</th>
                 <th class="text-center"></th>
               </tr>
             </thead>
@@ -195,10 +195,10 @@
           <table v-else class="assets-table">
               <thead>
                 <tr>
-                  <th>Ticker</th>
-                  <th>Classe</th>
-                  <th class="text-right">Valor (US$)</th>
-                  <th class="text-right">Equiv. (R$)</th>
+                  <th class="text-nowrap">Ticker</th>
+                  <th class="text-nowrap">Classe</th>
+                  <th class="text-right text-nowrap">Equiv. (R$)</th>
+                  <th class="text-right text-nowrap">Valor (US$)</th>
                   <th class="text-center"></th>
                 </tr>
               </thead>
@@ -215,11 +215,11 @@
                       <option value="Outros">Outros</option>
                     </select>
                   </td>
+                  <td class="text-right text-muted">R$ {{ formatCurrency(i.amount * (exchangeRate || 5.70)) }}</td>
                   <td class="text-right text-bold">
                     <span v-if="editingId !== i.id">US$ {{ formatUsd(i.amount) }}</span>
                     <input v-else type="number" v-model.number="editAmount" step="0.01" class="input-field edit-input" />
                   </td>
-                  <td class="text-right text-muted">R$ {{ formatCurrency(i.amount * (exchangeRate || 5.70)) }}</td>
                   <td class="text-center">
                     <button v-if="editingId !== i.id" class="btn-edit-sm" @click="startEdit(i)">✏️</button>
                     <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)">✕</button>
@@ -489,13 +489,11 @@ const handleSubmit = async () => {
 }
 
 function exportCSV() {
-  const header = 'Ticket,Origem,Classe,Valor,Moeda'
+  const header = 'Ticket;Origem;Classe;Valor;Moeda'
   const rows = store.investments.map(i => {
     const currency = i.type === 'international' ? 'USD' : 'BRL'
-    const value = i.type === 'international'
-      ? `${Number(i.amount).toFixed(2)}`
-      : `${Number(i.amount).toFixed(2)}`
-    return `${i.name},${i.type},${i.category},${value},${currency}`
+    const value = Number(i.amount).toFixed(2).replace('.', ',')
+    return `${i.name};${i.type};${i.category};${value};${currency}`
   }).join('\n')
   const csv = header + '\n' + rows
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
@@ -817,6 +815,7 @@ function exportCSV() {
 
 .text-right  { text-align: right; }
 .text-center { text-align: center; }
+.text-nowrap { white-space: nowrap; }
 .text-muted  { color: var(--text-secondary); font-weight: normal !important; }
 
 .btn-delete-sm {
@@ -1036,8 +1035,8 @@ function exportCSV() {
 }
 .tab-search-input {
   border: 1px solid var(--border-color);
-  border-radius: 2px;
-  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
   font-size: 0.8rem;
   font-family: inherit;
   color: var(--text-primary);
