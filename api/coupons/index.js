@@ -19,13 +19,20 @@ export default async function handler(req, res) {
   const real = realResult.status === 'fulfilled' ? realResult.value : { stores: [], coupons: [] }
   const staticData = staticResult.status === 'fulfilled' ? staticResult.value : { stores: [], coupons: [] }
 
+  const realStoreIds = new Set(real.stores.map(s => s.id))
+
+  const staticFiltered = {
+    stores: staticData.stores.filter(s => !realStoreIds.has(s.id)),
+    coupons: staticData.coupons.filter(c => !realStoreIds.has(c.storeId))
+  }
+
   const storeMap = new Map()
-  for (const s of staticData.stores) storeMap.set(s.id, s)
-  for (const s of real.stores) {
+  for (const s of real.stores) storeMap.set(s.id, s)
+  for (const s of staticFiltered.stores) {
     if (!storeMap.has(s.id)) storeMap.set(s.id, s)
   }
 
-  let allCoupons = [...staticData.coupons, ...real.coupons]
+  let allCoupons = [...real.coupons, ...staticFiltered.coupons]
 
   if (storeFilter) {
     const ids = storeFilter.split(',').map(s => s.trim().toLowerCase())
@@ -45,7 +52,7 @@ export default async function handler(req, res) {
     coupons: allCoupons.slice(0, maxCoupons),
     total: allCoupons.length,
     sources: {
-      static: staticData.coupons.length,
+      static: staticFiltered.coupons.length,
       cupomdesconto: real.coupons.length
     }
   })
