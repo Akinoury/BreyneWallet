@@ -52,11 +52,11 @@
           {{ s.name }}
         </button>
         <button
-          v-if="hiddenStores.length > 0"
+          v-if="hasExtraStores"
           class="store-chip show-more-chip"
           @click="showAllStores = !showAllStores"
         >
-          {{ showAllStores ? '− Ver menos' : `+${hiddenStores.length} Ver mais` }}
+          {{ showAllStores ? '− Ver menos' : `+${extraCount} Ver mais` }}
         </button>
       </div>
     </div>
@@ -161,10 +161,8 @@ const visibleStores = computed(() => {
   if (showAllStores.value) return stores.value
   return stores.value.filter(s => famousStoreIds.includes(s.id))
 })
-const hiddenStores = computed(() => {
-  if (showAllStores.value) return []
-  return stores.value.filter(s => !famousStoreIds.includes(s.id))
-})
+const extraCount = computed(() => stores.value.filter(s => !famousStoreIds.includes(s.id)).length)
+const hasExtraStores = computed(() => extraCount.value > 0)
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('pt-BR')
