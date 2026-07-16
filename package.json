@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.4.1",
     "@capgo/capacitor-native-biometric": "^8.6.2",
     "@fontsource/playfair-display": "^5.2.8",

@@ -135,79 +135,45 @@
       </div>
     </div>
 
-    <div v-if="!loading && extraCoupons.length > 0" class="bonus-section">
+    <div class="bonus-section">
       <div class="bonus-header">
         <div class="bonus-icon">🎁</div>
         <div class="bonus-text">
           <strong>Não encontrou o cupom ideal?</strong>
-          <p>Você não encontrou o cupom que queria mas não quer perder a compra? Então teste estes cupons aqui, algum pode funcionar para você!</p>
+          <p>Você não encontrou o cupom que queria mas não quer perder a compra? Então teste estes cupons no Cuponomia, site parceiro com milhares de ofertas!</p>
         </div>
       </div>
-      <div v-if="filteredExtra.length === 0" class="empty-state glass-panel">
-        <span class="empty-icon">🏷️</span>
-        <p>Nenhum cupom bônus para esta loja.</p>
-      </div>
-      <div v-else class="coupons-grid">
-        <div
-          v-for="c in filteredExtra"
-          :key="c.id"
-          class="coupon-card glass-panel"
+      <div class="coupons-grid">
+        <button
+          v-for="s in cuponomiaStores"
+          :key="s.id"
+          class="coupon-card glass-panel cuponomia-card"
+          @click="openCuponomia(s.url)"
         >
-          <div class="card-store-bar" :style="{ background: getExtraStore(c.storeId)?.color || getStore(c.storeId)?.color || '#888' }"></div>
+          <div class="card-store-bar" :style="{ background: s.color }"></div>
           <div class="card-body">
             <div class="card-store-row">
               <span class="store-logo">
-                <img
-                  :src="getExtraStoreLogo(c)"
-                  alt=""
-                  class="store-logo-img"
-                  @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"
-                />
-                <span class="store-logo-fallback" style="display:none">{{ getExtraStore(c.storeId)?.fallbackIcon || '🛍️' }}</span>
+                <span class="store-logo-fallback" style="display:flex">{{ s.icon }}</span>
               </span>
               <div class="card-top">
-                <span class="store-badge">
-                  {{ getExtraStoreDisplayName(c) }}
-                </span>
-                <span class="discount-badge">{{ c.discount }}</span>
+                <span class="store-badge">{{ s.name }}</span>
+                <span class="discount-badge">Cuponomia</span>
               </div>
             </div>
-
-            <span class="verified-badge">✓ Verificado</span>
-            <h4 class="card-title">{{ c.title }}</h4>
-            <p class="card-desc">{{ c.description }}</p>
-
-            <div class="card-meta">
-              <span class="meta-expiry">
-                {{ c.expiresAt ? `Válido até ${formatDate(c.expiresAt)}` : '' }}
-              </span>
-            </div>
-
-            <div class="code-row">
-              <code class="coupon-code">{{ c.code }}</code>
-              <button class="btn-copy" @click="copyCode(c.code)">
-                {{ copied === c.code ? 'Copiado!' : 'Copiar' }}
-              </button>
-            </div>
-
-            <a
-              :href="c.couponUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-store"
-            >
-              Aplicar Cupom na Loja →
-            </a>
+            <p class="card-desc">Ver cupons disponíveis no Cuponomia →</p>
           </div>
-        </div>
+        </button>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useWalletStore } from '../stores/walletStore'
+import { openInAppBrowser } from '../utils/browser'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -223,21 +189,32 @@ const showAllStores = ref(false)
 const loading = ref(true)
 const error = ref('')
 const copied = ref('')
-const extraCoupons = ref([])
-const extraStores = ref([])
 
 const famousStoreIds = ['shopee','magalu','amazon','mercadolivre','americanas','ifood','uber-eats','netshoes','aliexpress','casasbahia']
+
+const CUPONOMIA_BASE = 'https://www.cuponomia.com.br/desconto'
+const cuponomiaStores = [
+  { id: 'shopee',        name: 'Shopee',          icon: '🛒', color: '#ee4d2d', url: `${CUPONOMIA_BASE}/shopee` },
+  { id: 'magalu',        name: 'Magazine Luiza',  icon: '📱', color: '#0054a0', url: `${CUPONOMIA_BASE}/magazine-luiza` },
+  { id: 'amazon',        name: 'Amazon Brasil',   icon: '📦', color: '#ff9900', url: `${CUPONOMIA_BASE}/amazon` },
+  { id: 'mercadolivre',  name: 'Mercado Livre',   icon: '🟡', color: '#ffe600', url: `${CUPONOMIA_BASE}/mercadolivre` },
+  { id: 'americanas',    name: 'Americanas',      icon: '🔴', color: '#cc0000', url: `${CUPONOMIA_BASE}/americanas` },
+  { id: 'ifood',         name: 'iFood',           icon: '🍔', color: '#ea1d2c', url: `${CUPONOMIA_BASE}/ifood` },
+  { id: 'netshoes',      name: 'Netshoes',        icon: '👟', color: '#005b9e', url: `${CUPONOMIA_BASE}/netshoes` },
+  { id: 'aliexpress',    name: 'AliExpress',      icon: '🌍', color: '#ff4747', url: `${CUPONOMIA_BASE}/aliexpress` },
+  { id: 'casasbahia',    name: 'Casas Bahia',     icon: '🏠', color: '#e60014', url: `${CUPONOMIA_BASE}/casas-bahia` }
+]
+
+function openCuponomia(url) {
+  openInAppBrowser(url)
+}
+
 const visibleStores = computed(() => {
   if (showAllStores.value) return stores.value
   return stores.value.filter(s => famousStoreIds.includes(s.id))
 })
 const extraCount = computed(() => stores.value.filter(s => !famousStoreIds.includes(s.id)).length)
 const hasExtraStores = computed(() => extraCount.value > 0)
-
-const filteredExtra = computed(() => {
-  if (!selectedStore.value) return extraCoupons.value
-  return extraCoupons.value.filter(c => c.storeId === selectedStore.value)
-})
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('pt-BR')
@@ -253,20 +230,6 @@ function isExpired(iso) {
 
 function getStore(storeId) {
   return stores.value.find(s => s.id === storeId)
-}
-
-function getExtraStore(storeId) {
-  return extraStores.value.find(s => s.id === storeId)
-}
-
-function getExtraStoreLogo(c) {
-  const s = getExtraStore(c.storeId) || getStore(c.storeId)
-  return s?.logo || ''
-}
-
-function getExtraStoreDisplayName(c) {
-  const s = getExtraStore(c.storeId) || getStore(c.storeId)
-  return s?.name || c.storeId || 'Loja'
 }
 
 function applyFilters() {
@@ -320,15 +283,6 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-
-  try {
-    const eres = await fetch(`${API_BASE}/api/coupons/extra`)
-    if (eres.ok) {
-      const edata = await eres.json()
-      extraStores.value = edata.stores || []
-      extraCoupons.value = (edata.coupons || []).slice(0, 50)
-    }
-  } catch {}
 })
 </script>
 
@@ -674,6 +628,26 @@ onMounted(async () => {
   background: #0f2740;
 }
 
+.cuponomia-card {
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+}
+
+.cuponomia-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+.cuponomia-card .card-desc {
+  color: var(--accent-color);
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+
 .bonus-section {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
@@ -715,4 +689,5 @@ onMounted(async () => {
   line-height: 1.5;
   margin: 0;
 }
+
 </style>
