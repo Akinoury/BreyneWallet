@@ -154,7 +154,13 @@
           <div class="card-body">
             <div class="card-store-row">
               <span class="store-logo">
-                <span class="store-logo-fallback" style="display:flex">{{ s.icon }}</span>
+                <img
+                  :src="s.logo"
+                  alt=""
+                  class="store-logo-img"
+                  @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"
+                />
+                <span class="store-logo-fallback" style="display:none">{{ s.icon }}</span>
               </span>
               <div class="card-top">
                 <span class="store-badge">{{ s.name }}</span>
@@ -192,17 +198,18 @@ const copied = ref('')
 
 const famousStoreIds = ['shopee','magalu','amazon','mercadolivre','americanas','ifood','uber-eats','netshoes','aliexpress','casasbahia']
 
+const FAV = 'https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://'
 const CUPONOMIA_BASE = 'https://www.cuponomia.com.br/desconto'
 const cuponomiaStores = [
-  { id: 'shopee',        name: 'Shopee',          icon: '🛒', color: '#ee4d2d', url: `${CUPONOMIA_BASE}/shopee` },
-  { id: 'magalu',        name: 'Magazine Luiza',  icon: '📱', color: '#0054a0', url: `${CUPONOMIA_BASE}/magazine-luiza` },
-  { id: 'amazon',        name: 'Amazon Brasil',   icon: '📦', color: '#ff9900', url: `${CUPONOMIA_BASE}/amazon` },
-  { id: 'mercadolivre',  name: 'Mercado Livre',   icon: '🟡', color: '#ffe600', url: `${CUPONOMIA_BASE}/mercadolivre` },
-  { id: 'americanas',    name: 'Americanas',      icon: '🔴', color: '#cc0000', url: `${CUPONOMIA_BASE}/americanas` },
-  { id: 'ifood',         name: 'iFood',           icon: '🍔', color: '#ea1d2c', url: `${CUPONOMIA_BASE}/ifood` },
-  { id: 'netshoes',      name: 'Netshoes',        icon: '👟', color: '#005b9e', url: `${CUPONOMIA_BASE}/netshoes` },
-  { id: 'aliexpress',    name: 'AliExpress',      icon: '🌍', color: '#ff4747', url: `${CUPONOMIA_BASE}/aliexpress` },
-  { id: 'casasbahia',    name: 'Casas Bahia',     icon: '🏠', color: '#e60014', url: `${CUPONOMIA_BASE}/casas-bahia` }
+  { id: 'shopee',        name: 'Shopee',          icon: '🛒', color: '#ee4d2d', url: `${CUPONOMIA_BASE}/shopee`,        logo: `${FAV}shopee.com.br&size=128` },
+  { id: 'magalu',        name: 'Magazine Luiza',  icon: '📱', color: '#0054a0', url: `${CUPONOMIA_BASE}/magazine-luiza`, logo: `${FAV}magazineluiza.com.br&size=128` },
+  { id: 'amazon',        name: 'Amazon Brasil',   icon: '📦', color: '#ff9900', url: `${CUPONOMIA_BASE}/amazon`,        logo: `${FAV}amazon.com.br&size=128` },
+  { id: 'mercadolivre',  name: 'Mercado Livre',   icon: '🟡', color: '#ffe600', url: `${CUPONOMIA_BASE}/mercadolivre`,   logo: `${FAV}mercadolivre.com.br&size=128` },
+  { id: 'americanas',    name: 'Americanas',      icon: '🔴', color: '#cc0000', url: `${CUPONOMIA_BASE}/americanas`,     logo: `${FAV}americanas.com.br&size=128` },
+  { id: 'ifood',         name: 'iFood',           icon: '🍔', color: '#ea1d2c', url: `${CUPONOMIA_BASE}/ifood`,          logo: `${FAV}ifood.com.br&size=128` },
+  { id: 'netshoes',      name: 'Netshoes',        icon: '👟', color: '#005b9e', url: `${CUPONOMIA_BASE}/netshoes`,       logo: `${FAV}netshoes.com.br&size=128` },
+  { id: 'aliexpress',    name: 'AliExpress',      icon: '🌍', color: '#ff4747', url: `${CUPONOMIA_BASE}/aliexpress`,     logo: `${FAV}aliexpress.com&size=128` },
+  { id: 'casasbahia',    name: 'Casas Bahia',     icon: '🏠', color: '#e60014', url: `${CUPONOMIA_BASE}/casas-bahia`,    logo: `${FAV}casasbahia.com.br&size=128` }
 ]
 
 function openCuponomia(url) {
