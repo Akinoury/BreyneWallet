@@ -436,13 +436,18 @@
       <div class="speculative-panel">
         <h4 class="charts-title">🔬 Números Especulativos</h4>
         <div class="speculative-grid">
-          <div class="spec-card">
-            <span class="spec-label">Total Aportado até Independência</span>
-            <span class="spec-value">R$ {{ formatCurrency(speculativeData.totalContributions) }}</span>
-          </div>
-          <div class="spec-card">
-            <span class="spec-label">Juros Acumulados até Independência</span>
-            <span class="spec-value text-success">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</span>
+          <div class="spec-card" style="grid-column: span 2;">
+            <span class="spec-label">Composição do Patrimônio até a Independência</span>
+            <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.4rem;">
+              <div style="text-align: center;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
+                <span class="spec-value">R$ {{ formatCurrency(speculativeData.totalContributions) }}</span>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
+                <span class="spec-value text-success">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</span>
+              </div>
+            </div>
           </div>
           <div class="spec-card">
             <span class="spec-label">Renda Passiva em 20 Anos</span>
