@@ -237,7 +237,6 @@ function buildCouponUrl(store, category) {
 }
 
 export function generateCoupons(store, count) {
-  const verbs = ['FRETE', 'DESCONTO', 'PIX', 'CUPOM', 'OFERTA', 'SUPER', 'EXCLUSIVO']
   const pcts = [5, 8, 10, 12, 15, 20, 25, 30, 35, 40, 50]
   const now = Date.now()
   const coupons = []
@@ -245,15 +244,14 @@ export function generateCoupons(store, count) {
     const pct = pcts[randomBetween(0, pcts.length - 1)]
     const category = store.categories[randomBetween(0, store.categories.length - 1)]
     const minPurchase = randomBetween(5, 30) * 10
-    const code = `${verbs[randomBetween(0, verbs.length - 1)]}${pct}${store.id.toUpperCase().slice(0, 4)}`
     coupons.push({
       id: `static-${store.id}-${i}`,
       storeId: store.id,
-      title: `${pct}% OFF em ${category}`,
-      description: `Ganhe ${pct}% de desconto em produtos selecionados da ${store.name}. Válido para compras acima de R$ ${minPurchase},00.`,
-      code,
+      title: `Confira ofertas em ${category}`,
+      description: `Encontre ${store.name} com ${pct}% de desconto em produtos selecionados. Mínimo: R$ ${minPurchase},00.`,
+      code: null,
       couponUrl: buildCouponUrl(store, category),
-      discount: `${pct}%`,
+      discount: `até ${pct}%`,
       discountType: 'percent',
       minPurchase,
       expiresAt: new Date(now + randomBetween(15, 60) * 86400000).toISOString(),

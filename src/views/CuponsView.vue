@@ -96,7 +96,7 @@
             <span class="meta-used">{{ c.usedCount.toLocaleString('pt-BR') }} usos</span>
           </div>
 
-          <div class="code-row">
+          <div v-if="c.code" class="code-row">
             <code class="coupon-code">{{ c.code }}</code>
             <button class="btn-copy" @click="copyCode(c.code)">
               {{ copied === c.code ? 'Copiado!' : 'Copiar' }}
@@ -113,7 +113,7 @@
             rel="noopener noreferrer"
             class="btn-store"
           >
-            Aplicar Cupom na Loja →
+            {{ c.code ? 'Aplicar Cupom na Loja →' : 'Ver Ofertas na Loja →' }}
           </a>
         </div>
       </div>
