@@ -86,6 +86,8 @@
             </div>
           </div>
 
+          <span v-if="c.id?.startsWith('cupomdesconto')" class="verified-badge">✓ Verificado</span>
+
           <h4 class="card-title">{{ c.title }}</h4>
           <p class="card-desc">{{ c.description }}</p>
 
@@ -413,6 +415,20 @@ onMounted(async () => {
   font-size: 0.85rem;
   font-weight: bold;
   white-space: nowrap;
+}
+
+.verified-badge {
+  display: inline-block;
+  background: rgba(30, 70, 37, 0.08);
+  color: var(--success-color);
+  font-size: 0.68rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  align-self: flex-start;
+  margin-bottom: 0.15rem;
 }
 
 .card-title {
