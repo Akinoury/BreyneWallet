@@ -370,7 +370,8 @@
 
       <!-- SIMULATION RESULTS -->
       <div class="simulator-results-grid">
-        <!-- Dividend Forecast Card -->
+
+        <!-- Row 1 -->
         <div class="sim-card sim-card-dividendos">
           <span class="sim-card-label">📊 Dividendos Mensais (Fundo)</span>
           <h4 class="sim-card-value text-accent">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}</h4>
@@ -379,34 +380,20 @@
           </span>
         </div>
 
-        <!-- 1 Year Card -->
         <div class="sim-card">
-          <span class="sim-card-label">Acumulado em 1 Ano</span>
-          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(12)) }}</h4>
-          <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(12) * monthlyRate) }} / mês
-          </span>
+          <span class="sim-card-label">Composição do Patrimônio até a Independência</span>
+          <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.6rem;">
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
+              <h4 class="sim-card-value" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
+              <h4 class="sim-card-value text-success" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</h4>
+            </div>
+          </div>
         </div>
 
-        <!-- 5 Years Card -->
-        <div class="sim-card">
-          <span class="sim-card-label">Acumulado em 5 Anos</span>
-          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(60)) }}</h4>
-          <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(60) * monthlyRate) }} / mês
-          </span>
-        </div>
-
-        <!-- 10 Years Card -->
-        <div class="sim-card">
-          <span class="sim-card-label">Acumulado em 10 Anos</span>
-          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(120)) }}</h4>
-          <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(120) * monthlyRate) }} / mês
-          </span>
-        </div>
-
-        <!-- Financial Independence Target Card -->
         <div class="sim-card target-indep-card" :class="{ 'reached-card': financialIndependenceYears.alreadyReached }">
           <span class="sim-card-label">Tempo para Liberdade Financeira</span>
           
@@ -431,19 +418,29 @@
           </div>
         </div>
 
-        <!-- Composição do Patrimônio -->
+        <!-- Row 2 -->
         <div class="sim-card">
-          <span class="sim-card-label">Composição do Patrimônio até a Independência</span>
-          <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.6rem;">
-            <div style="text-align: center;">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
-              <h4 class="sim-card-value" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
-              <h4 class="sim-card-value text-success" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</h4>
-            </div>
-          </div>
+          <span class="sim-card-label">Acumulado em 1 Ano</span>
+          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(12)) }}</h4>
+          <span class="sim-card-sub text-success">
+            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(12) * monthlyRate) }} / mês
+          </span>
+        </div>
+
+        <div class="sim-card">
+          <span class="sim-card-label">Acumulado em 5 Anos</span>
+          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(60)) }}</h4>
+          <span class="sim-card-sub text-success">
+            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(60) * monthlyRate) }} / mês
+          </span>
+        </div>
+
+        <div class="sim-card">
+          <span class="sim-card-label">Acumulado em 10 Anos</span>
+          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(120)) }}</h4>
+          <span class="sim-card-sub text-success">
+            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(120) * monthlyRate) }} / mês
+          </span>
         </div>
 
       </div>
