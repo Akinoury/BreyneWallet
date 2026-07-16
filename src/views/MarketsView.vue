@@ -44,7 +44,7 @@
     <template v-else>
       <div class="result-info">
         <strong>{{ displayStocks.length }}</strong> ativo{{ displayStocks.length !== 1 ? 's' : '' }} encontrado{{ displayStocks.length !== 1 ? 's' : '' }}
-        <button v-if="showShowAll" class="link-btn" @click="showAll = true">— mostrar todos os {{ filteredStocks.length }}</button>
+        <span v-if="isPreview" class="preview-note">— preview de 50</span>
       </div>
 
       <div v-if="displayStocks.length === 0" class="empty-state glass-panel">
@@ -218,7 +218,7 @@ const error = ref('')
 const selectedExchanges = ref([])
 const selectedTypes = ref([])
 const searchQuery = ref('')
-const showAll = ref(false)
+
 const detail = ref(null)
 const chartCanvas = ref(null)
 const chartLoading = ref(false)
@@ -246,20 +246,14 @@ const filteredStocks = computed(() => {
   return result
 })
 
-const hasFilters = computed(() =>
-  selectedExchanges.value.length > 0 || selectedTypes.value.length > 0 || searchQuery.value
-)
-
-const showShowAll = computed(() =>
-  !hasFilters.value && !showAll.value && filteredStocks.value.length > 50
+const isPreview = computed(() =>
+  !selectedExchanges.value.length && !selectedTypes.value.length && !searchQuery.value
 )
 
 const displayStocks = computed(() => {
-  if (showShowAll.value) return filteredStocks.value.slice(0, 50)
+  if (isPreview.value) return filteredStocks.value.slice(0, 50)
   return filteredStocks.value
 })
-
-watch(hasFilters, () => { showAll.value = false })
 
 function getExchangeLabel(key) {
   return exchanges.find(e => e.key === key)?.label || key
@@ -454,6 +448,30 @@ async function lookupTicker() {
   } catch {}
 }
 
+let searchTimer
+watch(searchQuery, (val) => {
+  clearTimeout(searchTimer)
+  if (!val || val.trim().length < 2) return
+  searchTimer = setTimeout(() => liveLookup(val.trim()), 600)
+})
+
+async function liveLookup(q) {
+  const upper = q.toUpperCase()
+  const exists = stocks.value.some(s => s.symbol.toUpperCase() === upper)
+  if (exists) return
+  try {
+    const res = await fetch(`${API_BASE}/api/markets?symbols=${upper}`)
+    if (!res.ok) return
+    const data = await res.json()
+    if (data.stocks?.length) {
+      const found = data.stocks[0]
+      if (!stocks.value.some(s => s.symbol.toUpperCase() === found.symbol.toUpperCase())) {
+        stocks.value.unshift(found)
+      }
+    }
+  } catch {}
+}
+
 watch(detail, (val) => {
   if (!val) {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null }
@@ -638,15 +656,9 @@ onMounted(() => {
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
-.link-btn {
-  background: none;
-  border: none;
-  font: inherit;
-  color: var(--accent-color);
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  margin-left: 0.5rem;
+.preview-note {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
 }
 
 .empty-state {
