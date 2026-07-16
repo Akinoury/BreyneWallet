@@ -32,9 +32,9 @@ async function putJSON(path, data) {
 }
 
 async function getJSON(path) {
-  const blob = await get(path)
-  if (!blob) return null
-  const text = await blob.text()
+  const result = await get(path, { access: 'private' })
+  if (!result || !result.stream) return null
+  const text = await new Response(result.stream).text()
   return deserialize(text)
 }
 
