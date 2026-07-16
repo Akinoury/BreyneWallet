@@ -207,7 +207,7 @@ const cuponomiaStores = [
   { id: 'amazon',        name: 'Amazon Brasil',   icon: '📦', color: '#ff9900', url: `${CUPONOMIA_BASE}/amazon`,        logo: `${FAV}amazon.com.br&size=128` },
   { id: 'mercadolivre',  name: 'Mercado Livre',   icon: '🟡', color: '#ffe600', url: `${CUPONOMIA_BASE}/mercadolivre`,   logo: `${FAV}mercadolivre.com.br&size=128` },
   { id: 'americanas',    name: 'Americanas',      icon: '🔴', color: '#cc0000', url: `${CUPONOMIA_BASE}/americanas`,     logo: `${FAV}americanas.com.br&size=128` },
-  { id: 'submarino',     name: 'Submarino',       icon: '🔵', color: '#004b8d', url: `${CUPONOMIA_BASE}/submarino`,      logo: `${FAV}submarino.com.br&size=128` },
+  { id: 'submarino',     name: 'Submarino',       icon: '🔵', color: '#004b8d', url: `${CUPONOMIA_BASE}/submarino`,      logo: 'https://logo.clearbit.com/submarino.com.br' },
   { id: 'ifood',         name: 'iFood',           icon: '🍔', color: '#ea1d2c', url: `${CUPONOMIA_BASE}/ifood`,          logo: `${FAV}ifood.com.br&size=128` },
   { id: 'netshoes',      name: 'Netshoes',        icon: '👟', color: '#005b9e', url: `${CUPONOMIA_BASE}/netshoes`,       logo: `${FAV}netshoes.com.br&size=128` },
   { id: 'aliexpress',    name: 'AliExpress',      icon: '🌍', color: '#ff4747', url: `${CUPONOMIA_BASE}/aliexpress`,     logo: `${FAV}aliexpress.com&size=128` },
@@ -290,16 +290,19 @@ onMounted(async () => {
     const res = await fetch(`${API_BASE}/api/coupons?${params}`)
     if (!res.ok) throw new Error('Erro ao carregar cupons')
     const data = await res.json()
-    stores.value = (data.stores || []).filter(s => s.id !== 'submarino').map(s => {
+    stores.value = (data.stores || []).filter(s => s.id !== 'submarino' && s.id !== 'uber-eats').map(s => {
       if (s.name?.toLowerCase().includes('submarino')) {
-        return { ...s, id: 'submarino', name: 'Submarino', color: '#004b8d', logo: `${FAV}submarino.com.br&size=128`, fallbackIcon: '🔵' }
+        return { ...s, id: 'submarino', name: 'Submarino', color: '#004b8d', logo: 'https://logo.clearbit.com/submarino.com.br', fallbackIcon: '🔵' }
       }
       return s
     })
     if (!stores.value.find(s => s.id === 'submarino')) {
-      stores.value.push({ id: 'submarino', name: 'Submarino', color: '#004b8d', logo: `${FAV}submarino.com.br&size=128`, fallbackIcon: '🔵' })
+      stores.value.push({ id: 'submarino', name: 'Submarino', color: '#004b8d', logo: 'https://logo.clearbit.com/submarino.com.br', fallbackIcon: '🔵' })
     }
-    allCoupons.value = (data.coupons || []).map(c => {
+    allCoupons.value = (data.coupons || []).filter(c => {
+      const id = c.storeId?.toLowerCase() || ''
+      return !id.includes('uber-eats') && !id.includes('uber_eats')
+    }).map(c => {
       const texto = ((c.title || '') + ' ' + (c.description || '')).toLowerCase()
       if (texto.includes('submarino') && c.storeId !== 'submarino') {
         return { ...c, storeId: 'submarino' }

@@ -791,7 +791,7 @@ const renderCharts = async () => {
       datasets: [{
         label: 'Renda Passiva Mensal (R$)',
         data: milestones.map(y => Number((calculateAccumulation(y * 12) * monthlyRate.value).toFixed(2))),
-        backgroundColor: milestones.map((_, i) => i < 4 ? 'rgba(30,58,95,0.6)' : 'rgba(30,58,95,0.85)'),
+        backgroundColor: 'rgba(30,58,95,0.75)',
         borderColor: palette.navy,
         borderWidth: 1,
         borderRadius: 3
@@ -969,7 +969,10 @@ const renderCharts = async () => {
             borderWidth: 2,
             fill: false,
             tension: 0.35,
-            pointRadius: 2
+            pointRadius: 3,
+            pointBackgroundColor: '#1e3a5f',
+            pointBorderColor: '#1e3a5f',
+            pointHoverRadius: 5
           },
           {
             label: 'Poder de Compra Real (R$)',
@@ -979,7 +982,10 @@ const renderCharts = async () => {
             borderWidth: 2,
             fill: false,
             tension: 0.35,
-            pointRadius: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#2d6a4f',
+            pointBorderColor: '#2d6a4f',
+            pointHoverRadius: 5,
             borderDash: [5, 3]
           }
         ]
