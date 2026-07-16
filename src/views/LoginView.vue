@@ -50,12 +50,13 @@
               {{ isLoading ? 'Autenticando...' : 'Fazer Login' }}
             </button>
 
-            <!-- BIOMETRIC SENSOR (only shown when a local biometric credential exists) -->
-            <div v-if="hasBiometricCredential" class="biometric-singelo" @click="triggerBiometricScan">
+            <!-- BIOMETRIC SENSOR -->
+            <div class="biometric-singelo" :class="{ 'error-sensor': scanError }" @click="triggerBiometricScan">
               <svg class="fingerprint-icon-sm" :class="{ 'scanning': isScanning, 'success': scanSuccess, 'error': scanError }" viewBox="0 0 24 24">
                 <path d="M12,2A10,10,0,0,0,2,12a9.89,9.89,0,0,0,2.19,6.17,1,1,0,1,0,1.62-1.18,7.92,7.92,0,0,1-1.81-4.99,8,8,0,0,1,16,0,7.91,7.91,0,0,1-1.63,4.89,1,1,0,0,0,1.57,1.24A9.89,9.89,0,0,0,22,12,10,10,0,0,0,12,2Zm0,4a6,6,0,0,0-6,6,5.88,5.88,0,0,0,1,3.25,1,1,0,0,0,1.67-1.1,3.87,3.87,0,0,1-.67-2.15,4,4,0,0,1,8,0,3.82,3.82,0,0,1-.83,2.37,1,1,0,0,0,.16,1.4,1,1,0,0,0,1.4-.16A5.82,5.82,0,0,0,18,12,6,6,0,0,0,12,6Zm0,4a2,2,0,0,0-2,2,1.91,1.91,0,0,0,.29,1,1,0,0,0,1.71-1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,.29,1,2,2,0,0,0,0-4Z"/>
               </svg>
               <span class="bio-text-sm">{{ bioStatusLabel }}</span>
+              <span v-if="!hasBiometricCredential" class="bio-hint">Nenhuma biometria cadastrada. Faça login e vá em Configurações.</span>
             </div>
           </form>
 
@@ -122,6 +123,8 @@ onMounted(async () => {
     if (accounts.length > 0) {
       bioStatusLabel.value = `Olá, ${accounts[0].name}! Toque para autenticar`
     }
+  } else {
+    bioStatusLabel.value = 'Autenticação Biométrica'
   }
 })
 
@@ -150,6 +153,16 @@ const handleLogin = async () => {
 
 const triggerBiometricScan = async () => {
   if (isScanning.value) return
+
+  if (!hasBiometricCredential.value) {
+    errorMsg.value = 'Nenhuma biometria cadastrada. Vá em Configurações após fazer login para cadastrar.'
+    scanError.value = true
+    setTimeout(() => {
+      scanError.value = false
+      errorMsg.value = ''
+    }, 4000)
+    return
+  }
 
   const userIds = biometricService.getSavedAccountIds()
   if (userIds.length === 0) {
@@ -451,11 +464,21 @@ const playBeep = (freq, type, duration) => {
   background: #fdfcf7;
   border: 1px solid var(--border-color);
   transition: all 0.2s;
+  flex-wrap: wrap;
 }
 
 .biometric-singelo:hover {
   background: #f3efe2;
   border-color: var(--accent-color);
+}
+
+.biometric-singelo.error-sensor {
+  border-color: var(--danger-color);
+  background: #fdf2f2;
+}
+
+.biometric-singelo.error-sensor:hover {
+  background: #fce8e8;
 }
 
 .fingerprint-icon-sm {
@@ -484,6 +507,16 @@ const playBeep = (freq, type, duration) => {
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.bio-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  width: 100%;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: normal;
 }
 
 @keyframes pulseScan {
