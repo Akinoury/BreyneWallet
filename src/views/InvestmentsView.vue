@@ -53,7 +53,7 @@
     <div class="grid-2">
       <!-- FORM TO ADD INVESTMENT -->
       <div class="form-card glass-panel">
-        <h3>Registrar Novo Ativo</h3>
+        <h3>Registrar Novo Aporte</h3>
         <p class="form-subtitle">Adicione ativos da sua carteira para gerenciar sua alocação.</p>
 
         <form @submit.prevent="handleSubmit" class="invest-form">
@@ -159,25 +159,11 @@
             <tbody>
               <tr v-for="i in filteredNational" :key="i.id">
                 <td class="text-bold">{{ i.name }}</td>
-                <td>
-                  <span v-if="editingId !== i.id" class="badge badge-national">{{ i.category }}</span>
-                  <select v-else v-model="editCategory" class="select-field edit-select">
-                    <option value="Ações">Ações</option>
-                    <option value="FIIs">FIIs</option>
-                    <option value="Renda Fixa">Renda Fixa</option>
-                    <option value="ETFs">ETFs</option>
-                    <option value="Outros">Outros</option>
-                  </select>
-                </td>
-                <td class="text-right text-bold">
-                  <span v-if="editingId !== i.id">R$ {{ formatCurrency(i.amount) }}</span>
-                  <input v-else type="number" v-model.number="editAmount" step="0.01" class="input-field edit-input" />
-                </td>
+                <td><span class="badge badge-national">{{ i.category }}</span></td>
+                <td class="text-right text-bold">R$ {{ formatCurrency(i.amount) }}</td>
                 <td class="text-center">
-                  <button v-if="editingId !== i.id" class="btn-edit-sm" @click="startEdit(i)">✏️</button>
-                  <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)">✕</button>
-                  <button v-if="editingId === i.id" class="btn-save-sm" @click="saveEdit(i)">💾</button>
-                  <button v-if="editingId === i.id" class="btn-cancel-sm" @click="cancelEdit">↩️</button>
+                  <button class="btn-edit-sm" @click="startEdit(i)" title="Editar">✏️</button>
+                  <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)" title="Excluir">✕</button>
                 </td>
               </tr>
             </tbody>
@@ -205,26 +191,12 @@
               <tbody>
                 <tr v-for="i in filteredInternational" :key="i.id">
                   <td class="text-bold">{{ i.name }}</td>
-                  <td>
-                    <span v-if="editingId !== i.id" class="badge badge-international">{{ i.category }}</span>
-                    <select v-else v-model="editCategory" class="select-field edit-select">
-                      <option value="Stocks">Stocks</option>
-                      <option value="REITs">REITs</option>
-                      <option value="Crypto">Crypto</option>
-                      <option value="ETFs">ETFs</option>
-                      <option value="Outros">Outros</option>
-                    </select>
-                  </td>
+                  <td><span class="badge badge-international">{{ i.category }}</span></td>
                   <td class="text-right text-muted">R$ {{ formatCurrency(i.amount * (exchangeRate || 5.70)) }}</td>
-                  <td class="text-right text-bold">
-                    <span v-if="editingId !== i.id">US$ {{ formatUsd(i.amount) }}</span>
-                    <input v-else type="number" v-model.number="editAmount" step="0.01" class="input-field edit-input" />
-                  </td>
+                  <td class="text-right text-bold">US$ {{ formatUsd(i.amount) }}</td>
                   <td class="text-center">
-                    <button v-if="editingId !== i.id" class="btn-edit-sm" @click="startEdit(i)">✏️</button>
-                    <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)">✕</button>
-                    <button v-if="editingId === i.id" class="btn-save-sm" @click="saveEdit(i)">💾</button>
-                    <button v-if="editingId === i.id" class="btn-cancel-sm" @click="cancelEdit">↩️</button>
+                    <button class="btn-edit-sm" @click="startEdit(i)" title="Editar">✏️</button>
+                    <button class="btn-delete-sm" @click="store.deleteInvestment(i.id)" title="Excluir">✕</button>
                   </td>
                 </tr>
               </tbody>
@@ -284,6 +256,37 @@
         </div>
       </div>
     </div>
+
+    <!-- EDIT MODAL -->
+    <div v-if="editingAsset" class="edit-modal-overlay" @click.self="cancelEdit">
+      <div class="edit-modal glass-panel">
+        <button class="edit-modal-close" @click="cancelEdit">✕</button>
+        <h3 class="edit-modal-title">Editar Aporte</h3>
+        <div class="edit-modal-body">
+          <div class="edit-modal-field">
+            <label class="edit-modal-label">Ticket</label>
+            <span class="edit-modal-ticket">{{ editingAsset.name }}</span>
+          </div>
+          <div class="edit-modal-field">
+            <label class="edit-modal-label">Valor</label>
+            <div class="edit-modal-amount-wrap">
+              <span class="edit-modal-currency-tag">{{ editingAsset.type === 'international' ? 'US$' : 'R$' }}</span>
+              <input type="number" v-model.number="editAmount" step="0.01" class="edit-modal-input" />
+            </div>
+          </div>
+          <div class="edit-modal-field">
+            <label class="edit-modal-label">Classe</label>
+            <select v-model="editCategory" class="edit-modal-select">
+              <option v-for="opt in editCategoryOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="edit-modal-actions">
+          <button class="btn-cancel-modal" @click="cancelEdit">Cancelar</button>
+          <button class="btn-save-modal" @click="saveEdit">Salvar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -300,26 +303,35 @@ const category = ref('Ações')
 const activeTab = ref('national')
 const exchangeRate = ref(null)
 
-// Edit state
-const editingId = ref(null)
+// Edit state (modal)
+const editingAsset = ref(null)
 const editAmount = ref(null)
 const editCategory = ref('')
 
+const editCategoryOptions = computed(() => {
+  if (!editingAsset.value) return []
+  if (editingAsset.value.type === 'national') {
+    return ['Ações', 'FIIs', 'Renda Fixa', 'ETFs', 'Outros']
+  }
+  return ['Stocks', 'REITs', 'Crypto', 'ETFs', 'Outros']
+})
+
 function startEdit(asset) {
-  editingId.value = asset.id
+  editingAsset.value = asset
   editAmount.value = asset.amount
   editCategory.value = asset.category
 }
-async function saveEdit(asset) {
+async function saveEdit() {
+  if (!editingAsset.value) return
   if (editAmount.value === null || editAmount.value <= 0) return
-  await store.updateInvestment(asset.id, {
+  await store.updateInvestment(editingAsset.value.id, {
     amount: Number(editAmount.value),
     category: editCategory.value
   })
-  editingId.value = null
+  editingAsset.value = null
 }
 function cancelEdit() {
-  editingId.value = null
+  editingAsset.value = null
 }
 
 // Search on both tabs
@@ -866,7 +878,7 @@ function exportCSV() {
   color: #fff;
 }
 
-/* Edit buttons */
+/* Edit button */
 .btn-edit-sm {
   background: transparent;
   border: none;
@@ -877,41 +889,140 @@ function exportCSV() {
   transition: transform 0.15s;
 }
 .btn-edit-sm:hover { transform: scale(1.2); }
-.btn-save-sm, .btn-cancel-sm {
+
+/* Edit modal */
+.edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.edit-modal {
+  max-width: 380px;
+  width: 100%;
+  padding: 1.5rem;
+  position: relative;
+  text-align: left;
+}
+.edit-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
   background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 2px;
+  border: none;
+  font-size: 1.1rem;
   cursor: pointer;
-  padding: 0.2rem 0.3rem;
-  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: inherit;
   line-height: 1;
-  margin-left: 0.2rem;
+}
+.edit-modal-title {
+  font-size: 1.1rem;
+  margin: 0 0 1.25rem;
+}
+.edit-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.edit-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.edit-modal-label {
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+.edit-modal-ticket {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+.edit-modal-amount-wrap {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+  height: 42px;
+}
+.edit-modal-currency-tag {
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  background: #f5f0e6;
+  border-right: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+.edit-modal-input {
+  border: none;
+  outline: none;
+  padding: 0 0.75rem;
+  flex: 1;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-size: 1rem;
+  background: #fff;
+  color: var(--text-primary);
+}
+.edit-modal-select {
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text-primary);
+  outline: none;
+  height: 42px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.edit-modal-select:focus { border-color: var(--accent-color); }
+.edit-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
+}
+.btn-cancel-modal {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  border-radius: 3px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-secondary);
   transition: all 0.15s;
 }
-.btn-save-sm:hover { border-color: var(--success-color); }
-.btn-cancel-sm:hover { border-color: var(--danger-color); }
-
-.edit-select {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.3rem;
-  font-family: inherit;
-  border: 1px solid var(--accent-color);
-  border-radius: 2px;
-  background: #fff;
+.btn-cancel-modal:hover {
+  border-color: var(--text-primary);
   color: var(--text-primary);
-  max-width: 110px;
 }
-.edit-input {
-  font-size: 0.78rem;
-  padding: 0.2rem 0.3rem;
+.btn-save-modal {
+  border: none;
+  background: var(--text-primary);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
   font-family: inherit;
-  border: 1px solid var(--accent-color);
-  border-radius: 2px;
-  background: #fff;
-  color: var(--text-primary);
-  width: 90px;
-  text-align: right;
+  transition: background 0.15s;
 }
+.btn-save-modal:hover { background: #0f2740; }
 
 /* Pie chart card */
 .pie-chart-card {
