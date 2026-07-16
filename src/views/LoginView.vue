@@ -208,7 +208,7 @@ const triggerBiometricScan = async () => {
         name: result.user.name,
         email: result.user.email
       }
-      await store.loadWalletState()
+      try { await store.loadWalletState() } catch (e) { console.warn('Load wallet after biometric:', e) }
     }
 
     setTimeout(() => {

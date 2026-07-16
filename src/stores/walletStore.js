@@ -497,6 +497,7 @@ export const useWalletStore = defineStore('wallet', () => {
     simulateInterest,
     saveToLocalStorage,
     loadFromLocalStorage,
+    loadWalletState,
 
     registerUser,
     loginUser,
