@@ -108,12 +108,12 @@
           </div>
 
           <a
-            :href="getStore(c.storeId)?.url"
+            :href="c.couponUrl || getStore(c.storeId)?.url"
             target="_blank"
             rel="noopener noreferrer"
             class="btn-store"
           >
-            Abrir Loja →
+            Aplicar Cupom na Loja →
           </a>
         </div>
       </div>

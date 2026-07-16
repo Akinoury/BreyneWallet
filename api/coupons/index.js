@@ -99,6 +99,23 @@ function randomBetween(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+function buildCouponUrl(store, category) {
+  const cat = encodeURIComponent(category.toLowerCase())
+  const map = {
+    shopee:     `https://shopee.com.br/search?keyword=${cat}+promocao`,
+    magalu:     `https://magazineluiza.com.br/busca/${cat}/`,
+    amazon:     `https://amazon.com.br/s?k=${cat}+oferta`,
+    mercadolivre: `https://mercadolivre.com.br/ofertas?q=${cat}`,
+    americanas: `https://americanas.com.br/busca/${cat}`,
+    ifood:      `https://ifood.com.br/`,
+    'uber-eats': `https://ubereats.com/`,
+    netshoes:   `https://netshoes.com.br/busca?q=${cat}`,
+    submarino:  `https://submarino.com.br/busca/${cat}`,
+    aliexpress: `https://aliexpress.com/wholesale?catId=0&SearchText=${cat}+promocao`
+  }
+  return map[store.id] || store.url
+}
+
 function generateCoupons(store, count) {
   const verbs = ['FRETE', 'DESCONTO', 'PIX', 'CUPOM', 'OFERTA', 'SUPER']
   const pcts = [5, 10, 15, 20, 25, 30, 40, 50]
@@ -109,12 +126,14 @@ function generateCoupons(store, count) {
     const daysAgo = randomBetween(0, 30)
     const validDays = randomBetween(7, 60)
     const code = `${verbs[randomBetween(0, verbs.length - 1)]}${pct}${store.id.toUpperCase().slice(0, 3)}`
+    const category = store.categories[randomBetween(0, store.categories.length - 1)]
     coupons.push({
       id: `${store.id}-${i}`,
       storeId: store.id,
-      title: `${pct}% OFF em ${store.categories[randomBetween(0, store.categories.length - 1)]}`,
+      title: `${pct}% OFF em ${category}`,
       description: `Ganhe ${pct}% de desconto em produtos selecionados da ${store.name}. Válido para compras acima de R$ ${randomBetween(50, 300)},00.`,
       code,
+      couponUrl: buildCouponUrl(store, category),
       discount: `${pct}%`,
       discountType: 'percent',
       minPurchase: randomBetween(0, 200) * 10,
