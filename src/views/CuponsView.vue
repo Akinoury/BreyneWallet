@@ -137,11 +137,19 @@
 
     <div v-if="!loading && extraCoupons.length > 0" class="bonus-section">
       <div class="bonus-header">
-        <p>Você não encontrou o cupom que queria mas não quer perder a compra? Então teste estes cupons aqui, algum pode funcionar para você!</p>
+        <div class="bonus-icon">🎁</div>
+        <div class="bonus-text">
+          <strong>Não encontrou o cupom ideal?</strong>
+          <p>Você não encontrou o cupom que queria mas não quer perder a compra? Então teste estes cupons aqui, algum pode funcionar para você!</p>
+        </div>
       </div>
-      <div class="coupons-grid">
+      <div v-if="filteredExtra.length === 0" class="empty-state glass-panel">
+        <span class="empty-icon">🏷️</span>
+        <p>Nenhum cupom bônus para esta loja.</p>
+      </div>
+      <div v-else class="coupons-grid">
         <div
-          v-for="c in extraCoupons"
+          v-for="c in filteredExtra"
           :key="c.id"
           class="coupon-card glass-panel"
         >
@@ -165,7 +173,7 @@
               </div>
             </div>
 
-            <span v-if="c.id?.startsWith('cupomdesconto')" class="verified-badge">✓ Verificado</span>
+            <span class="verified-badge">✓ Verificado</span>
             <h4 class="card-title">{{ c.title }}</h4>
             <p class="card-desc">{{ c.description }}</p>
 
@@ -175,7 +183,7 @@
               </span>
             </div>
 
-            <div v-if="c.code" class="code-row">
+            <div class="code-row">
               <code class="coupon-code">{{ c.code }}</code>
               <button class="btn-copy" @click="copyCode(c.code)">
                 {{ copied === c.code ? 'Copiado!' : 'Copiar' }}
@@ -188,7 +196,7 @@
               rel="noopener noreferrer"
               class="btn-store"
             >
-              {{ c.code ? 'Aplicar Cupom na Loja →' : 'Ver Ofertas na Loja →' }}
+              Aplicar Cupom na Loja →
             </a>
           </div>
         </div>
@@ -225,6 +233,11 @@ const visibleStores = computed(() => {
 })
 const extraCount = computed(() => stores.value.filter(s => !famousStoreIds.includes(s.id)).length)
 const hasExtraStores = computed(() => extraCount.value > 0)
+
+const filteredExtra = computed(() => {
+  if (!selectedStore.value) return extraCoupons.value
+  return extraCoupons.value.filter(c => c.storeId === selectedStore.value)
+})
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('pt-BR')
@@ -673,13 +686,33 @@ onMounted(async () => {
   border-radius: 3px;
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
-.bonus-header p {
-  font-size: 0.85rem;
+.bonus-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.bonus-text {
+  flex: 1;
+}
+
+.bonus-text strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.bonus-text p {
+  font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
-  font-style: italic;
 }
 </style>
