@@ -103,15 +103,24 @@ export async function fetchCupomDescontoCoupons() {
       const discountVal = c.discount || 0
       const expiresAt = c.expiresAt || c.endAt || new Date(Date.now() + 30 * 86400000).toISOString()
 
+      let discountLabel
+      if (discountVal <= 0) {
+        discountLabel = 'Desconto'
+      } else if (discountVal <= 100) {
+        discountLabel = `${discountVal}%`
+      } else {
+        discountLabel = `R$ ${discountVal}`
+      }
+
       coupons.push({
         id: `cupomdesconto-${c.id}`,
         storeId,
         title: c.title,
-        description: c.description || `Aproveite ${discountVal > 0 ? discountVal + '% OFF' : 'desconto'} na ${c.store.name}. Cupom verificado e válido.`,
+        description: c.description || `Aproveite ${discountVal > 0 ? (discountVal <= 100 ? discountVal + '% OFF' : 'R$ ' + discountVal + ' de desconto') : 'desconto'} na ${c.store.name}. Cupom verificado e válido.`,
         code: c.code,
         couponUrl: c.couponUrl || c.url || c.store.url || c.store.pageUrl,
-        discount: discountVal > 0 ? `${discountVal}%` : 'Desconto',
-        discountType: 'percent',
+        discount: discountLabel,
+        discountType: discountVal <= 100 ? 'percent' : 'amount',
         minPurchase: 0,
         expiresAt,
         createdAt: c.createdAt || c.publishedAt || new Date(Date.now() - 1 * 86400000).toISOString(),
