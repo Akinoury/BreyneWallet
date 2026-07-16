@@ -430,28 +430,38 @@
             </span>
           </div>
         </div>
-      </div>
 
-      <!-- SPECULATIVE NUMBERS PANEL (antes dos gráficos) -->
-      <div class="speculative-panel">
-        <h4 class="charts-title">🔬 Números Especulativos</h4>
-        <div class="speculative-grid">
-          <div class="spec-card" style="grid-column: span 2;">
-            <span class="spec-label">Composição do Patrimônio até a Independência</span>
-            <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.4rem;">
-              <div style="text-align: center;">
-                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
-                <span class="spec-value">R$ {{ formatCurrency(speculativeData.totalContributions) }}</span>
-              </div>
-              <div style="text-align: center;">
-                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
-                <span class="spec-value text-success">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</span>
-              </div>
+        <!-- Composição do Patrimônio -->
+        <div class="sim-card">
+          <span class="sim-card-label">Composição do Patrimônio até a Independência</span>
+          <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.6rem;">
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
+              <h4 class="sim-card-value" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
+              <h4 class="sim-card-value text-success" style="font-size: 1.1rem;">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</h4>
             </div>
           </div>
-          <div class="spec-card">
-            <span class="spec-label">Renda Passiva em 20 Anos</span>
-            <span class="spec-value text-purple">R$ {{ formatCurrency(speculativeData.incomeAt20y) }} / mês</span>
+        </div>
+
+        <!-- Renda Passiva 10/20/30 -->
+        <div class="sim-card">
+          <span class="sim-card-label">Renda Passiva (Selic)</span>
+          <div style="display: flex; gap: 1.2rem; justify-content: center; margin-top: 0.5rem;">
+            <div style="text-align: center;">
+              <div style="font-size: 0.65rem; color: var(--text-secondary);">10 anos</div>
+              <div style="font-weight: bold; color: #5a2882; font-size: 0.95rem;">R$ {{ formatCurrency(speculativeData.incomeAt10y) }}/mês</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.65rem; color: var(--text-secondary);">20 anos</div>
+              <div style="font-weight: bold; color: #5a2882; font-size: 0.95rem;">R$ {{ formatCurrency(speculativeData.incomeAt20y) }}/mês</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.65rem; color: var(--text-secondary);">30 anos</div>
+              <div style="font-weight: bold; color: #5a2882; font-size: 0.95rem;">R$ {{ formatCurrency(speculativeData.incomeAt30y) }}/mês</div>
+            </div>
           </div>
         </div>
       </div>
@@ -728,12 +738,16 @@ const speculativeData = computed(() => {
   const balanceAtN = calculateAccumulation(N)
   const totalInterestEarned = Math.max(0, balanceAtN - totalContributions)
 
+  const incomeAt10y = calculateAccumulation(120) * r
   const incomeAt20y = calculateAccumulation(240) * r
+  const incomeAt30y = calculateAccumulation(360) * r
 
   return {
     totalContributions: Number(totalContributions.toFixed(2)),
     totalInterestEarned: Number(totalInterestEarned.toFixed(2)),
+    incomeAt10y: Number(incomeAt10y.toFixed(2)),
     incomeAt20y: Number(incomeAt20y.toFixed(2)),
+    incomeAt30y: Number(incomeAt30y.toFixed(2)),
     targetWealth: Number(targetWealth.toFixed(2))
   }
 })
