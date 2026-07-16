@@ -168,11 +168,22 @@ function applyFilters() {
 }
 
 async function copyCode(code) {
+  if (!code) return
   try {
     await navigator.clipboard.writeText(code)
-    copied.value = code
-    setTimeout(() => { copied.value = '' }, 2000)
-  } catch {}
+  } catch {
+    const el = document.createElement('textarea')
+    el.value = code
+    el.style.position = 'fixed'
+    el.style.opacity = '0'
+    el.style.pointerEvents = 'none'
+    document.body.appendChild(el)
+    el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+  }
+  copied.value = code
+  setTimeout(() => { copied.value = '' }, 2500)
 }
 
 onMounted(async () => {
