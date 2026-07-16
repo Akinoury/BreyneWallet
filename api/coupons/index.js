@@ -4,70 +4,80 @@ const STORES = [
   {
     id: 'shopee',
     name: 'Shopee',
-    icon: '🛒',
+    logo: 'https://logo.clearbit.com/shopee.com.br',
+    fallbackIcon: '🛒',
     color: '#ee4d2d',
     categories: ['Moda', 'Eletrônicos', 'Casa']
   },
   {
     id: 'magalu',
     name: 'Magazine Luiza',
-    icon: '📱',
+    logo: 'https://logo.clearbit.com/magazineluiza.com.br',
+    fallbackIcon: '📱',
     color: '#0054a0',
     categories: ['Eletrônicos', 'Eletrodomésticos', 'Celulares']
   },
   {
     id: 'amazon',
     name: 'Amazon Brasil',
-    icon: '📦',
+    logo: 'https://logo.clearbit.com/amazon.com.br',
+    fallbackIcon: '📦',
     color: '#ff9900',
     categories: ['Livros', 'Eletrônicos', 'Casa']
   },
   {
     id: 'mercadolivre',
     name: 'Mercado Livre',
-    icon: '🟡',
+    logo: 'https://logo.clearbit.com/mercadolivre.com.br',
+    fallbackIcon: '🟡',
     color: '#ffe600',
     categories: ['Variados', 'Tecnologia', 'Moda']
   },
   {
     id: 'americanas',
     name: 'Americanas',
-    icon: '🔴',
+    logo: 'https://logo.clearbit.com/americanas.com.br',
+    fallbackIcon: '🔴',
     color: '#cc0000',
     categories: ['Variados', 'Casa', 'Eletrônicos']
   },
   {
     id: 'ifood',
     name: 'iFood',
-    icon: '🍔',
+    logo: 'https://logo.clearbit.com/ifood.com.br',
+    fallbackIcon: '🍔',
     color: '#ea1d2c',
     categories: ['Alimentação', 'Restaurantes']
   },
   {
     id: 'uber-eats',
     name: 'Uber Eats',
-    icon: '🛵',
+    logo: 'https://logo.clearbit.com/ubereats.com',
+    fallbackIcon: '🛵',
     color: '#06c167',
     categories: ['Alimentação', 'Restaurantes']
   },
   {
     id: 'netshoes',
     name: 'Netshoes',
-    icon: '👟',
+    logo: 'https://logo.clearbit.com/netshoes.com.br',
+    fallbackIcon: '👟',
     color: '#005b9e',
     categories: ['Esportes', 'Moda']
   },
   {
     id: 'submarino',
     name: 'Submarino',
-    icon: '🔵',
+    logo: 'https://logo.clearbit.com/submarino.com.br',
+    fallbackIcon: '🔵',
     color: '#003c8f',
     categories: ['Eletrônicos', 'Casa', 'Livros']
   },
   {
     id: 'aliexpress',
     name: 'AliExpress',
-    icon: '🌍',
+    logo: 'https://logo.clearbit.com/aliexpress.com',
+    fallbackIcon: '🌍',
     color: '#ff4747',
     categories: ['Variados', 'Eletrônicos', 'Moda']
   }

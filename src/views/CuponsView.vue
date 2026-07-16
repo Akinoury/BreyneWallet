@@ -33,7 +33,15 @@
           :style="selectedStore === s.id ? { borderColor: s.color, color: s.color } : {}"
           @click="selectedStore = s.id; applyFilters()"
         >
-          <span class="chip-icon">{{ s.icon }}</span>
+          <span class="chip-icon">
+            <img
+              :src="s.logo"
+              alt=""
+              class="chip-logo"
+              @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='inline'"
+            />
+            <span class="chip-fallback" style="display:none">{{ s.fallbackIcon }}</span>
+          </span>
           {{ s.name }}
         </button>
       </div>
@@ -61,7 +69,15 @@
         <div class="card-store-bar" :style="{ background: getStore(c.storeId)?.color || '#888' }"></div>
         <div class="card-body">
           <div class="card-store-row">
-            <span class="store-logo">{{ getStore(c.storeId)?.icon }}</span>
+            <span class="store-logo">
+              <img
+                :src="getStore(c.storeId)?.logo"
+                alt=""
+                class="store-logo-img"
+                @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"
+              />
+              <span class="store-logo-fallback" style="display:none">{{ getStore(c.storeId)?.fallbackIcon }}</span>
+            </span>
             <div class="card-top">
               <span class="store-badge">
                 {{ getStore(c.storeId)?.name }}
@@ -229,6 +245,19 @@ onMounted(async () => {
 .chip-icon {
   font-size: 1.2rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.chip-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.chip-fallback {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .store-chip {
@@ -326,6 +355,17 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.store-logo-img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
+.store-logo-fallback {
+  font-size: 2rem;
+  line-height: 1;
 }
 
 .card-top {
