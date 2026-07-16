@@ -256,8 +256,10 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- EDIT MODAL -->
+  <!-- EDIT MODAL (outside wrapper for full-screen coverage) -->
+  <teleport to="body">
     <div v-if="editingAsset" class="edit-modal-overlay" @click.self="cancelEdit">
       <div class="edit-modal glass-panel">
         <button class="edit-modal-close" @click="cancelEdit">✕</button>
@@ -287,7 +289,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </teleport>
 </template>
 
 <script setup>
