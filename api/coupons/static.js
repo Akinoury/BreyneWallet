@@ -198,6 +198,15 @@ const STORES = [
     color: '#c0a062',
     url: 'https://zattini.com.br',
     categories: ['Calçados', 'Moda', 'Acessórios']
+  },
+  {
+    id: 'fastshop',
+    name: 'Fast Shop',
+    logo: FAV + 'fastshop.com.br&size=128',
+    fallbackIcon: '⚡',
+    color: '#ff6600',
+    url: 'https://fastshop.com.br',
+    categories: ['Eletrônicos', 'Eletrodomésticos', 'Informática']
   }
 ]
 
@@ -216,22 +225,23 @@ function buildCouponUrl(store, category) {
     mercadolivre: `https://mercadolivre.com.br/ofertas/`,
     americanas: `https://americanas.com.br/busca/${cat}-promocao`,
     ifood:      `https://ifood.com.br/`,
-    'uber-eats': `https://ubereats.com/`,
+    'uber-eats': `https://ubereats.com/br`,
     netshoes:   `https://netshoes.com.br/ofertas`,
     submarino:  `https://submarino.com.br/busca/${cat}`,
     aliexpress: `https://aliexpress.com/wholesale?catId=0&SearchText=${cat}`,
     casasbahia: `https://casasbahia.com.br/ofertas/`,
     pontofrio:  `https://pontofrio.com.br/ofertas/`,
     carrefour:  `https://carrefour.com.br/busca/${cat}`,
-    dafiti:     `https://dafiti.com.br/busca?q=${cat}`,
+    dafiti:     `https://dafiti.com.br/catalogsearch/result/?q=${cat}`,
     centauro:   `https://centauro.com.br/busca?q=${cat}`,
-    renner:     `https://renner.com.br/busca?q=${cat}`,
+    renner:     `https://lojasrenner.com.br/busca?q=${cat}`,
     marisa:     `https://marisa.com.br/busca?q=${cat}`,
     kabum:      `https://kabum.com.br/ofertas`,
     terabyteshop: `https://terabyteshop.com.br/busca?q=${cat}`,
     petz:       `https://petz.com.br/busca?q=${cat}`,
     epocacosmeticos: `https://epocacosmeticos.com.br/busca?q=${cat}`,
-    zattini:    `https://zattini.com.br/busca?q=${cat}`
+    zattini:    `https://zattini.com.br/busca?q=${cat}`,
+    fastshop:   `https://fastshop.com.br/busca?q=${cat}`
   }
   return map[store.id] || store.url
 }

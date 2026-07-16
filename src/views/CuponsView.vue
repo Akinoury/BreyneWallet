@@ -134,6 +134,66 @@
         </div>
       </div>
     </div>
+
+    <div v-if="!loading && extraCoupons.length > 0" class="bonus-section">
+      <div class="bonus-header">
+        <p>Você não encontrou o cupom que queria mas não quer perder a compra? Então teste estes cupons aqui, algum pode funcionar para você!</p>
+      </div>
+      <div class="coupons-grid">
+        <div
+          v-for="c in extraCoupons"
+          :key="c.id"
+          class="coupon-card glass-panel"
+        >
+          <div class="card-store-bar" :style="{ background: getExtraStore(c.storeId)?.color || getStore(c.storeId)?.color || '#888' }"></div>
+          <div class="card-body">
+            <div class="card-store-row">
+              <span class="store-logo">
+                <img
+                  :src="getExtraStoreLogo(c)"
+                  alt=""
+                  class="store-logo-img"
+                  @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"
+                />
+                <span class="store-logo-fallback" style="display:none">{{ getExtraStore(c.storeId)?.fallbackIcon || '🛍️' }}</span>
+              </span>
+              <div class="card-top">
+                <span class="store-badge">
+                  {{ getExtraStoreDisplayName(c) }}
+                </span>
+                <span class="discount-badge">{{ c.discount }}</span>
+              </div>
+            </div>
+
+            <span v-if="c.id?.startsWith('cupomdesconto')" class="verified-badge">✓ Verificado</span>
+            <h4 class="card-title">{{ c.title }}</h4>
+            <p class="card-desc">{{ c.description }}</p>
+
+            <div class="card-meta">
+              <span class="meta-expiry">
+                {{ c.expiresAt ? `Válido até ${formatDate(c.expiresAt)}` : '' }}
+              </span>
+            </div>
+
+            <div v-if="c.code" class="code-row">
+              <code class="coupon-code">{{ c.code }}</code>
+              <button class="btn-copy" @click="copyCode(c.code)">
+                {{ copied === c.code ? 'Copiado!' : 'Copiar' }}
+              </button>
+            </div>
+
+            <a
+              :href="c.couponUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-store"
+            >
+              {{ c.code ? 'Aplicar Cupom na Loja →' : 'Ver Ofertas na Loja →' }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -155,6 +215,8 @@ const showAllStores = ref(false)
 const loading = ref(true)
 const error = ref('')
 const copied = ref('')
+const extraCoupons = ref([])
+const extraStores = ref([])
 
 const famousStoreIds = ['shopee','magalu','amazon','mercadolivre','americanas','ifood','uber-eats','netshoes','aliexpress','casasbahia']
 const visibleStores = computed(() => {
@@ -178,6 +240,20 @@ function isExpired(iso) {
 
 function getStore(storeId) {
   return stores.value.find(s => s.id === storeId)
+}
+
+function getExtraStore(storeId) {
+  return extraStores.value.find(s => s.id === storeId)
+}
+
+function getExtraStoreLogo(c) {
+  const s = getExtraStore(c.storeId) || getStore(c.storeId)
+  return s?.logo || ''
+}
+
+function getExtraStoreDisplayName(c) {
+  const s = getExtraStore(c.storeId) || getStore(c.storeId)
+  return s?.name || c.storeId || 'Loja'
 }
 
 function applyFilters() {
@@ -231,6 +307,15 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+
+  try {
+    const eres = await fetch(`${API_BASE}/api/coupons/extra`)
+    if (eres.ok) {
+      const edata = await eres.json()
+      extraStores.value = edata.stores || []
+      extraCoupons.value = (edata.coupons || []).slice(0, 50)
+    }
+  } catch {}
 })
 </script>
 
@@ -574,5 +659,27 @@ onMounted(async () => {
 
 .btn-store:hover {
   background: #0f2740;
+}
+
+.bonus-section {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.bonus-header {
+  background: #fdfcf7;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.bonus-header p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
 }
 </style>

@@ -57,3 +57,20 @@ export default async function handler(req, res) {
     }
   })
 }
+
+export async function handlerExtra(req, res) {
+  if (handleOptions(req, res)) return
+  setCorsHeaders(res)
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  const result = await fetchCupomDescontoCoupons()
+  const mainStoreIds = new Set(result.stores.map(s => s.id))
+
+  return res.json({
+    stores: result.stores,
+    coupons: result.coupons,
+    total: result.coupons.length
+  })
+}
