@@ -4,6 +4,7 @@
       <div>
         <h2>Carteira de Investimentos</h2>
         <p>Acompanhe e registre a distribuição de seus ativos nacionais e internacionais.</p>
+        <button class="btn-markets" @click="$router.push('/markets')">📈 Mercados</button>
       </div>
       <!-- PORTFOLIO GRAND TOTAL -->
       <div class="grand-total-card glass-panel">
@@ -513,6 +514,24 @@ const handleSubmit = async () => {
   color: var(--text-secondary);
   margin-top: 0.2rem;
   display: block;
+}
+
+.btn-markets {
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  background: transparent;
+  border-radius: 3px;
+  padding: 0.35rem 1rem;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 0.5rem;
+  transition: all 0.15s;
+}
+.btn-markets:hover {
+  background: var(--accent-color);
+  color: #fff;
 }
 
 .btn-block {
