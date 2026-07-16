@@ -1,5 +1,15 @@
 import { put, get } from '@vercel/blob'
 
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN
+const BLOB_STORE_ID = process.env.BLOB_STORE_ID
+
+function blobOptions() {
+  const opts = { access: 'private' }
+  if (BLOB_TOKEN) opts.token = BLOB_TOKEN
+  if (BLOB_STORE_ID) opts.storeId = BLOB_STORE_ID
+  return opts
+}
+
 function serialize(obj) {
   return JSON.stringify(obj)
 }
@@ -25,14 +35,15 @@ const ACCOUNTS_PATH = '_accounts.json'
 
 async function putJSON(path, data) {
   await put(path, serialize(data), {
-    access: 'private',
+    ...blobOptions(),
     contentType: 'application/json',
-    addRandomSuffix: false
+    addRandomSuffix: false,
+    allowOverwrite: true
   })
 }
 
 async function getJSON(path) {
-  const result = await get(path, { access: 'private' })
+  const result = await get(path, blobOptions())
   if (!result || !result.stream) return null
   const text = await new Response(result.stream).text()
   return deserialize(text)
