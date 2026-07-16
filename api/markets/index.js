@@ -80,7 +80,19 @@ async function fetchForex() {
     fetchJSON(`${AWESOME_API}/GBP-BRL`),
     fetchJSON(`${AWESOME_API}/JPY-BRL`)
   ])
-  return { ...(usd || {}), ...(eur || {}), ...(gbp || {}), ...(jpy || {}) }
+  const merged = { ...(usd || {}), ...(eur || {}), ...(gbp || {}), ...(jpy || {}) }
+  if (Object.keys(merged).length) return merged
+  const ff = await fetchJSON('https://api.frankfurter.app/latest?from=BRL&to=USD,EUR,GBP,JPY')
+  if (ff?.rates) {
+    const r = ff.rates
+    const out = {}
+    if (r.USD) out.USDBRL = { bid: (1 / r.USD).toFixed(4), ask: (1 / r.USD).toFixed(4), pctChange: '0', name: 'Dólar', high: '0', low: '0' }
+    if (r.EUR) out.EURBRL = { bid: (1 / r.EUR).toFixed(4), ask: (1 / r.EUR).toFixed(4), pctChange: '0', name: 'Euro', high: '0', low: '0' }
+    if (r.GBP) out.GBPBRL = { bid: (1 / r.GBP).toFixed(4), ask: (1 / r.GBP).toFixed(4), pctChange: '0', name: 'Libra', high: '0', low: '0' }
+    if (r.JPY) out.JPYBRL = { bid: (1 / r.JPY).toFixed(6), ask: (1 / r.JPY).toFixed(6), pctChange: '0', name: 'Yene', high: '0', low: '0' }
+    return out
+  }
+  return {}
 }
 
 function classify(symbol, exchange) {
@@ -153,7 +165,7 @@ function formatQuote(q, exchange) {
 
 async function fetchQuotesChart(symbols) {
   const results = []
-  for (let i = 0; i < symbols.length; i += 30) {
+  for (let i = 0; i < symbols.length; i += 40) {
     const batch = symbols.slice(i, i + 30)
     const batchResults = await Promise.allSettled(
       batch.map(async (symbol) => {
