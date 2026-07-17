@@ -240,7 +240,7 @@
         </div>
 
         <div class="fund-balance-display">
-          <small class="fund-label">Saldo Atual Reservado</small>
+          <small class="fund-label">Saldo Atual (Tesouro Reserva)</small>
           <h2>R$ {{ formatCurrency(store.emergencyFund) }}</h2>
         </div>
 
@@ -266,7 +266,7 @@
             <input 
               type="number" 
               v-model.number="fundTxAmount" 
-              placeholder="Valor em R$" 
+              placeholder="Valor" 
               class="input-field fund-input-box" 
             />
             <div class="fund-buttons">
@@ -378,7 +378,7 @@
 
         <!-- Row 1 -->
         <div class="sim-card sim-card-dividendos">
-          <span class="sim-card-label">📊 Dividendos Mensais (Fundo)</span>
+          <span class="sim-card-label">📊 Dividendos Atuais do Fundo</span>
           <h4 class="sim-card-value text-accent">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}</h4>
           <span class="sim-card-sub text-muted">
             {{ (monthlyRate * 100).toFixed(2) }}% sobre R$ {{ formatCurrency(store.emergencyFund) }}
