@@ -90,7 +90,7 @@
               <h4>💡 Como Funciona o Acerto de Contas?</h4>
               <button class="help-modal-close" @click="showHelpModal = false" id="btn-help-close">✕</button>
             </div>
-            <p class="help-intro">Esta tabela consolida suas finanças do ciclo com base nas taxas configuradas. Entenda cada etapa:</p>
+            <p class="help-intro">O objetivo do Acerto de Contas é usar a lógica reversa no crédito e no endividamento transformando você em seu banco.</p>
 
             <div class="help-grid">
               <div class="help-item">
