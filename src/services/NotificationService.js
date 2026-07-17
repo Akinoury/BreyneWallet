@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 
 const DAILY_NOTIFICATION_ID = 100
+let nextImmediateId = 200
 const STORAGE_KEY_ENABLED = 'breyne_notifications_enabled'
 const STORAGE_KEY_HOUR = 'breyne_notifications_hour'
 const STORAGE_KEY_LAST_MESSAGE_INDEX = 'breyne_notifications_last_index'
@@ -255,26 +256,26 @@ class NotificationService {
     if (!isAndroid() || !this.enabled) return
     const message = pickNextMessage(LIMIT_EXCEEDED_MESSAGES)
     const body = `${message} Excedente: R$ ${Number(exceededValue).toFixed(2)}`
-    await this.scheduleImmediate(Date.now(), 'Limite de Consumo Excedido', body, 'breyne-alerts')
+    await this.scheduleImmediate(nextImmediateId++, 'Limite de Consumo Excedido', body, 'breyne-alerts')
   }
 
   async notifyHealthGood() {
     if (!isAndroid() || !this.enabled) return
     const message = pickNextMessage(HEALTH_GOOD_MESSAGES)
-    await this.scheduleImmediate(Date.now(), 'Saude Financeira', message, 'breyne-alerts')
+    await this.scheduleImmediate(nextImmediateId++, 'Saude Financeira', message, 'breyne-alerts')
   }
 
   async notifyNearLimit(consumptionPercent) {
     if (!isAndroid() || !this.enabled) return
     const message = pickNextMessage(NEAR_LIMIT_MESSAGES)
     const body = `${message} (${Number(consumptionPercent).toFixed(1)}% do limite utilizado)`
-    await this.scheduleImmediate(Date.now(), 'Aviso de Consumo', body, 'breyne-alerts')
+    await this.scheduleImmediate(nextImmediateId++, 'Aviso de Consumo', body, 'breyne-alerts')
   }
 
   async sendFinancialTip() {
     if (!isAndroid() || !this.enabled) return
     const message = pickNextMessage(FINANCIAL_TIPS)
-    await this.scheduleImmediate(Date.now(), 'Dica Financeira', message, 'breyne-tips')
+    await this.scheduleImmediate(nextImmediateId++, 'Dica Financeira', message, 'breyne-tips')
   }
 
   async checkAndNotify(storeData) {
@@ -329,7 +330,7 @@ class NotificationService {
         return { success: false, error: `Permissao negada (${permCheck.detail || permCheck.reason}). Va em Configuracoes > Notificacoes e permita.` }
       }
     }
-    return await this.scheduleImmediate(Date.now(), 'BreyneWallet', 'Notificacoes funcionando!', 'breyne-daily')
+    return await this.scheduleImmediate(nextImmediateId++, 'BreyneWallet', 'Notificacoes funcionando!', 'breyne-daily')
   }
 }
 
