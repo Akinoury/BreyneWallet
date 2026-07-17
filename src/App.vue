@@ -1,5 +1,6 @@
 <template>
-  <header v-if="isAuthenticated" class="app-header animate-fade-in">
+  <BiometricGate :visible="showBiometricGate" @authenticated="onBioAuthenticated" @skip="onBioSkip" />
+  <header v-if="isAuthenticated && !showBiometricGate" class="app-header animate-fade-in">
     <div class="logo" @click="router.push('/')" style="cursor: pointer;">
       <img src="/icon-header.png" alt="" class="logo-icon" />
       <span><span class="logo-accent">Breyne</span>Wallet</span>
@@ -66,25 +67,47 @@
       </div>
     </nav>
   </header>
-  <main class="app-container">
+  <main v-if="!showBiometricGate" class="app-container">
     <router-view />
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { Capacitor } from '@capacitor/core'
 import { useWalletStore } from './stores/walletStore'
+import { biometricService } from './services/BiometricService'
+import BiometricGate from './components/BiometricGate.vue'
 
 const router = useRouter()
 const route = useRoute()
 const store = useWalletStore()
 
 const isDropdownOpen = ref(false)
+const showBiometricGate = ref(false)
 
-onMounted(() => {
-  store.loadFromLocalStorage()
+onMounted(async () => {
+  await store.loadFromLocalStorage()
+  const platform = Capacitor.getPlatform()
+  const isNative = platform === 'android' || platform === 'ios'
+  if (
+    isNative &&
+    store.currentUser &&
+    store.isBiometricEnabled
+  ) {
+    await nextTick()
+    showBiometricGate.value = true
+  }
 })
+
+function onBioAuthenticated() {
+  showBiometricGate.value = false
+}
+
+function onBioSkip() {
+  showBiometricGate.value = false
+}
 
 const isAuthenticated = computed(() => {
   const publicRoutes = ['/login', '/register', '/forgot-password']
