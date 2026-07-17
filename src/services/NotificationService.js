@@ -113,7 +113,7 @@ function isAndroid() {
 }
 
 function scheduleNow() {
-  return { at: new Date() }
+  return { at: new Date(Date.now() + 1000) }
 }
 
 class NotificationService {
@@ -217,7 +217,7 @@ class NotificationService {
           id: DAILY_NOTIFICATION_ID,
           title: 'BreyneWallet',
           body: message,
-          schedule: { at: scheduled, repeat: { every: 'day' } },
+          schedule: { at: scheduled, every: 'day' },
           channelId: 'breyne-daily'
         }]
       })
