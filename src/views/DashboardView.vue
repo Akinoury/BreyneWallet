@@ -187,7 +187,7 @@
             <td>Uso do Limite Atual</td>
             <td class="formula">Consumo ÷ Limite</td>
             <td class="text-right text-bold">
-              {{ percentLimitUsed.toFixed(1) }}% de uso (Limite: R$ {{ formatCurrency(store.limitConsumption) }})
+              {{ percentLimitUsed.toFixed(1) }}%
             </td>
           </tr>
 
