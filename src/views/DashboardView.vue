@@ -96,15 +96,15 @@
               <div class="help-item">
                 <span class="help-badge badge-limit">Limite</span>
                 <strong>Limite de Consumo ({{ store.consumptionRate }}%):</strong>
-                <p>O teto máximo ideal planejado para seus gastos mensais. É calculado sobre o seu salário.</p>
+                <p>Taxa usada pelo autor e recomendada com salários maiores que dois salários minimos. Ideal para investir, porém caso não possa usar essa taxa, pode troca-la nas configs.</p>
               </div>
 
               <div class="help-item">
                 <span class="help-badge badge-bonus">Bônus</span>
-                <strong>Bônus de Incentivo ao Investimento ({{ store.investmentBonusRate }}%):</strong>
-                <p>Um valor obrigatório direcionado aos seus investimentos. Conta como "gasto" no consumo do mês, mas <strong>não sofre cobrança de juros</strong>.</p>
+                <strong>Juros de Investimento({{ store.investmentBonusRate }}%):</strong>
+                <p>Considero como juros por investir, considere uma taxa de mentalidade de investidor. Conta como "gasto" no consumo do mês, mas <strong>não sofre cobrança de juros</strong> (pode zerar caso não queira pagar).</p>
               </div>
-
+              
               <div class="help-item">
                 <span class="help-badge badge-juros">Juros</span>
                 <strong>Juros Correntes ({{ store.expenseTaxRate }}%):</strong>
@@ -174,7 +174,7 @@
             <td class="text-right text-bold">R$ {{ formatCurrency(store.gastosCorrentes) }}</td>
           </tr>
           <tr>
-            <td>Bônus de Incentivo</td>
+            <td>Juros de Investimento</td>
             <td class="formula">Valor Investido × {{ store.investmentBonusRate }}%</td>
             <td class="text-right text-purple">R$ {{ formatCurrency(store.investmentBonus) }}</td>
           </tr>
