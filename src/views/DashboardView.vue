@@ -102,7 +102,7 @@
               <div class="help-item">
                 <span class="help-badge badge-bonus">Bônus</span>
                 <strong>Bônus de Incentivo ao Investimento ({{ store.investmentBonusRate }}%):</strong>
-                <p>Um valor obrigatório direcionado aos seus investimentos. Conta como gasto no consumo do mês, mas <strong>não sofre cobrança de juros</strong>.</p>
+                <p>Um valor obrigatório direcionado aos seus investimentos. Conta como "gasto" no consumo do mês, mas <strong>não sofre cobrança de juros</strong>.</p>
               </div>
 
               <div class="help-item">
@@ -119,7 +119,7 @@
             </div>
 
             <div class="help-summary-text">
-              🎯 <strong>Retorno Total ao Fundo:</strong> Consumo (gastos + bônus) + Juros sobre gastos + Excedente + Penalidade sobre excedente. Este é o valor a ser devolvido ao fundo para manter suas finanças em equilíbrio.
+              🎯 <strong>Retorno Total ao Fundo de Emergência:</strong> Consumo (gastos + bônus) + Juros sobre gastos + Excedente + Penalidade sobre excedente. Este é o valor a ser devolvido ao fundo para manter suas finanças em equilíbrio.
             </div>
           </div>
         </div>
