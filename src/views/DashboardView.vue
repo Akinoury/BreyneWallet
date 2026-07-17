@@ -175,12 +175,12 @@
           </tr>
           <tr>
             <td>Juros de Investimento</td>
-            <td class="formula">Valor Investido × {{ store.investmentBonusRate }}%</td>
+            <td class="formula">{{ store.investmentBonusRate }}% do valor investido</td>
             <td class="text-right text-purple">R$ {{ formatCurrency(store.investmentBonus) }}</td>
           </tr>
           <tr>
             <td>Consumo Atual</td>
-            <td class="formula">Gastos + Bônus</td>
+            <td class="formula">Gastos + Juros</td>
             <td class="text-right text-bold">R$ {{ formatCurrency(store.consumoAtual) }}</td>
           </tr>
           <tr class="row-limit-usage" :class="{ 'limit-exceeded': percentLimitUsed > 100 }">
