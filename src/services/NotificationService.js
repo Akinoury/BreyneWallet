@@ -86,8 +86,6 @@ const FINANCIAL_TIPS = [
   'Invista em conhecimento financeiro — e o investimento com maior retorno.'
 ]
 
-let monthNames = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
-
 function getLastMessageIndex() {
   try { return parseInt(localStorage.getItem(STORAGE_KEY_LAST_MESSAGE_INDEX)) || -1 } catch { return -1 }
 }
@@ -112,6 +110,10 @@ function isAndroid() {
   } catch {
     return false
   }
+}
+
+function scheduleNow() {
+  return { at: new Date() }
 }
 
 class NotificationService {
@@ -216,9 +218,7 @@ class NotificationService {
           title: 'BreyneWallet',
           body: message,
           schedule: { at: scheduled, repeat: { every: 'day' } },
-          channelId: 'breyne-daily',
-          smallIcon: 'ic_launcher',
-          largeIcon: 'ic_launcher_round'
+          channelId: 'breyne-daily'
         }]
       })
     } catch (e) {
@@ -226,8 +226,10 @@ class NotificationService {
     }
   }
 
-  async notifyLimitExceeded(exceededValue, totalExpenses) {
+  async notifyLimitExceeded(exceededValue) {
     if (!isAndroid() || !this.enabled) return
+    const granted = await this.requestPermissions()
+    if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       const message = pickNextMessage(LIMIT_EXCEEDED_MESSAGES)
@@ -238,10 +240,8 @@ class NotificationService {
           id: Date.now(),
           title: 'Limite de Consumo Excedido',
           body,
-          schedule: { at: new Date(Date.now() + 1500) },
-          channelId: 'breyne-alerts',
-          smallIcon: 'ic_launcher',
-          largeIcon: 'ic_launcher_round'
+          schedule: scheduleNow(),
+          channelId: 'breyne-alerts'
         }]
       })
     } catch (e) {
@@ -251,6 +251,8 @@ class NotificationService {
 
   async notifyHealthGood() {
     if (!isAndroid() || !this.enabled) return
+    const granted = await this.requestPermissions()
+    if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       const message = pickNextMessage(HEALTH_GOOD_MESSAGES)
@@ -260,10 +262,8 @@ class NotificationService {
           id: Date.now(),
           title: 'Saude Financeira',
           body: message,
-          schedule: { at: new Date(Date.now() + 1500) },
-          channelId: 'breyne-alerts',
-          smallIcon: 'ic_launcher',
-          largeIcon: 'ic_launcher_round'
+          schedule: scheduleNow(),
+          channelId: 'breyne-alerts'
         }]
       })
     } catch (e) {
@@ -273,6 +273,8 @@ class NotificationService {
 
   async notifyNearLimit(consumptionPercent) {
     if (!isAndroid() || !this.enabled) return
+    const granted = await this.requestPermissions()
+    if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       const message = pickNextMessage(NEAR_LIMIT_MESSAGES)
@@ -283,10 +285,8 @@ class NotificationService {
           id: Date.now(),
           title: 'Aviso de Consumo',
           body,
-          schedule: { at: new Date(Date.now() + 1500) },
-          channelId: 'breyne-alerts',
-          smallIcon: 'ic_launcher',
-          largeIcon: 'ic_launcher_round'
+          schedule: scheduleNow(),
+          channelId: 'breyne-alerts'
         }]
       })
     } catch (e) {
@@ -296,6 +296,8 @@ class NotificationService {
 
   async sendFinancialTip() {
     if (!isAndroid() || !this.enabled) return
+    const granted = await this.requestPermissions()
+    if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       const message = pickNextMessage(FINANCIAL_TIPS)
@@ -305,10 +307,8 @@ class NotificationService {
           id: Date.now(),
           title: 'Dica Financeira',
           body: message,
-          schedule: { at: new Date(Date.now() + 1500) },
-          channelId: 'breyne-tips',
-          smallIcon: 'ic_launcher',
-          largeIcon: 'ic_launcher_round'
+          schedule: scheduleNow(),
+          channelId: 'breyne-tips'
         }]
       })
     } catch (e) {
@@ -316,14 +316,14 @@ class NotificationService {
     }
   }
 
-  async checkAndNotify(store) {
+  async checkAndNotify(storeData) {
     if (!isAndroid() || !this.enabled) return
-    const exceeded = Number(store.exceededValue) || 0
-    const limit = Number(store.limitConsumption) || 0
-    const current = Number(store.consumoAtual) || 0
+    const exceeded = Number(storeData.exceededValue) || 0
+    const limit = Number(storeData.limitConsumption) || 0
+    const current = Number(storeData.consumoAtual) || 0
 
     if (exceeded > 0) {
-      await this.notifyLimitExceeded(exceeded, current)
+      await this.notifyLimitExceeded(exceeded)
     } else {
       await this.notifyHealthGood()
     }
@@ -361,6 +361,8 @@ class NotificationService {
 
   async sendTestNotification() {
     if (!isAndroid()) return
+    const granted = await this.requestPermissions()
+    if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       await LocalNotifications.schedule({
@@ -368,10 +370,8 @@ class NotificationService {
           id: Date.now(),
           title: 'BreyneWallet',
           body: 'Notificacoes funcionando!',
-          schedule: { at: new Date(Date.now() + 2000) },
-          channelId: 'breyne-daily',
-          smallIcon: 'ic_launcher',
-          largeIcon: 'ic_launcher_round'
+          schedule: scheduleNow(),
+          channelId: 'breyne-daily'
         }]
       })
     } catch (e) {
