@@ -222,16 +222,26 @@ class NotificationService {
     }
   }
 
+  async checkPermissions() {
+    if (!isAndroid()) return { granted: false, reason: 'not-android' }
+    try {
+      const { LocalNotifications } = await import('@capacitor/local-notifications')
+      const perm = await LocalNotifications.checkPermissions()
+      return { granted: perm.display === 'granted', detail: perm.display }
+    } catch (e) {
+      return { granted: false, reason: 'plugin-error', error: e.message }
+    }
+  }
+
   async scheduleImmediate(id, title, body, channelId) {
-    const granted = await this.requestPermissions()
-    if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       await LocalNotifications.schedule({
         notifications: [{ id, title, body, channelId }]
       })
+      return { success: true }
     } catch (e) {
-      console.warn('Failed to send immediate notification:', e)
+      return { success: false, error: e.message || 'Erro desconhecido' }
     }
   }
 
@@ -305,8 +315,15 @@ class NotificationService {
   }
 
   async sendTestNotification() {
-    if (!isAndroid()) return
-    await this.scheduleImmediate(Date.now(), 'BreyneWallet', 'Notificacoes funcionando!', 'breyne-daily')
+    if (!isAndroid()) return { success: false, error: 'Apenas disponivel no Android' }
+    const permCheck = await this.checkPermissions()
+    if (!permCheck.granted) {
+      const requested = await this.requestPermissions()
+      if (!requested) {
+        return { success: false, error: `Permissao negada (${permCheck.detail || permCheck.reason}). Va em Configuracoes > Notificacoes e permita.` }
+      }
+    }
+    return await this.scheduleImmediate(Date.now(), 'BreyneWallet', 'Notificacoes funcionando!', 'breyne-daily')
   }
 }
 

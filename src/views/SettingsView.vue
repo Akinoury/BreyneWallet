@@ -439,8 +439,16 @@ async function handleNotificationHourChange() {
 
 async function handleTestNotification() {
   isTestingNotification.value = true
-  await notificationService.sendTestNotification()
-  setTimeout(() => { isTestingNotification.value = false }, 3000)
+  errorMsg.value = ''
+  successMsg.value = ''
+  const result = await notificationService.sendTestNotification()
+  isTestingNotification.value = false
+  if (result?.success) {
+    successMsg.value = 'Notificacao enviada! Verifique a central de notificacoes.'
+  } else {
+    errorMsg.value = result?.error || 'Falha ao enviar notificacao.'
+  }
+  setTimeout(() => { errorMsg.value = ''; successMsg.value = '' }, 6000)
 }
 
 const formatCurrency = (val) =>
