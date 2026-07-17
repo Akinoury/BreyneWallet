@@ -257,14 +257,6 @@
             >
               {{ isBioWorking ? 'Registrando...' : '➕ Registrar Nova Credencial' }}
             </button>
-            <button
-              v-if="registeredCredentials.length > 0"
-              class="btn-secondary btn-sm"
-              :disabled="isBioWorking"
-              @click="handleReplaceCredential"
-            >
-              🔄 Substituir Credencial
-            </button>
           </div>
         </div>
       </div>
@@ -642,36 +634,6 @@ const handleRegisterNewCredential = async () => {
   setTimeout(() => { errorMsg.value = ''; successMsg.value = '' }, 4000)
 }
 
-const handleReplaceCredential = async () => {
-  errorMsg.value = ''
-  successMsg.value = ''
-  const activeCreds = registeredCredentials.value.filter(c => !c.revoked)
-  if (activeCreds.length === 0) {
-    errorMsg.value = 'Nenhuma credencial ativa para substituir.'
-    return
-  }
-  isBioWorking.value = true
-  try {
-    var result = await biometricService.replaceCredential(
-      store.currentUser.id,
-      store.currentUser.email,
-      store.currentUser.name,
-      activeCreds[0].id,
-      activeCreds[0].credential_id
-    )
-  } catch (err) {
-    result = { success: false, message: err?.message || 'Erro inesperado.' }
-  }
-  isBioWorking.value = false
-  if (result.success) {
-    successMsg.value = 'Credencial substituída com sucesso!'
-    await loadRegisteredCredentials()
-    store.isBiometricEnabled = true
-  } else {
-    errorMsg.value = result.message
-  }
-  setTimeout(() => { errorMsg.value = ''; successMsg.value = '' }, 4000)
-}
 </script>
 
 <style scoped>
