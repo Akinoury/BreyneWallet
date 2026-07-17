@@ -59,7 +59,7 @@
               <small class="help-text">Máximo permitido para gastos no ciclo. Base: 40,01%</small>
             </div>
             <div class="rate-input-group">
-              <input type="number" id="consumption-rate" v-model.number="consumptionRateLocal" class="rate-input" step="0.01" min="0" max="100" />
+              <input type="number" id="consumption-rate" v-model.number="consumptionRateLocal" @input="onRateChange('consumption')" class="rate-input" step="0.01" min="0" max="100" />
               <span class="rate-suffix">%</span>
               <span class="rate-rs-value">= R$ {{ formatCurrency((salary * consumptionRateLocal / 100)) }}</span>
             </div>
@@ -71,7 +71,7 @@
               <small class="help-text">Percentual do salário alocado para a carteira. Base: 39,99%</small>
             </div>
             <div class="rate-input-group">
-              <input type="number" id="investment-rate" v-model.number="investmentRateLocal" class="rate-input" step="0.01" min="0" max="100" />
+              <input type="number" id="investment-rate" v-model.number="investmentRateLocal" @input="onRateChange('investment')" class="rate-input" step="0.01" min="0" max="100" />
               <span class="rate-suffix">%</span>
               <span class="rate-rs-value">= R$ {{ formatCurrency((salary * investmentRateLocal / 100)) }}</span>
             </div>
@@ -326,10 +326,26 @@ const investmentRateLocal = ref(store.investmentRate)
 const investmentBonusRateLocal = ref(store.investmentBonusRate)
 const penaltyRateLocal = ref(store.penaltyRate)
 
-// Soma das taxas principais (não pode ultrapassar 100%)
+// Soma das taxas principais (sempre 100% com auto-balanceamento)
 const totalAllocated = computed(() =>
   Number((consumptionRateLocal.value + investmentRateLocal.value).toFixed(4))
 )
+
+function onRateChange(changed) {
+  if (changed === 'consumption') {
+    const c = Number(consumptionRateLocal.value)
+    if (isNaN(c)) return
+    const clamped = Math.min(100, Math.max(0, c))
+    consumptionRateLocal.value = Number(clamped.toFixed(2))
+    investmentRateLocal.value = Number((100 - consumptionRateLocal.value).toFixed(2))
+  } else {
+    const i = Number(investmentRateLocal.value)
+    if (isNaN(i)) return
+    const clamped = Math.min(100, Math.max(0, i))
+    investmentRateLocal.value = Number(clamped.toFixed(2))
+    consumptionRateLocal.value = Number((100 - investmentRateLocal.value).toFixed(2))
+  }
+}
 
 // Perfil
 const profileName = ref('')
