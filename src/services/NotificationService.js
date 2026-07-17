@@ -214,7 +214,9 @@ class NotificationService {
           title: 'BreyneWallet',
           body: message,
           schedule: { at: scheduled, every: 'day' },
-          channelId: 'breyne-daily'
+          channelId: 'breyne-daily',
+          smallIcon: 'ic_stat_notification',
+          largeIcon: 'ic_notification_large'
         }]
       })
     } catch (e) {
@@ -237,7 +239,11 @@ class NotificationService {
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       await LocalNotifications.schedule({
-        notifications: [{ id, title, body, channelId }]
+        notifications: [{
+          id, title, body, channelId,
+          smallIcon: 'ic_stat_notification',
+          largeIcon: 'ic_notification_large'
+        }]
       })
       return { success: true }
     } catch (e) {

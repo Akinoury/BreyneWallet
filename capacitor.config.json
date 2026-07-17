@@ -6,5 +6,10 @@
   "server": {
     "androidScheme": "https"
   },
-  "plugins": {}
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notification",
+      "iconColor": "#8a6f3e"
+    }
+  }
 }
