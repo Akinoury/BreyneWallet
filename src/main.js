@@ -4,6 +4,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useWalletStore } from './stores/walletStore'
+import { notificationService } from './services/NotificationService'
 import './assets/main.css'
 
 window.Capacitor = Capacitor
@@ -17,3 +18,5 @@ app.mount('#app')
 
 const store = useWalletStore()
 store.loadFromLocalStorage()
+
+notificationService.initialize()

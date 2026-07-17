@@ -303,14 +303,59 @@
         </ul>
       </div>
     </div>
+
+    <!-- NOTIFICACOES -->
+    <div class="grid-2" style="margin-top: 1.5rem;">
+      <div class="settings-card glass-panel full-width-card">
+        <h3>Notificacoes</h3>
+        <p class="section-subtitle">Configure as notificacoes diarias no seu dispositivo Android para gerenciar suas financas.</p>
+
+        <div class="settings-form">
+          <div class="form-group toggle-group-row">
+            <div class="toggle-text-container">
+              <label>Notificacoes Diarias</label>
+              <small class="help-text">Receba lembretes diarios e alertas sobre sua saude financeira.</small>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="notificationsEnabled" @change="handleNotificationsToggle" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="rate-row" v-if="isAndroid">
+            <div class="rate-info">
+              <label>Horario do Lembrete Diario</label>
+              <small class="help-text">Horario em que voce recebera a notificacao diaria.</small>
+            </div>
+            <div class="rate-input-group">
+              <select v-model.number="notificationHour" @change="handleNotificationHourChange" class="rate-input hour-select">
+                <option v-for="h in 24" :key="h - 1" :value="h - 1">{{ String(h - 1).padStart(2, '0') }}:00</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-if="isAndroid" class="bio-section" style="margin-top: 1rem;">
+            <button class="btn-primary btn-block" @click="handleTestNotification" :disabled="isTestingNotification">
+              {{ isTestingNotification ? 'Enviando...' : 'Enviar Notificacao de Teste' }}
+            </button>
+          </div>
+
+          <div v-if="!isAndroid" class="empty-state">
+            <p>Notificacoes nativas disponiveis apenas no aplicativo Android.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Capacitor } from '@capacitor/core'
 import { useWalletStore } from '../stores/walletStore'
 import { biometricService } from '../services/BiometricService'
+import { notificationService } from '../services/NotificationService'
 
 const store = useWalletStore()
 const router = useRouter()
@@ -365,6 +410,38 @@ const isSavingFinancial = ref(false)
 const isSavingProfile = ref(false)
 const isSavingSecurity = ref(false)
 const isBioWorking = ref(false)
+
+const isAndroid = Capacitor.getPlatform() === 'android'
+const notificationsEnabled = ref(true)
+const notificationHour = ref(9)
+const isTestingNotification = ref(false)
+
+onMounted(async () => {
+  if (isAndroid) {
+    notificationsEnabled.value = notificationService.enabled
+    notificationHour.value = notificationService.notificationHour
+  }
+})
+
+async function handleNotificationsToggle() {
+  notificationService.enabled = notificationsEnabled.value
+  if (notificationsEnabled.value) {
+    await notificationService.scheduleDailyNotification()
+  } else {
+    await notificationService.cancelAll()
+  }
+}
+
+async function handleNotificationHourChange() {
+  notificationService.notificationHour = notificationHour.value
+  await notificationService.reschedule()
+}
+
+async function handleTestNotification() {
+  isTestingNotification.value = true
+  await notificationService.sendTestNotification()
+  setTimeout(() => { isTestingNotification.value = false }, 3000)
+}
 
 const formatCurrency = (val) =>
   Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -1137,6 +1214,19 @@ input:checked + .toggle-slider:before {
   margin-left: 0.25rem;
   border-left: 1px solid var(--border-color);
   padding-left: 0.5rem;
+}
+
+.hour-select {
+  width: auto;
+  min-width: 80px;
+  text-align: center;
+  cursor: pointer;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a6f3e'/%3E%3C/svg%3E") no-repeat right center;
+  padding-right: 1.2rem;
 }
 
 @media (max-width: 600px) {

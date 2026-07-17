@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../services/api'
 import { biometricService } from '../services/BiometricService'
+import { notificationService } from '../services/NotificationService'
 
 export const useWalletStore = defineStore('wallet', () => {
   const salary = ref(1420.00)
@@ -263,6 +264,11 @@ export const useWalletStore = defineStore('wallet', () => {
     })
 
     await saveWalletState()
+    notificationService.checkAndNotify({
+      exceededValue: exceededValue.value,
+      limitConsumption: limitConsumption.value,
+      consumoAtual: consumoAtual.value
+    })
     return true
   }
 
