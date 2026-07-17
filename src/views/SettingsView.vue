@@ -338,6 +338,9 @@
             <button class="btn-primary btn-block" @click="handleTestNotification" :disabled="isTestingNotification">
               {{ isTestingNotification ? 'Enviando...' : 'Enviar Notificacao de Teste' }}
             </button>
+            <div v-if="testStatus" class="test-feedback" :class="testStatus.type">
+              {{ testStatus.message }}
+            </div>
           </div>
 
           <div v-if="!isAndroid" class="empty-state">
@@ -415,6 +418,7 @@ const isAndroid = Capacitor.getPlatform() === 'android'
 const notificationsEnabled = ref(true)
 const notificationHour = ref(9)
 const isTestingNotification = ref(false)
+const testStatus = ref(null)
 
 onMounted(async () => {
   if (isAndroid) {
@@ -439,16 +443,19 @@ async function handleNotificationHourChange() {
 
 async function handleTestNotification() {
   isTestingNotification.value = true
-  errorMsg.value = ''
-  successMsg.value = ''
-  const result = await notificationService.sendTestNotification()
-  isTestingNotification.value = false
-  if (result?.success) {
-    successMsg.value = 'Notificacao enviada! Verifique a central de notificacoes.'
-  } else {
-    errorMsg.value = result?.error || 'Falha ao enviar notificacao.'
+  testStatus.value = null
+  try {
+    const result = await notificationService.sendTestNotification()
+    if (result?.success) {
+      testStatus.value = { type: 'success', message: 'Notificacao enviada! Verifique a central.' }
+    } else {
+      testStatus.value = { type: 'error', message: result?.error || 'Falha ao enviar.' }
+    }
+  } catch (err) {
+    testStatus.value = { type: 'error', message: 'Erro: ' + (err?.message || err || 'desconhecido') }
   }
-  setTimeout(() => { errorMsg.value = ''; successMsg.value = '' }, 6000)
+  isTestingNotification.value = false
+  setTimeout(() => { testStatus.value = null }, 8000)
 }
 
 const formatCurrency = (val) =>
@@ -1235,6 +1242,28 @@ input:checked + .toggle-slider:before {
   appearance: none;
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a6f3e'/%3E%3C/svg%3E") no-repeat right center;
   padding-right: 1.2rem;
+}
+
+.test-feedback {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.test-feedback.success {
+  background: #f3faf5;
+  color: var(--success-color);
+  border: 1px solid #def7ec;
+}
+
+.test-feedback.error {
+  background: #fdf2f2;
+  color: var(--danger-color);
+  border: 1px solid #f8b4b4;
 }
 
 @media (max-width: 600px) {
