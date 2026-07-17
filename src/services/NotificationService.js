@@ -112,10 +112,6 @@ function isAndroid() {
   }
 }
 
-function scheduleNow() {
-  return { at: new Date(Date.now() + 1000) }
-}
-
 class NotificationService {
   get enabled() {
     try { return localStorage.getItem(STORAGE_KEY_ENABLED) !== 'false' } catch { return true }
@@ -226,94 +222,43 @@ class NotificationService {
     }
   }
 
-  async notifyLimitExceeded(exceededValue) {
-    if (!isAndroid() || !this.enabled) return
+  async scheduleImmediate(id, title, body, channelId) {
     const granted = await this.requestPermissions()
     if (!granted) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
-      const message = pickNextMessage(LIMIT_EXCEEDED_MESSAGES)
-      const body = `${message} Excedente: R$ ${Number(exceededValue).toFixed(2)}`
-
       await LocalNotifications.schedule({
-        notifications: [{
-          id: Date.now(),
-          title: 'Limite de Consumo Excedido',
-          body,
-          schedule: scheduleNow(),
-          channelId: 'breyne-alerts'
-        }]
+        notifications: [{ id, title, body, channelId }]
       })
     } catch (e) {
-      console.warn('Failed to notify limit exceeded:', e)
+      console.warn('Failed to send immediate notification:', e)
     }
+  }
+
+  async notifyLimitExceeded(exceededValue) {
+    if (!isAndroid() || !this.enabled) return
+    const message = pickNextMessage(LIMIT_EXCEEDED_MESSAGES)
+    const body = `${message} Excedente: R$ ${Number(exceededValue).toFixed(2)}`
+    await this.scheduleImmediate(Date.now(), 'Limite de Consumo Excedido', body, 'breyne-alerts')
   }
 
   async notifyHealthGood() {
     if (!isAndroid() || !this.enabled) return
-    const granted = await this.requestPermissions()
-    if (!granted) return
-    try {
-      const { LocalNotifications } = await import('@capacitor/local-notifications')
-      const message = pickNextMessage(HEALTH_GOOD_MESSAGES)
-
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: Date.now(),
-          title: 'Saude Financeira',
-          body: message,
-          schedule: scheduleNow(),
-          channelId: 'breyne-alerts'
-        }]
-      })
-    } catch (e) {
-      console.warn('Failed to notify health good:', e)
-    }
+    const message = pickNextMessage(HEALTH_GOOD_MESSAGES)
+    await this.scheduleImmediate(Date.now(), 'Saude Financeira', message, 'breyne-alerts')
   }
 
   async notifyNearLimit(consumptionPercent) {
     if (!isAndroid() || !this.enabled) return
-    const granted = await this.requestPermissions()
-    if (!granted) return
-    try {
-      const { LocalNotifications } = await import('@capacitor/local-notifications')
-      const message = pickNextMessage(NEAR_LIMIT_MESSAGES)
-      const body = `${message} (${Number(consumptionPercent).toFixed(1)}% do limite utilizado)`
-
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: Date.now(),
-          title: 'Aviso de Consumo',
-          body,
-          schedule: scheduleNow(),
-          channelId: 'breyne-alerts'
-        }]
-      })
-    } catch (e) {
-      console.warn('Failed to notify near limit:', e)
-    }
+    const message = pickNextMessage(NEAR_LIMIT_MESSAGES)
+    const body = `${message} (${Number(consumptionPercent).toFixed(1)}% do limite utilizado)`
+    await this.scheduleImmediate(Date.now(), 'Aviso de Consumo', body, 'breyne-alerts')
   }
 
   async sendFinancialTip() {
     if (!isAndroid() || !this.enabled) return
-    const granted = await this.requestPermissions()
-    if (!granted) return
-    try {
-      const { LocalNotifications } = await import('@capacitor/local-notifications')
-      const message = pickNextMessage(FINANCIAL_TIPS)
-
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: Date.now(),
-          title: 'Dica Financeira',
-          body: message,
-          schedule: scheduleNow(),
-          channelId: 'breyne-tips'
-        }]
-      })
-    } catch (e) {
-      console.warn('Failed to send tip:', e)
-    }
+    const message = pickNextMessage(FINANCIAL_TIPS)
+    await this.scheduleImmediate(Date.now(), 'Dica Financeira', message, 'breyne-tips')
   }
 
   async checkAndNotify(storeData) {
@@ -361,22 +306,7 @@ class NotificationService {
 
   async sendTestNotification() {
     if (!isAndroid()) return
-    const granted = await this.requestPermissions()
-    if (!granted) return
-    try {
-      const { LocalNotifications } = await import('@capacitor/local-notifications')
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: Date.now(),
-          title: 'BreyneWallet',
-          body: 'Notificacoes funcionando!',
-          schedule: scheduleNow(),
-          channelId: 'breyne-daily'
-        }]
-      })
-    } catch (e) {
-      console.warn('Test notification failed:', e)
-    }
+    await this.scheduleImmediate(Date.now(), 'BreyneWallet', 'Notificacoes funcionando!', 'breyne-daily')
   }
 }
 
