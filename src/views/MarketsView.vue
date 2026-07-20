@@ -125,7 +125,7 @@
             <div>
               <div class="modal-title-row">
                 <h2>{{ detail.symbol.replace('.SA','').replace('.IR','').replace('.L','').replace('^','') }}</h2>
-                <button class="btn-alert" @click.stop="toggleAlertForm" :title="hasAlert ? 'Remover alerta' : 'Criar alerta de preço'">
+                <button class="btn-alert" @click.stop="toggleModalAlert" :title="hasAlert ? 'Remover alerta' : 'Criar alerta de preço'">
                   <span v-if="hasAlert" class="bell-active">🔔</span>
                   <span v-else class="bell-inactive">🔕</span>
                 </button>
@@ -136,25 +136,6 @@
               <span class="badge-exchange">{{ getExchangeLabel(detail.exchange) }}</span>
               <span class="badge-type" :class="detail.assetType.toLowerCase()">{{ detail.assetType }}</span>
             </div>
-          </div>
-          <div v-if="showAlertForm" class="alert-form">
-            <label class="alert-label">Alerta de preço:</label>
-            <div class="alert-movement" v-if="detail">
-              <span>Atual: {{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.price) }}</span>
-              <span :class="detail.change >= 0 ? 'up' : 'down'">
-                {{ detail.changePercent >= 0 ? '+' : '' }}{{ detail.changePercent?.toFixed(2) }}%
-              </span>
-            </div>
-            <div class="alert-input-row">
-              <select v-model="alertDirection" class="alert-select">
-                <option value="above">≥</option>
-                <option value="below">≤</option>
-              </select>
-              <input v-model.number="alertTargetPrice" type="number" step="any" class="alert-input" placeholder="Preço alvo" />
-              <button class="alert-save-btn" @click="saveAlert">Salvar</button>
-              <button class="alert-cancel-btn" @click="showAlertForm = false">✕</button>
-            </div>
-            <span v-if="alertError" class="alert-error">{{ alertError }}</span>
           </div>
 
           <div class="modal-price-row">
@@ -256,6 +237,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { priceAlertService } from '../services/PriceAlertService.js'
+import { notificationService } from '../services/NotificationService.js'
 import {
   Chart, LineElement, PointElement, LineController,
   LinearScale, CategoryScale, Filler, Tooltip
@@ -402,34 +384,18 @@ async function loadIndexCharts() {
   }
 }
 
-const showAlertForm = ref(false)
-const alertTargetPrice = ref(0)
-const alertDirection = ref('above')
-const alertError = ref('')
-
 const activeAlerts = ref(priceAlertService.getActive())
 
 const hasAlert = computed(() =>
   detail.value && activeAlerts.value.some(a => a.symbol === detail.value.symbol)
 )
 
-function toggleAlertForm() {
-  if (hasAlert.value && detail.value) {
-    priceAlertService.removeBySymbol(detail.value.symbol)
-    activeAlerts.value = priceAlertService.getActive()
-    showAlertForm.value = false
-    return
+function createAlerts(symbol, basis) {
+  const levels = [1.05, 1.10, 1.20]
+  for (const mult of levels) {
+    priceAlertService.add(symbol, basis * mult, 'above', basis)
+    priceAlertService.add(symbol, basis / mult, 'below', basis)
   }
-  const existing = activeAlerts.value.find(a => detail.value && a.symbol === detail.value.symbol)
-  if (existing) {
-    alertTargetPrice.value = existing.targetPrice
-    alertDirection.value = existing.direction
-  } else {
-    alertTargetPrice.value = detail.value?.price || 0
-    alertDirection.value = 'above'
-  }
-  alertError.value = ''
-  showAlertForm.value = true
 }
 
 function stockHasAlert(s) {
@@ -440,28 +406,19 @@ function toggleCardAlert(s) {
   if (stockHasAlert(s)) {
     priceAlertService.removeBySymbol(s.symbol)
   } else {
-    const basis = s.open || s.price
-    const levels = [1.05, 1.10, 1.20]
-    for (const mult of levels) {
-      priceAlertService.add(s.symbol, basis * mult, 'above', basis)
-      priceAlertService.add(s.symbol, basis / mult, 'below', basis)
-    }
+    createAlerts(s.symbol, s.open || s.price)
   }
   activeAlerts.value = priceAlertService.getActive()
 }
 
-function saveAlert() {
+function toggleModalAlert() {
   if (!detail.value) return
-  const price = alertTargetPrice.value
-  if (!price || price <= 0) {
-    alertError.value = 'Digite um preço válido'
-    return
+  if (hasAlert.value) {
+    priceAlertService.removeBySymbol(detail.value.symbol)
+  } else {
+    createAlerts(detail.value.symbol, detail.value.open || detail.value.price)
   }
-  const basis = detail.value.open || detail.value.price
-  priceAlertService.add(detail.value.symbol, price, alertDirection.value, basis)
   activeAlerts.value = priceAlertService.getActive()
-  showAlertForm.value = false
-  alertError.value = ''
 }
 
 function checkAlerts() {
@@ -474,6 +431,7 @@ function checkAlerts() {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, { body, icon: '/favicon.ico' })
     }
+    notificationService.scheduleImmediate(Date.now(), title, body, 'breyne-alerts')
   }
   activeAlerts.value = priceAlertService.getActive()
 }
