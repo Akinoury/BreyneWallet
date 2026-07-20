@@ -701,10 +701,10 @@ const percentLimitUsed = computed(() => {
 })
 
 const CATEGORY_PCT_LIMITS = [
-  { label: '🏠 Moradia (aluguel/financiamento + condomínio + IPTU)', key: 'Moradia', pct: 25 },
-  { label: '🚗 Transporte (carro, combustível, seguro, IPVA ou transporte público)', key: 'Transporte', pct: 10 },
+  { label: '🏠 Moradia', key: 'Moradia', pct: 25 },
+  { label: '🚗 Transporte', key: 'Transporte', pct: 10 },
   { label: '🍽️ Alimentação', key: 'Alimentação', pct: 15 },
-  { label: '⚡ Contas (água, luz, internet, celular, gás)', key: 'Contas', pct: 10 },
+  { label: '⚡ Contas', key: 'Contas', pct: 10 },
   { label: '🏥 Saúde e seguros', key: 'Saúde', pct: 5 },
   { label: '🎓 Educação', key: 'Educação', pct: 2.5 },
   { label: '🎉 Lazer e compras', key: 'Lazer', pct: 2.5 },
