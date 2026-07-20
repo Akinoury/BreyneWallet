@@ -579,12 +579,18 @@ Chart.register(
 
 const store = useWalletStore()
 
+const STORAGE_KEY_ACERTO_VISIBLE = 'breyne_acerto_table_visible'
+
 const fundTxAmount = ref(null)
 const showHelpModal = ref(false)
-const showAcertoTable = ref(true)
+const showAcertoTable = ref(localStorage.getItem(STORAGE_KEY_ACERTO_VISIBLE) !== 'false')
 
 // Projeção e Simulação da Selic / Liberdade Financeira
 const targetPassiveIncome = ref(0)
+
+watch(showAcertoTable, (val) => {
+  localStorage.setItem(STORAGE_KEY_ACERTO_VISIBLE, val ? 'true' : 'false')
+})
 
 const selicRate = ref(10.75)
 const inflationRate = ref(4)
