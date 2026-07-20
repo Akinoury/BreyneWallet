@@ -2,6 +2,10 @@ import { handleOptions, setCorsHeaders } from '../_lib/cors.js'
 
 const YAHOO_QUOTE = 'https://query2.finance.yahoo.com/v7/finance/quote'
 const YAHOO_CHART = 'https://query1.finance.yahoo.com/v8/finance/chart'
+
+function encSym(s) {
+  return s.startsWith('^') ? '%5E' + s.slice(1) : s
+}
 const AWESOME_API = 'https://economia.awesomeapi.com.br/json/last'
 const COINGECKO = 'https://api.coingecko.com/api/v3/simple/price'
 
@@ -83,7 +87,7 @@ export default async function handler(req, res) {
   if (chart) {
     const intervals = { '10y': '1mo' }
     const interval = intervals[range] || '1d'
-    const data = await fetchJSON(`${YAHOO_CHART}/${chart}?range=${range || '1mo'}&interval=${interval}`, 8000)
+    const data = await fetchJSON(`${YAHOO_CHART}/${encSym(chart)}?range=${range || '1mo'}&interval=${interval}`, 8000)
     return res.json(data || { error: 'Chart data not available' })
   }
 
@@ -209,15 +213,17 @@ async function fetchCrypto(signal) {
 }
 
 function classify(symbol, exchange) {
-  const s = symbol.toUpperCase().replace('.SA','').replace('.IR','').replace('.L','')
+  const s = symbol.toUpperCase().replace('.SA','').replace('.IR','').replace('.L','').replace('^','')
   if (ETF_SET.has(s)) return 'ETFs'
   if (REIT_SET.has(s) && exchange !== 'B3') return 'REITs'
   if (s.endsWith('11') && exchange === 'B3') return 'FIIs'
+  if (exchange === 'INDEX') return 'Índices'
   return 'Ações'
 }
 
 function getExchange(symbol) {
   const s = symbol.toUpperCase()
+  if (s.startsWith('^')) return 'INDEX'
   if (s.endsWith('.SA')) return 'B3'
   if (s.endsWith('.IR') || s.endsWith('.L')) return 'IRL'
   if (NYSE_SET.has(s)) return 'NYSE'
@@ -315,7 +321,7 @@ async function fetchQuotesChart(symbols, signal) {
     const batch = symbols.slice(i, i + 40)
     const batchResults = await Promise.allSettled(
       batch.map(async (symbol) => {
-        const data = await fetchJSON(`${YAHOO_CHART}/${symbol}?range=2d&interval=1d`, 6000, signal)
+        const data = await fetchJSON(`${YAHOO_CHART}/${encSym(symbol)}?range=2d&interval=1d`, 6000, signal)
         if (!data?.chart?.result?.[0]) return null
         return formatChartMeta(data.chart.result[0].meta, symbol)
       })
@@ -411,5 +417,8 @@ const ALL_SYMBOLS = [
   'BP.L','CPG.L','CRDA.L','DGE.L','EZJ.L','GSK.L','HL.L','HSBA.L',
   'IMB.L','INF.L','ITRK.L','LLOY.L','MNDI.L','MRO.L','NG.L','PRU.L',
   'RB.L','REL.L','REX.L','RR.L','SDR.L','SGE.L','SMIN.L','SN.L',
-  'SSE.L','STAN.L','SVT.L','TSCO.L','ULVR.L','UU.L','VOD.L','WTB.L'
+  'SSE.L','STAN.L','SVT.L','TSCO.L','ULVR.L','UU.L','VOD.L','WTB.L',
+
+  // Índices de referência
+  '^BVSP','^GSPC'
 ]

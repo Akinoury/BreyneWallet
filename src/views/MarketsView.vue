@@ -2,7 +2,10 @@
   <div class="markets-wrapper animate-fade-in">
     <div class="markets-header flex-between">
       <div>
-        <h2>📈 Mercados</h2>
+        <div class="markets-title-row">
+          <h2>📈 Mercados</h2>
+          <span v-if="activeAlerts.length" class="alerts-badge" title="Alertas ativos">🔔 {{ activeAlerts.length }}</span>
+        </div>
         <p>Cotações ao vivo das principais bolsas, FIIs, ETFs e moedas.</p>
       </div>
       <button class="btn-back" @click="$router.push('/investments')">← Voltar</button>
@@ -87,13 +90,32 @@
 
           <div class="modal-header">
             <div>
-              <h2>{{ detail.symbol.replace('.SA','').replace('.IR','').replace('.L','') }}</h2>
+              <div class="modal-title-row">
+                <h2>{{ detail.symbol.replace('.SA','').replace('.IR','').replace('.L','') }}</h2>
+                <button class="btn-alert" @click.stop="toggleAlertForm" :title="hasAlert ? 'Remover alerta' : 'Criar alerta de preço'">
+                  <span v-if="hasAlert" class="bell-active">🔔</span>
+                  <span v-else class="bell-inactive">🔕</span>
+                </button>
+              </div>
               <span class="modal-subtitle">{{ detail.longName || detail.shortName }}</span>
             </div>
             <div class="modal-badges">
               <span class="badge-exchange">{{ getExchangeLabel(detail.exchange) }}</span>
               <span class="badge-type" :class="detail.assetType.toLowerCase()">{{ detail.assetType }}</span>
             </div>
+          </div>
+          <div v-if="showAlertForm" class="alert-form">
+            <label class="alert-label">Alerta de preço:</label>
+            <div class="alert-input-row">
+              <select v-model="alertDirection" class="alert-select">
+                <option value="above">≥</option>
+                <option value="below">≤</option>
+              </select>
+              <input v-model.number="alertTargetPrice" type="number" step="any" class="alert-input" placeholder="Preço alvo" />
+              <button class="alert-save-btn" @click="saveAlert">Salvar</button>
+              <button class="alert-cancel-btn" @click="showAlertForm = false">✕</button>
+            </div>
+            <span v-if="alertError" class="alert-error">{{ alertError }}</span>
           </div>
 
           <div class="modal-price-row">
@@ -184,7 +206,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { priceAlertService } from '../services/PriceAlertService.js'
 import {
   Chart, LineElement, PointElement, LineController,
   LinearScale, CategoryScale, Filler, Tooltip
@@ -205,7 +228,8 @@ const assetTypes = [
   { key: 'Ações', label: 'Ações' },
   { key: 'FIIs', label: 'FIIs' },
   { key: 'ETFs', label: 'ETFs' },
-  { key: 'REITs', label: 'REITs' }
+  { key: 'REITs', label: 'REITs' },
+  { key: 'Índices', label: 'Índices' }
 ]
 
 const chartRanges = [
@@ -232,6 +256,63 @@ const chartError = ref('')
 const chartRange = ref('1mo')
 let chartInstance = null
 let chartRequestId = 0
+let alertCheckTimer = null
+
+const showAlertForm = ref(false)
+const alertTargetPrice = ref(0)
+const alertDirection = ref('above')
+const alertError = ref('')
+
+const activeAlerts = ref(priceAlertService.getActive())
+
+const hasAlert = computed(() =>
+  detail.value && activeAlerts.value.some(a => a.symbol === detail.value.symbol)
+)
+
+function toggleAlertForm() {
+  if (hasAlert.value && detail.value) {
+    priceAlertService.removeBySymbol(detail.value.symbol)
+    activeAlerts.value = priceAlertService.getActive()
+    showAlertForm.value = false
+    return
+  }
+  const existing = activeAlerts.value.find(a => detail.value && a.symbol === detail.value.symbol)
+  if (existing) {
+    alertTargetPrice.value = existing.targetPrice
+    alertDirection.value = existing.direction
+  } else {
+    alertTargetPrice.value = detail.value?.price || 0
+    alertDirection.value = 'above'
+  }
+  alertError.value = ''
+  showAlertForm.value = true
+}
+
+function saveAlert() {
+  if (!detail.value) return
+  const price = alertTargetPrice.value
+  if (!price || price <= 0) {
+    alertError.value = 'Digite um preço válido'
+    return
+  }
+  priceAlertService.add(detail.value.symbol, price, alertDirection.value)
+  activeAlerts.value = priceAlertService.getActive()
+  showAlertForm.value = false
+  alertError.value = ''
+}
+
+function checkAlerts() {
+  const triggered = priceAlertService.checkPrices(stocks.value)
+  for (const t of triggered) {
+    const dir = t.direction === 'above' ? 'atingiu' : 'caiu para'
+    const title = `🔔 Alerta: ${t.symbol}`
+    const body = `${t.symbol} ${dir} R$ ${t.currentPrice.toFixed(2)} (meta: R$ ${t.targetPrice.toFixed(2)})`
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/favicon.ico' })
+    }
+  }
+  activeAlerts.value = priceAlertService.getActive()
+}
 
 const filteredStocks = computed(() => {
   let result = stocks.value
@@ -327,6 +408,7 @@ async function fetchAll() {
     if (c.binancecoin) items.push({ label: 'BNB/USD', value: `$ ${c.binancecoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.binancecoin.usd_24h_change || 0).toFixed(2) })
 
     tickers.value = items
+    checkAlerts()
   } catch {
     error.value = 'Erro ao carregar dados dos mercados. Tente novamente.'
   } finally {
@@ -497,6 +579,14 @@ watch(detail, (val) => {
 
 onMounted(() => {
   fetchAll()
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission()
+  }
+  alertCheckTimer = setInterval(checkAlerts, 30000)
+})
+
+onUnmounted(() => {
+  if (alertCheckTimer) clearInterval(alertCheckTimer)
 })
 </script>
 
@@ -510,6 +600,20 @@ onMounted(() => {
 
 .markets-header {
   align-items: flex-start;
+}
+.markets-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.alerts-badge {
+  font-size: 0.7rem;
+  background: var(--border-color);
+  color: var(--text-primary);
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 .btn-back {
@@ -741,6 +845,7 @@ onMounted(() => {
 .stock-type-badge.fiis { background: rgba(6,193,103,0.1); color: #06c167; }
 .stock-type-badge.etfs { background: rgba(255,153,0,0.1); color: #cc7a00; }
 .stock-type-badge.reits { background: rgba(230,0,20,0.1); color: #e60014; }
+.stock-type-badge.índices { background: rgba(184,134,11,0.1); color: #b8860b; }
 
 .stock-name {
   font-size: 0.7rem;
@@ -823,6 +928,99 @@ onMounted(() => {
   margin-bottom: 0.5rem;
 }
 .modal-header h2 { font-size: 1.3rem; margin: 0; }
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-alert {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  font-family: inherit;
+  transition: transform 0.15s;
+}
+.btn-alert:hover { transform: scale(1.2); }
+.bell-active { filter: none; }
+.bell-inactive { opacity: 0.4; filter: grayscale(1); }
+
+.alert-form {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.alert-label {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.alert-input-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.alert-select {
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text-primary);
+  width: 50px;
+}
+.alert-input {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #fff;
+  outline: none;
+  min-width: 0;
+}
+.alert-input:focus { border-color: var(--accent-color); }
+.alert-save-btn {
+  background: var(--text-primary);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.alert-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.alert-error {
+  font-size: 0.7rem;
+  color: #c62828;
+  display: block;
+  margin-top: 0.25rem;
+}
+
 .modal-subtitle { font-size: 0.78rem; color: var(--text-secondary); display: block; margin-top: 0.1rem; }
 
 .modal-badges {
@@ -852,6 +1050,7 @@ onMounted(() => {
 .badge-type.fiis { background: rgba(6,193,103,0.1); color: #06c167; }
 .badge-type.etfs { background: rgba(255,153,0,0.1); color: #cc7a00; }
 .badge-type.reits { background: rgba(230,0,20,0.1); color: #e60014; }
+.badge-type.índices { background: rgba(184,134,11,0.1); color: #b8860b; }
 
 .modal-price-row {
   display: flex;
