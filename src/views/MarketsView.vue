@@ -142,10 +142,14 @@
             <button v-for="r in chartRanges" :key="r.key" class="range-chip" :class="{ active: chartRange === r.key }" @click="setChartRange(r.key)">{{ r.label }}</button>
           </div>
 
-          <div class="chart-container">
-            <canvas ref="chartCanvas" v-show="chartReady"></canvas>
-            <div v-if="chartLoading" class="chart-loading">Carregando gráfico...</div>
-            <div v-if="chartError" class="chart-loading">{{ chartError }}</div>
+          <div class="chart-container" :class="{ 'chart-split': isIndex }">
+            <div class="chart-single" v-for="(ch, i) in chartInstances" :key="i">
+              <span class="chart-label">{{ ch.label }}</span>
+              <canvas :ref="el => setChartRef(i, el)" v-show="ch.ready"></canvas>
+              <div v-if="!ch.ready && !chartLoading" class="chart-loading">Gráfico indisponível</div>
+            </div>
+            <div v-if="chartLoading" class="chart-loading chart-loading-full">Carregando gráfico...</div>
+            <div v-if="chartError && !isIndex" class="chart-loading chart-loading-full">{{ chartError }}</div>
           </div>
 
           <div class="metrics-grid">
@@ -269,6 +273,12 @@ let chartInstance = null
 let chartRequestId = 0
 let alertCheckTimer = null
 
+const chartInstances = ref([])
+const chartRefs = {}
+function setChartRef(i, el) { if (el) chartRefs[i] = el }
+
+const isIndex = computed(() => detail.value?.assetType === 'Índices')
+
 const showAlertForm = ref(false)
 const alertTargetPrice = ref(0)
 const alertDirection = ref('above')
@@ -307,9 +317,11 @@ function toggleCardAlert(s) {
   if (stockHasAlert(s)) {
     priceAlertService.removeBySymbol(s.symbol)
   } else {
-    const direction = s.change >= 0 ? 'above' : 'below'
-    const target = direction === 'above' ? s.price * 1.05 : s.price * 0.95
-    priceAlertService.add(s.symbol, target, direction)
+    const levels = [1.05, 1.10, 1.20]
+    for (const mult of levels) {
+      priceAlertService.add(s.symbol, s.price * mult, 'above')
+      priceAlertService.add(s.symbol, s.price / mult, 'below')
+    }
   }
   activeAlerts.value = priceAlertService.getActive()
 }
@@ -449,10 +461,9 @@ async function loadChart() {
   chartLoading.value = true
   chartReady.value = false
   chartError.value = ''
+  chartInstances.value = []
   try {
-    const symbols = detail.value.assetType === 'Índices'
-      ? ['^BVSP', '^GSPC']
-      : [detail.value.symbol]
+    const symbols = isIndex.value ? ['^BVSP', '^GSPC'] : [detail.value.symbol]
     const results = await Promise.all(symbols.map(sym =>
       fetch(`${API_BASE}/api/markets?chart=${sym}&range=${chartRange.value}`).then(r => r.ok ? r.json() : null)
     ))
@@ -460,7 +471,11 @@ async function loadChart() {
     const valid = results.filter(Boolean)
     if (!valid.length) throw new Error('Falha')
     await nextTick()
-    renderChart(valid, symbols)
+    if (isIndex.value) {
+      renderSplitCharts(results, symbols)
+    } else {
+      renderChart(results[0])
+    }
   } catch {
     if (id === chartRequestId) {
       chartError.value = 'Gráfico indisponível'
@@ -469,74 +484,103 @@ async function loadChart() {
   }
 }
 
-const CHART_COLORS = ['#06c167', '#1e3a5f', '#b8860b', '#8b0000']
+function makeChart(el, closes, label, color) {
+  if (!el) return null
+  const timestamps = []
+  const labels = []
+  for (let i = 0; i < closes.length; i++) {
+    timestamps.push(i)
+    labels.push('')
+  }
+  const min = Math.min(...closes)
+  const max = Math.max(...closes)
+  const padding = (max - min) * 0.1 || max * 0.05
+  return new Chart(el, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label,
+        data: closes,
+        borderColor: color,
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 180)
+          g.addColorStop(0, color + '33')
+          g.addColorStop(1, 'rgba(0,0,0,0)')
+          return g
+        },
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0.5,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      scales: {
+        x: { display: false },
+        y: {
+          min: Math.max(0, min - padding),
+          max: max + padding,
+          ticks: { font: { size: 8 }, callback: v => v.toFixed(0), maxTicksLimit: 4 }
+        }
+      }
+    }
+  })
+}
 
-function renderChart(results, labels) {
+const CHART_COLORS = ['#06c167', '#1e3a5f']
+
+function renderChart(data) {
   if (!chartCanvas.value) return
   if (chartInstance) { chartInstance.destroy(); chartInstance = null }
-  const datasets = []
-  let allCloses = []
-
-  for (let i = 0; i < results.length; i++) {
-    const data = results[i]
-    const timestamps = data.chart?.result?.[0]?.timestamp || []
-    const quotes = data.chart?.result?.[0]?.indicators?.quote?.[0]
-    const closes = quotes?.close?.filter(c => c != null) || []
-    if (closes.length < 2) continue
-    const name = labels[i] ? labels[i].replace('^','') : 'Série ' + (i + 1)
-    const up = closes[0] <= closes[closes.length - 1]
-    const color = CHART_COLORS[i % CHART_COLORS.length]
-    datasets.push({
-      label: name,
-      data: closes,
-      borderColor: color,
-      backgroundColor: (ctx) => {
-        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220)
-        g.addColorStop(0, color + '33')
-        g.addColorStop(1, 'rgba(0,0,0,0)')
-        return g
-      },
-      fill: false,
-      tension: 0.3,
-      pointRadius: 0.5,
-      borderWidth: 2
-    })
-    allCloses = allCloses.concat(closes)
-  }
-
-  if (datasets.length === 0) {
+  const timestamps = data?.chart?.result?.[0]?.timestamp || []
+  const quotes = data?.chart?.result?.[0]?.indicators?.quote?.[0]
+  const closes = quotes?.close?.filter(c => c != null) || []
+  if (closes.length < 2) {
     chartError.value = 'Dados insuficientes para o gráfico'
     chartLoading.value = false
     return
   }
-
-  const timestamps = results[0]?.chart?.result?.[0]?.timestamp || []
-  const firstQuotes = results[0]?.chart?.result?.[0]?.indicators?.quote?.[0]
-  const firstCloses = firstQuotes?.close?.filter(c => c != null) || []
-  const xLabels = timestamps.slice(-firstCloses.length).map(t => {
+  const xLabels = timestamps.slice(-closes.length).map(t => {
     const d = new Date(t * 1000)
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   })
-
-  const allMin = Math.min(...allCloses)
-  const allMax = Math.max(...allCloses)
-  const padding = (allMax - allMin) * 0.1 || allMax * 0.05
-
+  const min = Math.min(...closes)
+  const max = Math.max(...closes)
+  const padding = (max - min) * 0.1 || max * 0.05
+  const up = closes[0] <= closes[closes.length - 1]
   chartInstance = new Chart(chartCanvas.value, {
     type: 'line',
-    data: { labels: xLabels, datasets },
+    data: {
+      labels: xLabels,
+      datasets: [{
+        label: 'Fechamento',
+        data: closes,
+        borderColor: up ? '#06c167' : '#e60014',
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220)
+          g.addColorStop(0, up ? 'rgba(6,193,103,0.2)' : 'rgba(230,0,20,0.2)')
+          g.addColorStop(1, 'rgba(0,0,0,0)')
+          return g
+        },
+        fill: true,
+        tension: 0.3,
+        pointRadius: 1,
+        borderWidth: 2
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: datasets.length > 1, position: 'top', labels: { font: { size: 10 }, boxWidth: 12, padding: 8 } },
-        tooltip: { enabled: true }
-      },
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
       scales: {
         x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 9 } } },
         y: {
-          min: Math.max(0, allMin - padding),
-          max: allMax + padding,
+          min: Math.max(0, min - padding),
+          max: max + padding,
           ticks: { font: { size: 9 }, callback: v => v.toFixed(2) }
         }
       }
@@ -544,6 +588,33 @@ function renderChart(results, labels) {
   })
   chartLoading.value = false
   chartReady.value = true
+}
+
+function renderSplitCharts(results, symbols) {
+  const instances = []
+  for (let i = 0; i < results.length; i++) {
+    if (!results[i]) continue
+    const quotes = results[i]?.chart?.result?.[0]?.indicators?.quote?.[0]
+    const closes = quotes?.close?.filter(c => c != null) || []
+    if (closes.length < 2) continue
+    const label = symbols[i].replace('^', '')
+    instances.push({ label, closes, color: CHART_COLORS[i % CHART_COLORS.length], ready: false })
+  }
+  chartInstances.value = instances
+  chartLoading.value = false
+  nextTick(() => {
+    for (let i = 0; i < chartInstances.value.length; i++) {
+      const inst = chartInstances.value[i]
+      const el = chartRefs[i]
+      if (!el) continue
+      if (chartInstance) chartInstance.destroy()
+      const ch = makeChart(el, inst.closes, inst.label, inst.color)
+      if (ch) {
+        inst.ready = true
+        chartInstances.value = [...chartInstances.value]
+      }
+    }
+  })
 }
 
 async function openDetail(stock) {
@@ -622,6 +693,7 @@ async function liveLookup(q) {
 watch(detail, (val) => {
   if (!val) {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+    chartInstances.value = []
     chartReady.value = false
     chartLoading.value = false
     chartError.value = ''
@@ -1174,6 +1246,33 @@ onUnmounted(() => {
   position: relative;
 }
 
+.chart-container.chart-split {
+  height: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.chart-single {
+  height: 200px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.5rem;
+  position: relative;
+}
+
+.chart-label {
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  display: block;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
 .chart-loading {
   position: absolute;
   inset: 0;
@@ -1182,6 +1281,17 @@ onUnmounted(() => {
   justify-content: center;
   color: var(--text-secondary);
   font-size: 0.85rem;
+}
+
+.chart-loading-full {
+  position: absolute;
+  inset: 0;
+}
+
+@media (max-width: 480px) {
+  .chart-container.chart-split {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metrics-grid {
