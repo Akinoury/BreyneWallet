@@ -63,8 +63,13 @@
           @click="openDetail(s)"
         >
           <div class="stock-top">
-            <div class="stock-symbol">{{ s.symbol.replace('.SA','').replace('.IR','').replace('.L','') }}</div>
-            <div class="stock-type-badge" :class="s.assetType.toLowerCase()">{{ s.assetType }}</div>
+            <div class="stock-symbol">{{ s.symbol.replace('.SA','').replace('.IR','').replace('.L','').replace('^','') }}</div>
+            <div class="stock-top-right">
+              <button class="card-bell" @click.stop="toggleCardAlert(s)" :title="'Alerta de preço'">
+                <span :class="stockHasAlert(s) ? 'bell-active' : 'bell-inactive'">🔔</span>
+              </button>
+              <div class="stock-type-badge" :class="s.assetType.toLowerCase()">{{ s.assetType }}</div>
+            </div>
           </div>
           <div class="stock-name">{{ s.shortName || s.symbol }}</div>
           <div class="stock-price-row">
@@ -91,7 +96,7 @@
           <div class="modal-header">
             <div>
               <div class="modal-title-row">
-                <h2>{{ detail.symbol.replace('.SA','').replace('.IR','').replace('.L','') }}</h2>
+                <h2>{{ detail.symbol.replace('.SA','').replace('.IR','').replace('.L','').replace('^','') }}</h2>
                 <button class="btn-alert" @click.stop="toggleAlertForm" :title="hasAlert ? 'Remover alerta' : 'Criar alerta de preço'">
                   <span v-if="hasAlert" class="bell-active">🔔</span>
                   <span v-else class="bell-inactive">🔕</span>
@@ -106,6 +111,12 @@
           </div>
           <div v-if="showAlertForm" class="alert-form">
             <label class="alert-label">Alerta de preço:</label>
+            <div class="alert-movement" v-if="detail">
+              <span>Atual: {{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.price) }}</span>
+              <span :class="detail.change >= 0 ? 'up' : 'down'">
+                {{ detail.changePercent >= 0 ? '+' : '' }}{{ detail.changePercent?.toFixed(2) }}%
+              </span>
+            </div>
             <div class="alert-input-row">
               <select v-model="alertDirection" class="alert-select">
                 <option value="above">≥</option>
@@ -288,6 +299,21 @@ function toggleAlertForm() {
   showAlertForm.value = true
 }
 
+function stockHasAlert(s) {
+  return activeAlerts.value.some(a => a.symbol === s.symbol)
+}
+
+function toggleCardAlert(s) {
+  if (stockHasAlert(s)) {
+    priceAlertService.removeBySymbol(s.symbol)
+  } else {
+    const direction = s.change >= 0 ? 'above' : 'below'
+    const target = direction === 'above' ? s.price * 1.05 : s.price * 0.95
+    priceAlertService.add(s.symbol, target, direction)
+  }
+  activeAlerts.value = priceAlertService.getActive()
+}
+
 function saveAlert() {
   if (!detail.value) return
   const price = alertTargetPrice.value
@@ -424,12 +450,17 @@ async function loadChart() {
   chartReady.value = false
   chartError.value = ''
   try {
-    const res = await fetch(`${API_BASE}/api/markets?chart=${detail.value.symbol}&range=${chartRange.value}`)
-    if (!res.ok) throw new Error('Falha')
-    const data = await res.json()
+    const symbols = detail.value.assetType === 'Índices'
+      ? ['^BVSP', '^GSPC']
+      : [detail.value.symbol]
+    const results = await Promise.all(symbols.map(sym =>
+      fetch(`${API_BASE}/api/markets?chart=${sym}&range=${chartRange.value}`).then(r => r.ok ? r.json() : null)
+    ))
     if (id !== chartRequestId) return
+    const valid = results.filter(Boolean)
+    if (!valid.length) throw new Error('Falha')
     await nextTick()
-    renderChart(data)
+    renderChart(valid, symbols)
   } catch {
     if (id === chartRequestId) {
       chartError.value = 'Gráfico indisponível'
@@ -438,54 +469,74 @@ async function loadChart() {
   }
 }
 
-function renderChart(data) {
+const CHART_COLORS = ['#06c167', '#1e3a5f', '#b8860b', '#8b0000']
+
+function renderChart(results, labels) {
   if (!chartCanvas.value) return
   if (chartInstance) { chartInstance.destroy(); chartInstance = null }
-  const timestamps = data.chart?.result?.[0]?.timestamp || []
-  const quotes = data.chart?.result?.[0]?.indicators?.quote?.[0]
-  const closes = quotes?.close?.filter(c => c != null) || []
-  if (closes.length < 2) {
+  const datasets = []
+  let allCloses = []
+
+  for (let i = 0; i < results.length; i++) {
+    const data = results[i]
+    const timestamps = data.chart?.result?.[0]?.timestamp || []
+    const quotes = data.chart?.result?.[0]?.indicators?.quote?.[0]
+    const closes = quotes?.close?.filter(c => c != null) || []
+    if (closes.length < 2) continue
+    const name = labels[i] ? labels[i].replace('^','') : 'Série ' + (i + 1)
+    const up = closes[0] <= closes[closes.length - 1]
+    const color = CHART_COLORS[i % CHART_COLORS.length]
+    datasets.push({
+      label: name,
+      data: closes,
+      borderColor: color,
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220)
+        g.addColorStop(0, color + '33')
+        g.addColorStop(1, 'rgba(0,0,0,0)')
+        return g
+      },
+      fill: false,
+      tension: 0.3,
+      pointRadius: 0.5,
+      borderWidth: 2
+    })
+    allCloses = allCloses.concat(closes)
+  }
+
+  if (datasets.length === 0) {
     chartError.value = 'Dados insuficientes para o gráfico'
     chartLoading.value = false
     return
   }
-  const labels = timestamps.slice(-closes.length).map(t => {
+
+  const timestamps = results[0]?.chart?.result?.[0]?.timestamp || []
+  const firstQuotes = results[0]?.chart?.result?.[0]?.indicators?.quote?.[0]
+  const firstCloses = firstQuotes?.close?.filter(c => c != null) || []
+  const xLabels = timestamps.slice(-firstCloses.length).map(t => {
     const d = new Date(t * 1000)
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   })
-  const min = Math.min(...closes)
-  const max = Math.max(...closes)
-  const padding = (max - min) * 0.1 || max * 0.05
-  const up = closes[0] <= closes[closes.length - 1]
+
+  const allMin = Math.min(...allCloses)
+  const allMax = Math.max(...allCloses)
+  const padding = (allMax - allMin) * 0.1 || allMax * 0.05
+
   chartInstance = new Chart(chartCanvas.value, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Fechamento',
-        data: closes,
-        borderColor: up ? '#06c167' : '#e60014',
-        backgroundColor: (ctx) => {
-          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220)
-          g.addColorStop(0, up ? 'rgba(6,193,103,0.2)' : 'rgba(230,0,20,0.2)')
-          g.addColorStop(1, 'rgba(0,0,0,0)')
-          return g
-        },
-        fill: true,
-        tension: 0.3,
-        pointRadius: 1,
-        borderWidth: 2
-      }]
-    },
+    data: { labels: xLabels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      plugins: {
+        legend: { display: datasets.length > 1, position: 'top', labels: { font: { size: 10 }, boxWidth: 12, padding: 8 } },
+        tooltip: { enabled: true }
+      },
       scales: {
         x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 9 } } },
         y: {
-          min: Math.max(0, min - padding),
-          max: max + padding,
+          min: Math.max(0, allMin - padding),
+          max: allMax + padding,
           ticks: { font: { size: 9 }, callback: v => v.toFixed(2) }
         }
       }
@@ -827,6 +878,24 @@ onUnmounted(() => {
   gap: 0.35rem;
 }
 
+.stock-top-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.card-bell {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1;
+  font-family: inherit;
+  transition: transform 0.15s;
+}
+.card-bell:hover { transform: scale(1.3); }
+
 .stock-symbol {
   font-size: 1rem;
   font-weight: bold;
@@ -991,6 +1060,14 @@ onUnmounted(() => {
   min-width: 0;
 }
 .alert-input:focus { border-color: var(--accent-color); }
+.alert-movement {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+
 .alert-save-btn {
   background: var(--text-primary);
   color: #fff;
