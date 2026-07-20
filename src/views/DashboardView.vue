@@ -65,7 +65,7 @@
 
         <div :class="['status-card', 'glass-panel', 'border-danger', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
           <span class="card-label">Excedente de Limite</span>
-          <h3 class="card-value" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+          <h3 class="card-value card-value-center" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
             R$ {{ formatCurrency(store.exceededValue) }}
           </h3>
           <span class="card-sub card-sub-center" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
@@ -1333,6 +1333,10 @@ watch(() => store.monthlyContribution, () => {
   border-left: 5px solid var(--border-color);
   border-radius: 3px;
   background: #ffffff;
+}
+
+.card-value-center {
+  text-align: center;
 }
 
 .card-sub-center {
