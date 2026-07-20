@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 
 const DAILY_NOTIFICATION_ID = 100
+const SECOND_DAILY_NOTIFICATION_ID = 101
 let nextImmediateId = 200
 const STORAGE_KEY_ENABLED = 'breyne_notifications_enabled'
 const STORAGE_KEY_HOUR = 'breyne_notifications_hour'
@@ -26,7 +27,14 @@ const MORNING_MESSAGES = [
   'Acompanhe de perto seus gastos e mantenha a saúde financeira.',
   'Seu futuro agradece cada decisão financeira consciente.',
   'Que tal dar uma olhada nas suas transações recentes?',
-  'Mantenha a disciplina financeira e colha os frutos.'
+  'Mantenha a disciplina financeira e colha os frutos.',
+  'Nao deixe para depois — registre seus gastos agora.',
+  'Comece o dia com uma revisao rapida do seu orcamento.',
+  'Pequenas acoes diarias geram grandes resultados financeiros.',
+  'Acompanhar seus gastos e o primeiro passo para a riqueza.',
+  'Nao subestime o poder de um orcamento bem planejado.',
+  'Que tal definir uma meta de economia para hoje?',
+  'A consistencia e a chave para a saude financeira.'
 ]
 
 const EVENING_MESSAGES = [
@@ -39,8 +47,17 @@ const EVENING_MESSAGES = [
   'Confira se alguma transação ficou pendente de registro.',
   'Seu orçamento agradece quando você revisa antes de dormir.',
   'A tranquilidade financeira vem com a organização diária.',
-  'Prepare o terreno para um mês financeiramente saudável.'
+  'Prepare o terreno para um mês financeiramente saudável.',
+  'Avalie seus gastos do dia e veja onde pode melhorar.',
+  'Quanto você gastou hoje? Confira e registre.',
+  'Uma rápida revisão noturna mantém suas finanças nos trilhos.',
+  'Não deixe para amanhã o registro de gastos de hoje.',
+  'O planejamento noturno é o segredo de um mês tranquilo.',
+  'Reflita sobre suas escolhas financeiras de hoje.',
+  'Seu futuro financeiro começa com hábitos diários.'
 ]
+
+const DAILY_MESSAGES = [...MORNING_MESSAGES, ...EVENING_MESSAGES]
 
 const LIMIT_EXCEEDED_MESSAGES = [
   'Seus gastos ultrapassaram o limite de consumo!',
@@ -51,7 +68,12 @@ const LIMIT_EXCEEDED_MESSAGES = [
   'Excedente de consumo detectado. Considere cortar gastos.',
   'Cuidado! As despesas estão acima do limite estabelecido.',
   'Seu orçamento foi estourado. Reveja seus hábitos.',
-  'Os gastos atuais superam o limite. Ajuste a rota!'
+  'Os gastos atuais superam o limite. Ajuste a rota!',
+  'Você ultrapassou o orçamento — é hora de reavaliar prioridades.',
+  'Atenção máxima: seus gastos dispararam. Tome uma atitude!',
+  'Limite estourado! Reveja suas despesas urgentemente.',
+  'Seus gastos estão fora de controle. Busque equilíbrio.',
+  'Excesso de consumo detectado. Corte despesas desnecessárias.'
 ]
 
 const HEALTH_GOOD_MESSAGES = [
@@ -63,7 +85,12 @@ const HEALTH_GOOD_MESSAGES = [
   'Tudo nos conformes. Sua carteira está saudável.',
   'Excelente! Você está no azul e no controle.',
   'Finanças em ordem — é assim que se constroi patrimonio.',
-  'Você esta gerenciando bem seus recursos. Parabéns!'
+  'Você esta gerenciando bem seus recursos. Parabéns!',
+  'Suas finanças estão no rumo certo. Continue assim!',
+  'Equilíbrio financeiro mantido. Ótima gestão!',
+  'Você está no caminho da independência financeira.',
+  'Saúde financeira em dia — o futuro agradece.',
+  'Disciplina financeira: você está de parabéns!'
 ]
 
 const NEAR_LIMIT_MESSAGES = [
@@ -71,7 +98,10 @@ const NEAR_LIMIT_MESSAGES = [
   'Gastos controlados, mas o limite esta proximo. Atencao redobrada.',
   'Voce ja utilizou grande parte do orcamento. Planeje com cuidado.',
   'Fique de olho! O limite de consumo esta quase sendo atingido.',
-  'Consumo proximo do teto. Hora de pisar no freio.'
+  'Consumo proximo do teto. Hora de pisar no freio.',
+  'Atenção: você está gastando mais que o planejado.',
+  'Seu orçamento está apertando. Reveja seus gastos.',
+  'Quase no limite! Avalie se todas as despesas são necessárias.'
 ]
 
 const FINANCIAL_TIPS = [
@@ -84,7 +114,13 @@ const FINANCIAL_TIPS = [
   'Parcelamento pode esconder juros altos. Prefira pagar a vista quando possivel.',
   'Defina metas financeiras claras: curto, medio e longo prazo.',
   'Acompanhe seu score de credito regularmente.',
-  'Invista em conhecimento financeiro — e o investimento com maior retorno.'
+  'Invista em conhecimento financeiro — e o investimento com maior retorno.',
+  'Use a regra 50/30/20 para equilibrar gastos, sonhos e dividas.',
+  'Automatize suas transferencias de investimento todo mes.',
+  'Evite dividas rotativas no cartao de credito — os juros sao altos.',
+  'Ter mais de uma fonte de renda acelera sua liberdade financeira.',
+  'Reveja seu orcamento a cada mes e ajuste conforme necessario.',
+  'Gastos fixos altos roubam sua liberdade. Tente reduzi-los.'
 ]
 
 function getLastMessageIndex() {
@@ -190,36 +226,51 @@ class NotificationService {
     }
   }
 
+  async _cancelDailyNotifications() {
+    try {
+      const { LocalNotifications } = await import('@capacitor/local-notifications')
+      await LocalNotifications.cancel({
+        notifications: [
+          { id: DAILY_NOTIFICATION_ID },
+          { id: SECOND_DAILY_NOTIFICATION_ID }
+        ]
+      })
+    } catch {}
+  }
+
+  async _scheduleOne(id, hour, title, body) {
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+    const now = new Date()
+    const scheduled = new Date(now)
+    scheduled.setHours(hour, 0, 0, 0)
+    if (scheduled <= now) {
+      scheduled.setDate(scheduled.getDate() + 1)
+    }
+    await LocalNotifications.schedule({
+      notifications: [{
+        id,
+        title,
+        body,
+        schedule: { at: scheduled, every: 'day' },
+        channelId: 'breyne-daily',
+        smallIcon: 'ic_stat_notification',
+        largeIcon: 'ic_notification_large'
+      }]
+    })
+  }
+
   async scheduleDailyNotification() {
     if (!isAndroid() || !this.enabled) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
 
-      await LocalNotifications.cancel({ notifications: [{ id: DAILY_NOTIFICATION_ID }] })
+      await this._cancelDailyNotifications()
 
-      const hour = this.notificationHour
-      const isMorning = hour >= 5 && hour < 18
-      const pool = isMorning ? MORNING_MESSAGES : EVENING_MESSAGES
-      const message = pickNextMessage(pool)
+      const hour1 = this.notificationHour
+      const hour2 = (hour1 + 6) % 24
 
-      const now = new Date()
-      const scheduled = new Date(now)
-      scheduled.setHours(hour, 0, 0, 0)
-      if (scheduled <= now) {
-        scheduled.setDate(scheduled.getDate() + 1)
-      }
-
-      await LocalNotifications.schedule({
-        notifications: [{
-          id: DAILY_NOTIFICATION_ID,
-          title: 'BreyneWallet',
-          body: message,
-          schedule: { at: scheduled, every: 'day' },
-          channelId: 'breyne-daily',
-          smallIcon: 'ic_stat_notification',
-          largeIcon: 'ic_notification_large'
-        }]
-      })
+      await this._scheduleOne(DAILY_NOTIFICATION_ID, hour1, 'BreyneWallet', pickNextMessage(DAILY_MESSAGES))
+      await this._scheduleOne(SECOND_DAILY_NOTIFICATION_ID, hour2, 'BreyneWallet', pickNextMessage(DAILY_MESSAGES))
     } catch (e) {
       console.warn('Failed to schedule daily notification:', e)
     }

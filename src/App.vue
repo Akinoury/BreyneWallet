@@ -16,7 +16,6 @@
         <button @click="toggleDropdown" class="user-menu-btn">
           <img v-if="store.profilePhotoUrl" :src="store.profilePhotoUrl" alt="Foto de perfil" class="profile-thumb" />
           <span v-else class="profile-initial">{{ store.currentUser?.name?.charAt(0).toUpperCase() || 'U' }}</span>
-          <span class="user-name-label">{{ store.currentUser?.name?.split(' ')[0] }}</span>
           <span class="chevron">▼</span>
         </button>
 
@@ -207,11 +206,10 @@ nav {
 .user-menu-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 3px;
-  padding: 0.4rem 0.75rem;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  padding: 0;
   cursor: pointer;
   font-family: "Times New Roman", Times, Georgia, serif;
   font-weight: bold;
@@ -220,37 +218,27 @@ nav {
 }
 
 .user-menu-btn:hover {
-  border-color: var(--accent-color);
-  background-color: #fdfcf7;
+  opacity: 0.8;
 }
 
 .profile-thumb {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--accent-color);
 }
 
 .profile-initial {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--text-primary);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: bold;
-}
-
-.user-name-label {
-  font-size: 0.85rem;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .chevron {

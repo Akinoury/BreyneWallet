@@ -52,6 +52,7 @@
 
           <!-- TAXAS SOBRE O SALÁRIO -->
           <div class="rate-section-title">📊 Distribuição do Salário (% sobre X)</div>
+          <p class="golden-rule-notice">As taxas abaixo são baseadas na "Regra de Ouro" de 50 30 20. Caso mude essas porcentagens marcadas isso poderá prejudicar sua independencia futura.</p>
 
           <div class="rate-row">
             <div class="rate-info">
@@ -113,19 +114,6 @@
               <input type="number" id="penalty-rate" v-model.number="penaltyRateLocal" class="rate-input" step="0.01" min="0" max="200" />
               <span class="rate-suffix">%</span>
             </div>
-          </div>
-
-          <!-- LIMITE MANUAL -->
-          <div class="rate-section-title">🔧 Configurações Gerais</div>
-          <div class="form-group toggle-group-row">
-            <div class="toggle-text-container">
-              <label>Utilizar Limite Fixo Manual</label>
-              <small class="help-text">Aplica o limite calculado pelo % acima (desative para usar qualquer salário).</small>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="useManualLimit" />
-              <span class="toggle-slider"></span>
-            </label>
           </div>
 
           <button type="submit" class="btn-primary btn-block" :disabled="isSavingFinancial || totalAllocated > 100">
@@ -358,8 +346,6 @@ const router = useRouter()
 // Parâmetros básicos
 const salary = ref(store.salary)
 const taxRate = ref(store.expenseTaxRate)
-const useManualLimit = ref(store.useManualLimit)
-
 // Taxas configuráveis (cópias locais para edição)
 const consumptionRateLocal = ref(store.consumptionRate)
 const investmentRateLocal = ref(store.investmentRate)
@@ -457,7 +443,6 @@ onMounted(async () => {
   await store.loadFromLocalStorage()
   salary.value = store.salary
   taxRate.value = store.expenseTaxRate
-  useManualLimit.value = store.useManualLimit
   consumptionRateLocal.value = store.consumptionRate
   investmentRateLocal.value = store.investmentRate
   investmentBonusRateLocal.value = store.investmentBonusRate
@@ -496,7 +481,6 @@ const saveFinancialSettings = async () => {
   try {
     store.salary = Number(salary.value)
     store.expenseTaxRate = Number(taxRate.value)
-    store.useManualLimit = useManualLimit.value
     store.consumptionRate = Number(consumptionRateLocal.value)
     store.investmentRate = Number(investmentRateLocal.value)
     store.investmentBonusRate = Number(investmentBonusRateLocal.value)
@@ -705,6 +689,18 @@ const handleRegisterNewCredential = async () => {
   font-size: 0.76rem;
   color: var(--text-secondary);
   margin-top: 0.35rem;
+}
+
+.golden-rule-notice {
+  font-size: 0.8rem;
+  color: var(--accent-color);
+  background: #fdfcf7;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--accent-color);
+  padding: 0.6rem 0.85rem;
+  border-radius: 2px;
+  margin-bottom: 1rem;
+  line-height: 1.4;
 }
 
 .toggle-group-row {
