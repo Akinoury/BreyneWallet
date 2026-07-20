@@ -101,8 +101,13 @@
               </span>
             </div>
             <div class="index-chart-canvas-wrap">
-              <svg v-if="ch.path" viewBox="0 0 400 180" preserveAspectRatio="none" class="index-svg">
-                <path :d="ch.path" fill="none" :stroke="ch.stroke" stroke-width="2" vector-effect="non-scaling-stroke" />
+              <svg v-if="ch.path" viewBox="0 0 400 220" class="index-svg">
+                <rect x="0" y="0" width="400" height="220" fill="transparent" />
+                <text x="5" y="14" font-size="11" fill="#666" font-weight="bold">{{ ch.maxStr }}</text>
+                <text x="5" y="208" font-size="11" fill="#666" font-weight="bold">{{ ch.minStr }}</text>
+                <text x="10" y="218" font-size="9" fill="#999">{{ ch.startDate }}</text>
+                <text x="390" y="218" font-size="9" fill="#999" text-anchor="end">{{ ch.endDate }}</text>
+                <path :d="ch.path" fill="none" :stroke="ch.stroke" stroke-width="2" />
               </svg>
               <div v-else class="chart-loading">Carregando gráfico...</div>
             </div>
@@ -165,13 +170,18 @@
             <button v-for="r in chartRanges" :key="r.key" class="range-chip" :class="{ active: chartRange === r.key }" @click="setChartRange(r.key)">{{ r.label }}</button>
           </div>
 
-          <div class="chart-container" :class="{ 'chart-split': isIndex }">
+          <div v-if="!isIndex" class="chart-container">
+            <canvas ref="chartCanvas" v-show="chartReady"></canvas>
+            <div v-if="chartLoading" class="chart-loading">Carregando gráfico...</div>
+            <div v-if="chartError" class="chart-loading">{{ chartError }}</div>
+          </div>
+          <div v-else class="chart-container chart-split">
             <div class="chart-single" v-for="(ch, i) in chartInstances" :key="i">
               <span class="chart-label">{{ ch.label }}</span>
               <canvas :ref="el => setChartRef(i, el)" v-show="ch.ready"></canvas>
               <div v-if="!ch.ready && !chartLoading" class="chart-loading">Gráfico indisponível</div>
             </div>
-            <div v-if="chartLoading" class="chart-loading chart-loading-full">Carregando gráfico...</div>
+            <div v-if="chartLoading && !chartInstances.length" class="chart-loading chart-loading-full">Carregando gráfico...</div>
             <div v-if="chartError && !isIndex" class="chart-loading chart-loading-full">{{ chartError }}</div>
           </div>
 
@@ -308,22 +318,38 @@ const showIndexCharts = computed(() =>
 
 const indexChartData = ref([])
 
-function calcSvgPath(closes) {
-  if (closes.length < 2) return ''
+function fmtNum(v) {
+  if (v >= 10000) return v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+  if (v >= 1000) return v.toFixed(2)
+  if (v >= 100) return v.toFixed(2)
+  return v.toFixed(2)
+}
+
+function calcSvgPath(closes, timestamps) {
+  if (closes.length < 2) return { path: '', minStr: '', maxStr: '', startDate: '', endDate: '' }
   const min = Math.min(...closes)
   const max = Math.max(...closes)
   const range = max - min || 1
   const w = 400
-  const h = 180
-  const padding = 10
-  const drawH = h - padding * 2
-  const drawW = w - padding * 2
+  const h = 200
+  const padX = 5
+  const padY = 22
+  const drawH = h - padY * 2
+  const drawW = w - padX * 2
   const points = closes.map((c, i) => {
-    const x = padding + (i / (closes.length - 1)) * drawW
-    const y = padding + (1 - (c - min) / range) * drawH
-    return `${x},${y}`
+    const x = padX + (i / (closes.length - 1)) * drawW
+    const y = padY + (1 - (c - min) / range) * drawH
+    return `${x.toFixed(1)},${y.toFixed(1)}`
   })
-  return 'M' + points.join(' L')
+  const sd = timestamps?.[0] ? new Date(timestamps[0] * 1000) : null
+  const ed = timestamps?.[timestamps.length - 1] ? new Date(timestamps[timestamps.length - 1] * 1000) : null
+  return {
+    path: 'M' + points.join(' L'),
+    minStr: fmtNum(min),
+    maxStr: fmtNum(max),
+    startDate: sd ? sd.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : '',
+    endDate: ed ? ed.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) : ''
+  }
 }
 
 async function loadIndexCharts() {
@@ -341,6 +367,10 @@ async function loadIndexCharts() {
     currency: currencies[i],
     loading: true,
     path: '',
+    minStr: '',
+    maxStr: '',
+    startDate: '',
+    endDate: '',
     stroke: '#06c167'
   }))
   const results = await Promise.all(symbols.map(sym =>
@@ -350,6 +380,7 @@ async function loadIndexCharts() {
   for (let i = 0; i < results.length; i++) {
     const data = results[i]
     const meta = data?.chart?.result?.[0]?.meta
+    const timestamps = data?.chart?.result?.[0]?.timestamp || []
     const quotes = data?.chart?.result?.[0]?.indicators?.quote?.[0]
     const closes = quotes?.close?.filter(c => c != null) || []
     if (closes.length < 2) continue
@@ -357,9 +388,14 @@ async function loadIndexCharts() {
     const p = meta?.regularMarketPrice ?? closes[closes.length - 1]
     const prev = meta?.chartPreviousClose ?? closes[0]
     const up = closes[0] <= closes[closes.length - 1]
+    const svg = calcSvgPath(closes, timestamps)
     item.price = p
     item.change = prev > 0 ? ((p - prev) / prev) * 100 : 0
-    item.path = calcSvgPath(closes)
+    item.path = svg.path
+    item.minStr = svg.minStr
+    item.maxStr = svg.maxStr
+    item.startDate = svg.startDate
+    item.endDate = svg.endDate
     item.stroke = up ? '#06c167' : '#e60014'
     item.loading = false
   }
@@ -1166,7 +1202,7 @@ onUnmounted(() => {
   font-weight: bold;
 }
 .index-chart-canvas-wrap {
-  height: 180px;
+  height: 200px;
   position: relative;
 }
 .index-svg {
