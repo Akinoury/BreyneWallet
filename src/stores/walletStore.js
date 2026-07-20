@@ -7,18 +7,18 @@ import { notificationService } from '../services/NotificationService'
 export const useWalletStore = defineStore('wallet', () => {
   const salary = ref(1420.00)
   const useManualLimit = ref(true)
-  const expenseTaxRate = ref(20)
+  const expenseTaxRate = ref(15)
   const emergencyFund = ref(250.00)
   const isSyncing = ref(false)
   const profilePhotoUrl = ref('')
   const usdToBrl = ref(5.70)
   const monthlyContribution = ref(0)
 
-  const consumptionRate = ref(59.01)
+  const consumptionRate = ref(70)
   const fundReturnRate = ref(0.00)
-  const investmentRate = ref(40.99)
+  const investmentRate = ref(30)
   const investmentBonusRate = ref(5.00)
-  const penaltyRate = ref(50.00)
+  const penaltyRate = ref(30)
 
   const savedAccounts = ref([])
 

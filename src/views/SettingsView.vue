@@ -56,7 +56,7 @@
           <div class="rate-row">
             <div class="rate-info">
               <label for="consumption-rate">Limite de Consumo</label>
-              <small class="help-text">Máximo permitido para gastos no ciclo. Base: 40,01%</small>
+              <small class="help-text">Máximo permitido para gastos no ciclo. Base: 70%</small>
             </div>
             <div class="rate-input-group">
               <input type="number" id="consumption-rate" v-model.number="consumptionRateLocal" @input="onRateChange('consumption')" class="rate-input" step="0.01" min="0" max="100" />
@@ -68,7 +68,7 @@
           <div class="rate-row">
             <div class="rate-info">
               <label for="investment-rate">Destinado a Investimentos</label>
-              <small class="help-text">Percentual do salário alocado para a carteira. Base: 39,99%</small>
+              <small class="help-text">Percentual do salário alocado para a carteira. Base: 30%</small>
             </div>
             <div class="rate-input-group">
               <input type="number" id="investment-rate" v-model.number="investmentRateLocal" @input="onRateChange('investment')" class="rate-input" step="0.01" min="0" max="100" />
@@ -84,7 +84,7 @@
           <div class="rate-row">
             <div class="rate-info">
               <label for="bonus-rate">Bônus de Incentivo ao Investimento</label>
-              <small class="help-text">% sobre o valor investido como bônus. Base: 8%</small>
+              <small class="help-text">% sobre o valor investido como bônus. Base: 5%</small>
             </div>
             <div class="rate-input-group">
               <input type="number" id="bonus-rate" v-model.number="investmentBonusRateLocal" class="rate-input" step="0.01" min="0" max="100" />
@@ -96,7 +96,7 @@
           <div class="rate-row">
             <div class="rate-info">
               <label for="expense-tax-rate">Juros sobre Gastos (Compras e Passivos)</label>
-              <small class="help-text">Aplicado sobre o total de compras e passivos. Base: 20%</small>
+              <small class="help-text">Aplicado sobre o total de compras e passivos. Base: 15%</small>
             </div>
             <div class="rate-input-group">
               <input type="number" id="expense-tax-rate" v-model.number="taxRate" class="rate-input" step="0.01" min="0" max="100" />
@@ -107,7 +107,7 @@
           <div class="rate-row">
             <div class="rate-info">
               <label for="penalty-rate">Penalidade sobre Excedente de Consumo</label>
-              <small class="help-text">% cobrado sobre o valor que ultrapassou o limite. Base: 50%</small>
+              <small class="help-text">% cobrado sobre o valor que ultrapassou o limite. Base: 30%</small>
             </div>
             <div class="rate-input-group">
               <input type="number" id="penalty-rate" v-model.number="penaltyRateLocal" class="rate-input" step="0.01" min="0" max="200" />
