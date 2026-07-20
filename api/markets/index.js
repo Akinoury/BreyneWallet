@@ -72,7 +72,12 @@ export default async function handler(req, res) {
   setCorsHeaders(res)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { symbols, chart, range } = req.query
+  const { symbols, chart, range, fundamentals } = req.query
+
+  if (fundamentals) {
+    const result = await fetchFundamentals(fundamentals.toUpperCase())
+    return res.json(result || { error: 'Fundamentals not available' })
+  }
 
   if (chart) {
     const intervals = { '10y': '1mo' }
@@ -122,6 +127,49 @@ async function fetchJSON(url, timeout = 8000, parentSignal) {
     clearTimeout(timer)
     return null
   }
+}
+
+async function fetchFundamentals(symbol) {
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 12000)
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/json,*/*',
+      'Referer': 'https://finance.yahoo.com/'
+    }
+    // Step 1: get A3 cookie
+    const r1 = await fetch('https://fc.yahoo.com/', { headers, signal: controller.signal, redirect: 'follow' })
+    const cookie = (r1.headers.get('set-cookie') || '').match(/A3=[^;]+/)?.[0] || ''
+    // Step 2: get crumb
+    const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+      headers: { ...headers, 'Accept': 'text/plain', 'Cookie': cookie },
+      signal: controller.signal
+    })
+    const crumb = await r2.text()
+    // Step 3: get fundamentals
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=defaultKeyStatistics%2CfinancialData%2CsummaryDetail&crumb=${encodeURIComponent(crumb)}`
+    const r3 = await fetch(url, {
+      headers: { ...headers, 'Accept': 'application/json', 'Cookie': cookie },
+      signal: controller.signal
+    })
+    clearTimeout(timer)
+    const data = await r3.json()
+    const qs = data?.quoteSummary?.result?.[0]
+    if (qs) {
+      const ks = qs.defaultKeyStatistics || {}
+      const fd = qs.financialData || {}
+      const sd = qs.summaryDetail || {}
+      return {
+        priceToBook: ks.priceToBook?.raw ?? null,
+        trailingPE: sd.trailingPE?.raw ?? null,
+        returnOnEquity: fd.returnOnEquity?.raw ?? null,
+        dividendYield: sd.dividendYield?.raw ?? null,
+        profitMargins: fd.profitMargins?.raw ?? ks.profitMargins?.raw ?? null
+      }
+    }
+  } catch {}
+  return null
 }
 
 async function fetchForex(signal) {
