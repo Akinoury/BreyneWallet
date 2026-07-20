@@ -389,7 +389,7 @@
       <div class="simulator-results-grid">
 
         <!-- Row 1 -->
-        <div class="sim-card sim-card-dividendos">
+        <div class="sim-card sim-card-dividendos sim-card-center">
           <span class="sim-card-label">📊 Dividendos do Fundo</span>
           <h4 class="sim-card-value text-accent">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}</h4>
           <span class="sim-card-sub text-muted">
@@ -411,7 +411,7 @@
           </div>
         </div>
 
-        <div class="sim-card target-indep-card" :class="{ 'reached-card': financialIndependenceYears.alreadyReached }">
+        <div class="sim-card sim-card-center target-indep-card" :class="{ 'reached-card': financialIndependenceYears.alreadyReached }">
           <span class="sim-card-label">Liberdade Financeira</span>
           
           <div v-if="financialIndependenceYears.alreadyReached">
@@ -436,17 +436,17 @@
         </div>
 
         <!-- Row 2 -->
-        <div class="sim-card">
+        <div class="sim-card sim-card-center">
           <span class="sim-card-label">Acumulado em 1 Ano</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(12)) }}</h4>
         </div>
 
-        <div class="sim-card">
+        <div class="sim-card sim-card-center">
           <span class="sim-card-label">Acumulado em 5 Anos</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(60)) }}</h4>
         </div>
 
-        <div class="sim-card">
+        <div class="sim-card sim-card-center">
           <span class="sim-card-label">Acumulado em 10 Anos</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(120)) }}</h4>
         </div>
@@ -2250,6 +2250,13 @@ input:checked + .toggle-slider-sm:before {
 .sim-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.sim-card-center {
+  text-align: center;
+}
+.sim-card-center .sim-card-sub {
+  text-align: left;
 }
 
 .sim-card-label {
