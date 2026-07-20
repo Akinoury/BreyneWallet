@@ -250,13 +250,13 @@
       <!-- FUND CARD -->
       <div class="emergency-fund-card glass-panel">
         <div class="flex-between" style="margin-bottom: 1rem;">
-          <h3>Fundo de Emergência</h3>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <img src="/pig.png" alt="Porquinho" class="fund-pig" />
+            <h3>Fundo de Emergência</h3>
+          </div>
         </div>
 
         <div class="fund-balance-display">
-          <div class="fund-pig-container">
-            <img src="/pig.png" alt="Porquinho" class="fund-pig" />
-          </div>
           <small class="fund-label">Saldo Atual (Tesouro Reserva)</small>
           <h2>R$ {{ formatCurrency(store.emergencyFund) }}</h2>
         </div>
@@ -1726,14 +1726,8 @@ input:checked + .toggle-slider-sm:before {
   font-weight: bold;
 }
 
-.fund-pig-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.75rem;
-}
-
 .fund-pig {
-  width: 64px;
+  width: 48px;
   height: auto;
   object-fit: contain;
 }
