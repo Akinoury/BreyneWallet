@@ -20,7 +20,7 @@ export const useWalletStore = defineStore('wallet', () => {
   const investmentBonusRate = ref(5.00)
   const penaltyRate = ref(30)
 
-  const savedAccounts = ref([])
+  const savedAccounts = ref(biometricService.getSavedAccounts())
 
   const investments = ref([
     { id: 1, name: 'WEGE3', amount: 1500.00, type: 'national', category: 'Ações' },
@@ -362,6 +362,7 @@ export const useWalletStore = defineStore('wallet', () => {
     if (result.success) {
       currentUser.value = result.user
       isBiometricEnabled.value = enableBio
+      addToSavedAccounts(result.user)
       try { localStorage.setItem('breyne_bio_enabled', enableBio ? 'true' : 'false') } catch {}
       await saveWalletState()
     }
@@ -373,6 +374,7 @@ export const useWalletStore = defineStore('wallet', () => {
     if (result.success) {
       currentUser.value = result.user
       isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
+      addToSavedAccounts(result.user)
       await loadWalletState()
     }
     return result
@@ -397,11 +399,13 @@ export const useWalletStore = defineStore('wallet', () => {
     const exists = savedAccounts.value.find(a => a.id === user.id)
     if (!exists) {
       savedAccounts.value.push({ id: user.id, name: user.name, email: user.email })
+      biometricService.saveAccount(user)
     }
   }
 
   function removeFromSavedAccounts(accountId) {
     savedAccounts.value = savedAccounts.value.filter(a => a.id !== accountId)
+    biometricService.removeSavedAccount(accountId)
   }
 
   async function switchAccount(accountEmail) {
