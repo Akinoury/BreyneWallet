@@ -2,6 +2,7 @@ import { handleOptions, setCorsHeaders } from '../_lib/cors.js'
 
 const YAHOO_QUOTE = 'https://query2.finance.yahoo.com/v7/finance/quote'
 const YAHOO_CHART = 'https://query1.finance.yahoo.com/v8/finance/chart'
+const YAHOO_SUMMARY = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary'
 const AWESOME_API = 'https://economia.awesomeapi.com.br/json/last'
 const COINGECKO = 'https://api.coingecko.com/api/v3/simple/price'
 
@@ -72,7 +73,23 @@ export default async function handler(req, res) {
   setCorsHeaders(res)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { symbols, chart, range } = req.query
+  const { symbols, chart, range, fundamentals } = req.query
+
+  if (fundamentals) {
+    const sym = fundamentals.toUpperCase()
+    const data = await fetchJSON(`${YAHOO_SUMMARY}/${sym}?modules=defaultKeyStatistics%2CfinancialData`, 10000)
+    const qs = data?.quoteSummary?.result?.[0]
+    if (!qs) return res.json({ error: 'Fundamentals not available' })
+    const ks = qs.defaultKeyStatistics || {}
+    const fd = qs.financialData || {}
+    return res.json({
+      priceToBook: fd.priceToBook?.raw ?? null,
+      trailingPE: fd.trailingPE?.raw ?? null,
+      returnOnEquity: ks.returnOnEquity?.raw ?? null,
+      dividendYield: fd.dividendYield?.raw ?? null,
+      profitMargins: fd.profitMargins?.raw ?? null
+    })
+  }
 
   if (chart) {
     const intervals = { '10y': '1mo' }

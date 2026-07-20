@@ -434,7 +434,18 @@ function renderChart(data) {
 async function openDetail(stock) {
   detail.value = { ...stock }
   chartRange.value = '1mo'
-  await loadChart()
+  await Promise.all([loadChart(), loadFundamentals(stock.symbol)])
+}
+
+async function loadFundamentals(symbol) {
+  try {
+    const res = await fetch(`${API_BASE}/api/markets?fundamentals=${symbol}`)
+    if (!res.ok) return
+    const data = await res.json()
+    if (data && !data.error && detail.value) {
+      detail.value = { ...detail.value, ...data }
+    }
+  } catch {}
 }
 
 async function setChartRange(range) {
