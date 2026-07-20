@@ -65,10 +65,10 @@
 
         <div :class="['status-card', 'glass-panel', 'border-danger', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
           <span class="card-label">Excedente de Limite</span>
-          <h3 class="card-value card-value-center" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+          <h3 class="card-value" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
             R$ {{ formatCurrency(store.exceededValue) }}
           </h3>
-          <span class="card-sub card-sub-center" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+          <span class="card-sub" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
             {{ store.exceededValue > 0 ? `Penalidade de ${store.penaltyRate}% Aplicada` : 'Dentro do Limite Recomendado' }}
           </span>
         </div>
@@ -354,7 +354,6 @@
             <span class="prefix">R$</span>
             <span class="value-text">{{ formatCurrency(store.emergencyFund) }}</span>
           </div>
-          <small class="help-text">Saldo atual do seu fundo usado como base</small>
         </div>
 
         <div class="sim-input-group">
@@ -384,7 +383,6 @@
               class="input-field-inline"
             />
           </div>
-          <small class="help-text">Salário base de referência: R$ {{ formatCurrency(store.salary) }}</small>
         </div>
       </div>
 
@@ -442,25 +440,16 @@
         <div class="sim-card">
           <span class="sim-card-label">Acumulado em 1 Ano</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(12)) }}</h4>
-          <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(12) * monthlyRate) }} / mês
-          </span>
         </div>
 
         <div class="sim-card">
           <span class="sim-card-label">Acumulado em 5 Anos</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(60)) }}</h4>
-          <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(60) * monthlyRate) }} / mês
-          </span>
         </div>
 
         <div class="sim-card">
           <span class="sim-card-label">Acumulado em 10 Anos</span>
           <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(120)) }}</h4>
-          <span class="sim-card-sub text-success">
-            Rendimento mensal: + R$ {{ formatCurrency(calculateAccumulation(120) * monthlyRate) }} / mês
-          </span>
         </div>
 
       </div>
@@ -1335,14 +1324,6 @@ watch(() => store.monthlyContribution, () => {
   background: #ffffff;
 }
 
-.card-value-center {
-  text-align: center;
-}
-
-.card-sub-center {
-  text-align: center;
-  display: block;
-}
 
 .carousel-dots {
   display: flex;
