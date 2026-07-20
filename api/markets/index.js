@@ -132,7 +132,7 @@ async function fetchJSON(url, timeout = 8000, parentSignal) {
 async function fetchFundamentals(symbol) {
   try {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 12000)
+    const timer = setTimeout(() => controller.abort(), 9000)
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/json,*/*',
