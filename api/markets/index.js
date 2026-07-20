@@ -75,32 +75,8 @@ export default async function handler(req, res) {
   const { symbols, chart, range, fundamentals } = req.query
 
   if (fundamentals) {
-    const sym = fundamentals.toUpperCase()
-    const data = await fetchJSON(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics%2CfinancialData`, 10000)
-    const qs = data?.quoteSummary?.result?.[0]
-    if (qs) {
-      const ks = qs.defaultKeyStatistics || {}
-      const fd = qs.financialData || {}
-      return res.json({
-        priceToBook: fd.priceToBook?.raw ?? null,
-        trailingPE: fd.trailingPE?.raw ?? null,
-        returnOnEquity: ks.returnOnEquity?.raw ?? null,
-        dividendYield: fd.dividendYield?.raw ?? null,
-        profitMargins: fd.profitMargins?.raw ?? null
-      })
-    }
-    const fallback = await fetchJSON(`${YAHOO_QUOTE}?symbols=${sym}`, 8000)
-    const q = fallback?.quoteResponse?.result?.[0]
-    if (q) {
-      return res.json({
-        priceToBook: q.priceToBook ?? null,
-        trailingPE: q.trailingPE ?? null,
-        returnOnEquity: null,
-        dividendYield: q.dividendYield ?? null,
-        profitMargins: null
-      })
-    }
-    return res.json({ error: 'Fundamentals not available' })
+    const result = await fetchFundamentals(fundamentals.toUpperCase())
+    return res.json(result || { error: 'Fundamentals not available' })
   }
 
   if (chart) {
@@ -151,6 +127,37 @@ async function fetchJSON(url, timeout = 8000, parentSignal) {
     clearTimeout(timer)
     return null
   }
+}
+
+async function fetchFundamentals(symbol) {
+  // Try query1 v10 first (may work without crumb for some stocks)
+  const v10url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=defaultKeyStatistics%2CfinancialData`
+  const v10data = await fetchJSON(v10url, 10000)
+  const qs = v10data?.quoteSummary?.result?.[0]
+  if (qs) {
+    const ks = qs.defaultKeyStatistics || {}
+    const fd = qs.financialData || {}
+    return {
+      priceToBook: fd.priceToBook?.raw ?? null,
+      trailingPE: fd.trailingPE?.raw ?? null,
+      returnOnEquity: ks.returnOnEquity?.raw ?? null,
+      dividendYield: fd.dividendYield?.raw ?? null,
+      profitMargins: fd.profitMargins?.raw ?? null
+    }
+  }
+  // Fallback v7 quote (gives trailingPE, priceToBook, dividendYield)
+  const fallback = await fetchJSON(`${YAHOO_QUOTE}?symbols=${symbol}`, 8000)
+  const q = fallback?.quoteResponse?.result?.[0]
+  if (q) {
+    return {
+      priceToBook: q.priceToBook ?? null,
+      trailingPE: q.trailingPE ?? null,
+      returnOnEquity: null,
+      dividendYield: q.dividendYield ?? null,
+      profitMargins: null
+    }
+  }
+  return null
 }
 
 async function fetchForex(signal) {
