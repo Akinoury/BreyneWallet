@@ -1057,7 +1057,7 @@ const renderCharts = async () => {
             borderWidth: 2,
             fill: false,
             tension: 0.35,
-            pointRadius: 1,
+            pointRadius: 2,
             pointBackgroundColor: '#1e3a5f',
             pointBorderColor: '#1e3a5f',
             pointHoverRadius: 4
@@ -1070,7 +1070,7 @@ const renderCharts = async () => {
             borderWidth: 2,
             fill: false,
             tension: 0.35,
-            pointRadius: 1,
+            pointRadius: 2,
             pointBackgroundColor: '#2d6a4f',
             pointBorderColor: '#2d6a4f',
             pointHoverRadius: 4,
