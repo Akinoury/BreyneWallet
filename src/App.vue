@@ -176,7 +176,9 @@ const vClickOutside = {
   left: 3px;
   right: 3px;
   height: 1px;
-  border-bottom: 1px solid rgba(138, 111, 62, 0.3); /* Gold accent line under header */
+  background: rgba(138, 111, 62, 0.3);
+  border-radius: 28px;
+  pointer-events: none;
 }
 .logo {
   display: flex;
@@ -393,8 +395,8 @@ nav {
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 0.5rem 0.85rem;
-    padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
+    padding: 0.35rem 0.85rem;
+    padding-top: calc(0.35rem + env(safe-area-inset-top, 0px));
     padding-left: calc(0.85rem + env(safe-area-inset-left, 0px));
     padding-right: calc(0.85rem + env(safe-area-inset-right, 0px));
     flex-wrap: wrap;
