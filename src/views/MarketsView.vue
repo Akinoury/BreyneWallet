@@ -313,9 +313,9 @@ function setIndexChartRef(label, el) {
 }
 
 async function loadIndexCharts() {
+  for (const c of indexCharts) c.destroy()
+  indexCharts = []
   if (!showIndexCharts.value) {
-    for (const c of indexCharts) c.destroy()
-    indexCharts = []
     indexChartData.value = []
     return
   }
@@ -350,28 +350,20 @@ async function loadIndexCharts() {
     indexChartData.value = [...indexChartData.value]
   }
   await nextTick()
+  await new Promise(r => setTimeout(r, 50))
   for (const item of indexChartData.value) {
     if (!item.closes.length) continue
     const el = indexChartRefs[item.label]
     if (!el) continue
-    for (const c of indexCharts) c.destroy()
-    const min = Math.min(...item.closes)
-    const max = Math.max(...item.closes)
-    const padding = (max - min) * 0.1 || max * 0.05
-    const up = item.closes[0] <= item.closes[item.closes.length - 1]
+    const color = item.closes[0] <= item.closes[item.closes.length - 1] ? '#06c167' : '#e60014'
     const ch = new Chart(el, {
       type: 'line',
       data: {
         labels: [],
         datasets: [{
           data: item.closes,
-          borderColor: up ? '#06c167' : '#e60014',
-          backgroundColor: (ctx) => {
-            const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 160)
-            g.addColorStop(0, up ? 'rgba(6,193,103,0.2)' : 'rgba(230,0,20,0.2)')
-            g.addColorStop(1, 'rgba(0,0,0,0)')
-            return g
-          },
+          borderColor: color,
+          backgroundColor: color + '22',
           fill: true,
           tension: 0.3,
           pointRadius: 0,
@@ -381,10 +373,11 @@ async function loadIndexCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
         scales: {
           x: { display: false },
-          y: { display: false, min: Math.max(0, min - padding), max: max + padding }
+          y: { display: false }
         },
         elements: { point: { radius: 0 } }
       }
@@ -489,8 +482,11 @@ const isPreview = computed(() =>
 )
 
 const displayStocks = computed(() => {
-  if (isPreview.value) return filteredStocks.value.slice(0, 50)
-  return filteredStocks.value
+  const list = filteredStocks.value
+  // Hide index cards from grid when index charts are showing
+  const filtered = showIndexCharts.value ? list.filter(s => s.assetType !== 'Índices') : list
+  if (isPreview.value && !showIndexCharts.value) return filtered.slice(0, 50)
+  return filtered
 })
 
 function getExchangeLabel(key) {
