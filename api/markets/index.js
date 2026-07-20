@@ -58,7 +58,8 @@ const FOREVER = {
   USDBRL: { bid: '5.20', ask: '5.21', pctChange: '0', name: 'Dólar' },
   EURBRL: { bid: '5.65', ask: '5.66', pctChange: '0', name: 'Euro' },
   GBPBRL: { bid: '6.60', ask: '6.61', pctChange: '0', name: 'Libra' },
-  JPYBRL: { bid: '0.033', ask: '0.034', pctChange: '0', name: 'Yene' }
+  JPYBRL: { bid: '0.033', ask: '0.034', pctChange: '0', name: 'Yene' },
+  CHFBRL: { bid: '5.75', ask: '5.76', pctChange: '0', name: 'Franco Suíço' }
 }
 
 const CRYPTOVER = {
@@ -173,17 +174,18 @@ async function fetchFundamentals(symbol) {
 }
 
 async function fetchForex(signal) {
-  const data = await fetchJSON(`${AWESOME_API}/USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL`, 5000, signal)
-  if (data && (data.USDBRL || data.EURBRL || data.GBPBRL || data.JPYBRL)) return data
-  const [usd, eur, gbp, jpy] = await Promise.all([
+  const data = await fetchJSON(`${AWESOME_API}/USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL,CHF-BRL`, 5000, signal)
+  if (data && (data.USDBRL || data.EURBRL || data.GBPBRL || data.JPYBRL || data.CHFBRL)) return data
+  const [usd, eur, gbp, jpy, chf] = await Promise.all([
     fetchJSON(`${AWESOME_API}/USD-BRL`, 4000, signal),
     fetchJSON(`${AWESOME_API}/EUR-BRL`, 4000, signal),
     fetchJSON(`${AWESOME_API}/GBP-BRL`, 4000, signal),
-    fetchJSON(`${AWESOME_API}/JPY-BRL`, 4000, signal)
+    fetchJSON(`${AWESOME_API}/JPY-BRL`, 4000, signal),
+    fetchJSON(`${AWESOME_API}/CHF-BRL`, 4000, signal)
   ])
-  const merged = { ...(usd || {}), ...(eur || {}), ...(gbp || {}), ...(jpy || {}) }
+  const merged = { ...(usd || {}), ...(eur || {}), ...(gbp || {}), ...(jpy || {}), ...(chf || {}) }
   if (Object.keys(merged).length >= 2) return merged
-  const ff = await fetchJSON('https://api.frankfurter.app/latest?from=BRL&to=USD,EUR,GBP,JPY', 4000, signal)
+  const ff = await fetchJSON('https://api.frankfurter.app/latest?from=BRL&to=USD,EUR,GBP,JPY,CHF', 4000, signal)
   if (ff?.rates) {
     const r = ff.rates
     const out = {}
@@ -191,6 +193,7 @@ async function fetchForex(signal) {
     if (r.EUR) out.EURBRL = { bid: (1 / r.EUR).toFixed(4), ask: (1 / r.EUR).toFixed(4), pctChange: '0', name: 'Euro' }
     if (r.GBP) out.GBPBRL = { bid: (1 / r.GBP).toFixed(4), ask: (1 / r.GBP).toFixed(4), pctChange: '0', name: 'Libra' }
     if (r.JPY) out.JPYBRL = { bid: (1 / r.JPY).toFixed(6), ask: (1 / r.JPY).toFixed(6), pctChange: '0', name: 'Yene' }
+    if (r.CHF) out.CHFBRL = { bid: (1 / r.CHF).toFixed(4), ask: (1 / r.CHF).toFixed(4), pctChange: '0', name: 'Franco Suíço' }
     if (Object.keys(out).length >= 2) return out
   }
   return FOREVER

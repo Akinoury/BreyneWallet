@@ -316,6 +316,7 @@ async function fetchAll() {
     if (f.EURBRL) items.push({ label: 'EUR/BRL', value: `R$ ${parseFloat(f.EURBRL.bid).toFixed(4)}`, change: parseFloat(f.EURBRL.pctChange || 0).toFixed(2) })
     if (f.GBPBRL) items.push({ label: 'GBP/BRL', value: `R$ ${parseFloat(f.GBPBRL.bid).toFixed(4)}`, change: parseFloat(f.GBPBRL.pctChange || 0).toFixed(2) })
     if (f.JPYBRL) items.push({ label: 'JPY/BRL', value: `R$ ${parseFloat(f.JPYBRL.bid).toFixed(4)}`, change: parseFloat(f.JPYBRL.pctChange || 0).toFixed(2) })
+    if (f.CHFBRL) items.push({ label: 'CHF/BRL', value: `R$ ${parseFloat(f.CHFBRL.bid).toFixed(4)}`, change: parseFloat(f.CHFBRL.pctChange || 0).toFixed(2) })
     if (f.USDBRL) {
       const brlUsd = 1 / parseFloat(f.USDBRL.bid)
       items.push({ label: 'BRL/USD', value: `$ ${brlUsd.toFixed(6)}`, change: 0 })
