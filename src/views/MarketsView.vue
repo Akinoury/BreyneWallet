@@ -440,10 +440,11 @@ function toggleCardAlert(s) {
   if (stockHasAlert(s)) {
     priceAlertService.removeBySymbol(s.symbol)
   } else {
+    const basis = s.open || s.price
     const levels = [1.05, 1.10, 1.20]
     for (const mult of levels) {
-      priceAlertService.add(s.symbol, s.price * mult, 'above')
-      priceAlertService.add(s.symbol, s.price / mult, 'below')
+      priceAlertService.add(s.symbol, basis * mult, 'above', basis)
+      priceAlertService.add(s.symbol, basis / mult, 'below', basis)
     }
   }
   activeAlerts.value = priceAlertService.getActive()
@@ -456,13 +457,15 @@ function saveAlert() {
     alertError.value = 'Digite um preço válido'
     return
   }
-  priceAlertService.add(detail.value.symbol, price, alertDirection.value)
+  const basis = detail.value.open || detail.value.price
+  priceAlertService.add(detail.value.symbol, price, alertDirection.value, basis)
   activeAlerts.value = priceAlertService.getActive()
   showAlertForm.value = false
   alertError.value = ''
 }
 
 function checkAlerts() {
+  priceAlertService.rebaseAlerts(stocks.value)
   const triggered = priceAlertService.checkPrices(stocks.value)
   for (const t of triggered) {
     const dir = t.direction === 'above' ? 'atingiu' : 'caiu para'

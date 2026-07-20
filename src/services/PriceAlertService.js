@@ -14,6 +14,10 @@ function save(alerts) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts)) } catch {}
 }
 
+function today() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export const priceAlertService = {
   getAll() {
     return load()
@@ -23,16 +27,18 @@ export const priceAlertService = {
     return load().filter(a => a.active)
   },
 
-  add(symbol, targetPrice, direction = 'above') {
+  add(symbol, targetPrice, direction = 'above', basisPrice = 0) {
     const alerts = load()
     const existing = alerts.find(a => a.symbol === symbol && a.active)
     if (existing) {
       existing.targetPrice = targetPrice
       existing.direction = direction
+      existing.basisPrice = basisPrice
+      existing.basisDate = today()
       save(alerts)
       return existing
     }
-    const alert = { id: nextId++, symbol, targetPrice, direction, active: true }
+    const alert = { id: nextId++, symbol, targetPrice, direction, active: true, basisPrice, basisDate: today() }
     alerts.push(alert)
     save(alerts)
     return alert
@@ -60,6 +66,33 @@ export const priceAlertService = {
   removeBySymbol(symbol) {
     const alerts = load().filter(a => a.symbol !== symbol)
     save(alerts)
+  },
+
+  rebaseAlerts(stocks) {
+    const alerts = load()
+    let changed = false
+    const td = today()
+    for (const alert of alerts) {
+      if (!alert.active) continue
+      if (alert.basisDate === td) continue
+      const stock = stocks.find(s => s.symbol === alert.symbol)
+      if (!stock || !stock.open) continue
+      const levels = [1.05, 1.10, 1.20]
+      const newPrice = stock.open
+      const dir = alert.direction
+      const idx = levels.findIndex(l =>
+        dir === 'above'
+          ? Math.abs(alert.targetPrice - alert.basisPrice * l) < 0.01
+          : Math.abs(alert.targetPrice - alert.basisPrice / l) < 0.01
+      )
+      if (idx >= 0) {
+        alert.targetPrice = dir === 'above' ? newPrice * levels[idx] : newPrice / levels[idx]
+        alert.basisPrice = newPrice
+        alert.basisDate = td
+        changed = true
+      }
+    }
+    if (changed) save(alerts)
   },
 
   checkPrices(stocks) {
