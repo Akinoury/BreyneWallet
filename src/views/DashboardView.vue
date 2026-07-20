@@ -372,7 +372,7 @@
         </div>
 
         <div class="sim-input-group">
-          <label for="target-passive">Meta de Renda Passiva Mensal</label>
+          <label for="target-passive">Meta de Renda Passiva</label>
           <div class="input-prefix-group">
             <span class="prefix">R$</span>
             <input 
@@ -399,8 +399,8 @@
         </div>
 
         <div class="sim-card">
-          <span class="sim-card-label">Composição do Patrimônio até a Independência</span>
-          <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 0.6rem;">
+          <span class="sim-card-label">Patrimônio Total</span>
+          <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 0.6rem;">
             <div style="text-align: center;">
               <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
               <h4 class="sim-card-value" style="font-size: 1.1rem; white-space: nowrap;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
