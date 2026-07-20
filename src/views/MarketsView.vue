@@ -86,6 +86,27 @@
           </div>
         </button>
       </div>
+
+      <div v-if="showIndexCharts" class="index-charts-section">
+        <h3 class="index-charts-title">📊 Comparativo IBOV vs S&P 500</h3>
+        <div class="index-charts-grid">
+          <div class="index-chart-card" v-for="ch in indexChartData" :key="ch.label">
+            <div class="index-chart-header">
+              <span class="index-chart-label">{{ ch.label }}</span>
+              <span class="index-chart-price" :class="ch.change >= 0 ? 'up' : 'down'">
+                {{ ch.currency === 'BRL' ? 'R$' : '$' }} {{ formatPrice(ch.price) }}
+              </span>
+              <span class="index-chart-change" :class="ch.change >= 0 ? 'up' : 'down'">
+                {{ ch.change >= 0 ? '+' : '' }}{{ ch.change?.toFixed(2) }}%
+              </span>
+            </div>
+            <div class="index-chart-canvas-wrap">
+              <canvas :ref="el => setIndexChartRef(ch.label, el)"></canvas>
+              <div v-if="ch.loading" class="chart-loading">Carregando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
 
     <Teleport to="body">
@@ -279,6 +300,99 @@ function setChartRef(i, el) { if (el) chartRefs[i] = el }
 
 const isIndex = computed(() => detail.value?.assetType === 'Índices')
 
+const showIndexCharts = computed(() =>
+  selectedTypes.value.includes('Índices')
+)
+
+const indexChartData = ref([])
+const indexChartRefs = {}
+let indexCharts = []
+
+function setIndexChartRef(label, el) {
+  if (el) indexChartRefs[label] = el
+}
+
+async function loadIndexCharts() {
+  if (!showIndexCharts.value) {
+    for (const c of indexCharts) c.destroy()
+    indexCharts = []
+    indexChartData.value = []
+    return
+  }
+  const symbols = ['^BVSP', '^GSPC']
+  const names = ['IBOVESPA', 'S&P 500']
+  const currencies = ['BRL', 'USD']
+  indexChartData.value = symbols.map((sym, i) => ({
+    label: names[i],
+    price: 0,
+    change: 0,
+    currency: currencies[i],
+    loading: true,
+    closes: []
+  }))
+  const results = await Promise.all(symbols.map(sym =>
+    fetch(`${API_BASE}/api/markets?chart=${sym}&range=1y&interval=1d`)
+      .then(r => r.ok ? r.json() : null)
+  ))
+  for (let i = 0; i < results.length; i++) {
+    const data = results[i]
+    const meta = data?.chart?.result?.[0]?.meta
+    const quotes = data?.chart?.result?.[0]?.indicators?.quote?.[0]
+    const closes = quotes?.close?.filter(c => c != null) || []
+    if (closes.length < 2) continue
+    const item = indexChartData.value[i]
+    const p = meta?.regularMarketPrice ?? closes[closes.length - 1]
+    const prev = meta?.chartPreviousClose ?? closes[0]
+    item.price = p
+    item.change = prev > 0 ? ((p - prev) / prev) * 100 : 0
+    item.loading = false
+    item.closes = closes
+    indexChartData.value = [...indexChartData.value]
+  }
+  await nextTick()
+  for (const item of indexChartData.value) {
+    if (!item.closes.length) continue
+    const el = indexChartRefs[item.label]
+    if (!el) continue
+    for (const c of indexCharts) c.destroy()
+    const min = Math.min(...item.closes)
+    const max = Math.max(...item.closes)
+    const padding = (max - min) * 0.1 || max * 0.05
+    const up = item.closes[0] <= item.closes[item.closes.length - 1]
+    const ch = new Chart(el, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          data: item.closes,
+          borderColor: up ? '#06c167' : '#e60014',
+          backgroundColor: (ctx) => {
+            const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 160)
+            g.addColorStop(0, up ? 'rgba(6,193,103,0.2)' : 'rgba(230,0,20,0.2)')
+            g.addColorStop(1, 'rgba(0,0,0,0)')
+            return g
+          },
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: { display: false },
+          y: { display: false, min: Math.max(0, min - padding), max: max + padding }
+        },
+        elements: { point: { radius: 0 } }
+      }
+    })
+    indexCharts.push(ch)
+  }
+}
+
 const showAlertForm = ref(false)
 const alertTargetPrice = ref(0)
 const alertDirection = ref('above')
@@ -447,6 +561,7 @@ async function fetchAll() {
 
     tickers.value = items
     checkAlerts()
+    loadIndexCharts()
   } catch {
     error.value = 'Erro ao carregar dados dos mercados. Tente novamente.'
   } finally {
@@ -666,6 +781,8 @@ async function lookupTicker() {
   } catch {}
 }
 
+watch(selectedTypes, () => { loadIndexCharts() }, { deep: true })
+
 let searchTimer
 watch(searchQuery, (val) => {
   clearTimeout(searchTimer)
@@ -710,6 +827,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (alertCheckTimer) clearInterval(alertCheckTimer)
+  for (const c of indexCharts) c.destroy()
+  indexCharts = []
 })
 </script>
 
@@ -1024,6 +1143,59 @@ onUnmounted(() => {
   font-size: 0.62rem;
   color: var(--text-secondary);
   margin-top: 0.2rem;
+}
+
+/* Index charts on main page */
+.index-charts-section {
+  margin-top: 1rem;
+}
+.index-charts-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+}
+.index-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+@media (max-width: 600px) {
+  .index-charts-grid { grid-template-columns: 1fr; }
+}
+.index-chart-card {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+.index-chart-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.index-chart-label {
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+.index-chart-price {
+  font-size: 0.9rem;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+}
+.index-chart-change {
+  font-size: 0.72rem;
+  font-weight: bold;
+}
+.index-chart-canvas-wrap {
+  height: 180px;
+  position: relative;
 }
 
 /* Modal */
