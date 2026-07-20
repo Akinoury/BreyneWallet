@@ -393,13 +393,13 @@ nav {
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 2rem 1rem 0.75rem;
-    padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
+    padding: 0.75rem 1rem;
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
     padding-left: calc(1rem + env(safe-area-inset-left, 0px));
     padding-right: calc(1rem + env(safe-area-inset-right, 0px));
     flex-wrap: wrap;
     gap: 0.5rem;
-    border-radius: 12px 12px 0 0;
+    border-radius: 20px;
   }
   nav {
     gap: 0.5rem;
