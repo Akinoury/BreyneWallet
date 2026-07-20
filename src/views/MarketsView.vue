@@ -150,7 +150,7 @@
             </div>
           </div>
 
-          <div class="fundamentals-grid" v-if="detail.priceToBook != null || detail.trailingPE != null || detail.returnOnEquity != null || detail.dividendYield != null || detail.profitMargins != null">
+          <div class="fundamentals-grid" v-if="detail.priceToBook != null || detail.trailingPE != null || detail.dividendYield != null">
             <h4 class="fundamentals-title">Fundamentos</h4>
             <div class="metric" v-if="detail.priceToBook != null">
               <span class="metric-label">P/VP</span>
@@ -160,17 +160,9 @@
               <span class="metric-label">P/L</span>
               <span class="metric-value">{{ detail.trailingPE.toFixed(2) }}</span>
             </div>
-            <div class="metric" v-if="detail.returnOnEquity != null">
-              <span class="metric-label">ROE</span>
-              <span class="metric-value">{{ (detail.returnOnEquity * 100).toFixed(2) }}%</span>
-            </div>
             <div class="metric" v-if="detail.dividendYield != null">
               <span class="metric-label">DY Médio</span>
               <span class="metric-value">{{ (detail.dividendYield * 100).toFixed(2) }}%</span>
-            </div>
-            <div class="metric" v-if="detail.profitMargins != null">
-              <span class="metric-label">Rentabilidade</span>
-              <span class="metric-value">{{ (detail.profitMargins * 100).toFixed(2) }}%</span>
             </div>
           </div>
 
@@ -415,18 +407,7 @@ function renderChart(data) {
 async function openDetail(stock) {
   detail.value = { ...stock }
   chartRange.value = '1mo'
-  await Promise.all([loadChart(), loadFundamentals(stock.symbol)])
-}
-
-async function loadFundamentals(symbol) {
-  try {
-    const res = await fetch(`${API_BASE}/api/markets?fundamentals=${symbol}`)
-    if (!res.ok) return
-    const data = await res.json()
-    if (data && !data.error && detail.value) {
-      detail.value = { ...detail.value, ...data }
-    }
-  } catch {}
+  await loadChart()
 }
 
 async function setChartRange(range) {
