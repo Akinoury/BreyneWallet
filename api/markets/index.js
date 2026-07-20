@@ -64,11 +64,7 @@ const FOREVER = {
 const CRYPTOVER = {
   bitcoin: { usd: 64000, usd_24h_change: 0 },
   ethereum: { usd: 1850, usd_24h_change: 0 },
-  binancecoin: { usd: 575, usd_24h_change: 0 },
-  solana: { usd: 75, usd_24h_change: 0 },
-  ripple: { usd: 1.10, usd_24h_change: 0 },
-  cardano: { usd: 0.16, usd_24h_change: 0 },
-  dogecoin: { usd: 0.07, usd_24h_change: 0 }
+  binancecoin: { usd: 575, usd_24h_change: 0 }
 }
 
 export default async function handler(req, res) {
@@ -154,7 +150,7 @@ async function fetchForex(signal) {
 
 async function fetchCrypto(signal) {
   const data = await fetchJSON(
-    `${COINGECKO}?ids=bitcoin,ethereum,binancecoin,solana,ripple,cardano,dogecoin&vs_currencies=usd&include_24hr_change=true`,
+    `${COINGECKO}?ids=bitcoin,ethereum,binancecoin&vs_currencies=usd&include_24hr_change=true`,
     6000, signal
   )
   if (data && (data.bitcoin?.usd != null)) return data
@@ -202,7 +198,12 @@ function formatQuote(q, exchange) {
     bid: q.bid ?? null,
     ask: q.ask ?? null,
     marketState: q.marketState || 'CLOSED',
-    currency: getCurrency(exchange)
+    currency: getCurrency(exchange),
+    priceToBook: q.priceToBook ?? null,
+    trailingPE: q.trailingPE ?? null,
+    returnOnEquity: q.returnOnEquity ?? null,
+    dividendYield: q.dividendYield ?? null,
+    profitMargins: q.profitMargins ?? null
   }
 }
 
@@ -228,7 +229,12 @@ function formatChartMeta(meta, symbol) {
     bid: meta.bid || null,
     ask: meta.ask || null,
     marketState: meta.marketState || 'CLOSED',
-    currency: getCurrency(exchange)
+    currency: getCurrency(exchange),
+    priceToBook: meta.priceToBook ?? null,
+    trailingPE: meta.trailingPE ?? null,
+    returnOnEquity: meta.returnOnEquity ?? null,
+    dividendYield: meta.dividendYield ?? null,
+    profitMargins: meta.profitMargins ?? null
   }
 }
 

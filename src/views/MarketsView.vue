@@ -150,6 +150,30 @@
             </div>
           </div>
 
+          <div class="fundamentals-grid" v-if="detail.priceToBook != null || detail.trailingPE != null || detail.returnOnEquity != null || detail.dividendYield != null || detail.profitMargins != null">
+            <h4 class="fundamentals-title">Fundamentos</h4>
+            <div class="metric" v-if="detail.priceToBook != null">
+              <span class="metric-label">P/VP</span>
+              <span class="metric-value">{{ detail.priceToBook.toFixed(2) }}</span>
+            </div>
+            <div class="metric" v-if="detail.trailingPE != null">
+              <span class="metric-label">P/L</span>
+              <span class="metric-value">{{ detail.trailingPE.toFixed(2) }}</span>
+            </div>
+            <div class="metric" v-if="detail.returnOnEquity != null">
+              <span class="metric-label">ROE</span>
+              <span class="metric-value">{{ (detail.returnOnEquity * 100).toFixed(2) }}%</span>
+            </div>
+            <div class="metric" v-if="detail.dividendYield != null">
+              <span class="metric-label">DY Médio</span>
+              <span class="metric-value">{{ (detail.dividendYield * 100).toFixed(2) }}%</span>
+            </div>
+            <div class="metric" v-if="detail.profitMargins != null">
+              <span class="metric-label">Rentabilidade</span>
+              <span class="metric-value">{{ (detail.profitMargins * 100).toFixed(2) }}%</span>
+            </div>
+          </div>
+
           <div class="trade-section">
             <h4 class="trade-title">Compra / Venda</h4>
             <div class="trade-row">
@@ -319,10 +343,7 @@ async function fetchAll() {
     if (c.bitcoin) items.push({ label: 'BTC/USD', value: `$ ${c.bitcoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.bitcoin.usd_24h_change || 0).toFixed(2) })
     if (c.ethereum) items.push({ label: 'ETH/USD', value: `$ ${c.ethereum.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ethereum.usd_24h_change || 0).toFixed(2) })
     if (c.binancecoin) items.push({ label: 'BNB/USD', value: `$ ${c.binancecoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.binancecoin.usd_24h_change || 0).toFixed(2) })
-    if (c.solana) items.push({ label: 'SOL/USD', value: `$ ${c.solana.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.solana.usd_24h_change || 0).toFixed(2) })
-    if (c.ripple) items.push({ label: 'XRP/USD', value: `$ ${c.ripple.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.ripple.usd_24h_change || 0).toFixed(2) })
-    if (c.cardano) items.push({ label: 'ADA/USD', value: `$ ${c.cardano.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.cardano.usd_24h_change || 0).toFixed(2) })
-    if (c.dogecoin) items.push({ label: 'DOGE/USD', value: `$ ${c.dogecoin.usd?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: (c.dogecoin.usd_24h_change || 0).toFixed(2) })
+
     tickers.value = items
   } catch {
     error.value = 'Erro ao carregar dados dos mercados. Tente novamente.'
@@ -918,6 +939,25 @@ onMounted(() => {
   font-size: 0.82rem;
   font-weight: bold;
   font-family: "Courier New", monospace;
+}
+
+.fundamentals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.fundamentals-title {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin: 0 0 0.2rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .trade-section {
