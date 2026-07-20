@@ -39,7 +39,7 @@
             </div>
             <span class="card-limit-value card-limit-max">R$ {{ formatCurrency(store.limitConsumption) }}</span>
           </div>
-          <span class="card-sub text-blue">
+          <span class="card-sub card-sub-bottom text-blue">
             {{ store.totalReturn > store.limitConsumption ? '⬆ Excedeu o Limite' : '✅ Retorno Total ao Fundo' }}
           </span>
         </div>
@@ -55,7 +55,7 @@
             </div>
             <span class="card-limit-value card-invest-available">R$ {{ formatCurrency(store.investedValue) }}</span>
           </div>
-          <span class="card-sub text-purple">
+          <span class="card-sub card-sub-bottom text-purple">
             {{ store.penaltyValue > 0
               ? `⬆ Planejado R$ ${formatCurrency(store.investedValue)} − Penalidades`
               : `✅ Planejado (${store.investmentRate}%): R$ ${formatCurrency(store.investedValue)}`
@@ -65,10 +65,10 @@
 
         <div :class="['status-card', 'glass-panel', 'border-danger', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
           <span class="card-label">Excedente de Limite</span>
-          <h3 class="card-value" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+          <h3 class="card-value card-value-center" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
             R$ {{ formatCurrency(store.exceededValue) }}
           </h3>
-          <span class="card-sub" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+          <span class="card-sub card-sub-bottom" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
             {{ store.exceededValue > 0 ? `Penalidade de ${store.penaltyRate}% Aplicada` : 'Dentro do Limite Recomendado' }}
           </span>
         </div>
@@ -1315,6 +1315,8 @@ watch(() => store.monthlyContribution, () => {
 }
 
 .status-card {
+  display: flex;
+  flex-direction: column;
   flex: 0 0 100%;
   scroll-snap-align: start;
   text-align: left;
@@ -1322,6 +1324,14 @@ watch(() => store.monthlyContribution, () => {
   border-left: 5px solid var(--border-color);
   border-radius: 3px;
   background: #ffffff;
+}
+
+.card-value-center {
+  text-align: center;
+}
+
+.card-sub-bottom {
+  margin-top: auto;
 }
 
 
