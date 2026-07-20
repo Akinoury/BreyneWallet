@@ -243,8 +243,8 @@ export const useWalletStore = defineStore('wallet', () => {
         currentUser.value = result.user
         isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
         addToSavedAccounts(result.user)
-        const token = api.getToken()
-        if (token) biometricService.saveAccountToken(result.user.email, token)
+        const t = api.getToken()
+        if (t) biometricService.saveAccountToken(result.user.email, t)
         await loadWalletState()
       }
     } catch {
@@ -425,23 +425,39 @@ export const useWalletStore = defineStore('wallet', () => {
       if (currentUser.value?.email) {
         biometricService.saveAccountToken(currentUser.value.email, currentToken)
       }
-      const targetToken = biometricService.getAccountToken(accountEmail)
-      if (!targetToken) return false
+      let targetToken = biometricService.getAccountToken(accountEmail)
+      if (!targetToken) {
+        const acc = savedAccounts.value.find(a => a.email === accountEmail)
+        if (acc) {
+          targetToken = biometricService.getAccountToken(acc.email)
+        }
+      }
+      if (!targetToken) {
+        api.logout()
+        currentUser.value = null
+        return false
+      }
       api.setToken(targetToken)
       const me = await api.me()
       if (me?.user) {
         currentUser.value = me.user
-        addToSavedAccounts(me.user)
       } else {
         const acc = savedAccounts.value.find(a => a.email === accountEmail)
         if (acc) {
           currentUser.value = { id: acc.id, name: acc.name, email: acc.email }
         }
       }
+      if (currentUser.value) {
+        addToSavedAccounts(currentUser.value)
+        const tk = api.getToken()
+        if (tk) biometricService.saveAccountToken(currentUser.value.email, tk)
+      }
       isBiometricEnabled.value = await biometricService.hasCredential(currentUser.value?.id || '')
       await loadWalletState()
       return true
     } catch {
+      api.logout()
+      currentUser.value = null
       return false
     }
   }
