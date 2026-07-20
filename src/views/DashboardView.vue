@@ -498,6 +498,32 @@
           <canvas id="chart-expense-breakdown" height="260"></canvas>
         </div>
       </div>
+
+      <!-- CATEGORY LIMIT WARNINGS -->
+      <div v-if="categoryWarnings.some(c => c.exceeded)" class="limit-warnings">
+        <h5 class="limit-warnings-title">⚠️ Limites por Categoria Recomendados Foram Excedidos</h5>
+        <div class="limit-warnings-grid">
+          <div
+            v-for="cat in categoryWarnings.filter(c => c.exceeded)"
+            :key="cat.label"
+            class="limit-warning-card"
+          >
+            <div class="lw-label">{{ cat.label }}</div>
+            <div class="lw-values">
+              <span class="lw-spent">Gasto: R$ {{ formatCurrency(cat.spent) }}</span>
+              <span class="lw-max">Máx: R$ {{ formatCurrency(cat.maxAllowed) }}</span>
+              <span class="lw-pct-recommended">Usado: {{ cat.pctSalary.toFixed(1) }}% / Recomendado: {{ cat.pct }}%</span>
+            </div>
+            <div class="lw-bar">
+              <div class="lw-bar-fill" :style="{ width: Math.min(cat.pctUsed, 100) + '%' }"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="limit-warnings limit-ok">
+        <p class="limit-ok-text">✅ Todos os gastos estão dentro dos limites sugeridos por categoria.</p>
+      </div>
     </div>
   </div>
 </template>
@@ -649,6 +675,34 @@ const categoryBreakdown = computed(() => {
 const percentLimitUsed = computed(() => {
   if (store.limitConsumption === 0) return 0
   return ((store.consumoAtual + store.currentInterest) / store.limitConsumption) * 100
+})
+
+const CATEGORY_PCT_LIMITS = [
+  { label: '🏠 Moradia (aluguel/financiamento + condomínio + IPTU)', key: 'Moradia', pct: 25 },
+  { label: '🚗 Transporte (carro, combustível, seguro, IPVA ou transporte público)', key: 'Transporte', pct: 10 },
+  { label: '🍽️ Alimentação', key: 'Alimentação', pct: 15 },
+  { label: '⚡ Contas (água, luz, internet, celular, gás)', key: null, pct: 10 },
+  { label: '🏥 Saúde e seguros', key: 'Saúde', pct: 5 },
+  { label: '🎓 Educação', key: 'Educação', pct: 2.5 },
+  { label: '🎉 Lazer e compras', key: 'Lazer', pct: 2.5 },
+]
+
+const categoryWarnings = computed(() => {
+  const salary = Number(store.salary) || 0
+  const breakdown = categoryBreakdown.value
+  const breakdownMap = {}
+  for (const b of breakdown) {
+    breakdownMap[b.name] = b.total
+  }
+
+  return CATEGORY_PCT_LIMITS.map(lim => {
+    const spent = lim.key ? (breakdownMap[lim.key] || 0) : 0
+    const maxAllowed = salary * (lim.pct / 100)
+    const pctUsed = maxAllowed > 0 ? (spent / maxAllowed) * 100 : 0
+    const pctSalary = salary > 0 ? (spent / salary) * 100 : 0
+    const exceeded = spent > maxAllowed
+    return { ...lim, spent, maxAllowed, pctUsed, pctSalary, exceeded }
+  })
 })
 
 const handleFundAction = async (isDeposit) => {
@@ -2153,5 +2207,98 @@ input:checked + .toggle-slider-sm:before {
   .simulator-inputs-grid { padding: 1rem; gap: 1rem; }
   .sim-card-value { font-size: 1.2rem; }
   .help-modal-box { padding: 1.25rem; margin: 0.5rem; }
+}
+
+/* Category limit warnings */
+.limit-warnings {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.limit-warnings-title {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  color: var(--danger-color);
+}
+
+.limit-warnings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.limit-warning-card {
+  padding: 0.75rem 1rem;
+  background: #fdf2f2;
+  border: 1px solid #f8b4b4;
+  border-left: 3px solid var(--danger-color);
+  border-radius: 3px;
+}
+
+.lw-label {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.lw-values {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+
+.lw-spent {
+  color: var(--danger-color);
+  font-weight: bold;
+}
+
+.lw-max {
+  color: var(--text-secondary);
+}
+
+.lw-pct {
+  font-weight: bold;
+  color: var(--danger-color);
+  margin-left: auto;
+}
+
+.lw-pct-recommended {
+  font-weight: bold;
+  color: var(--danger-color);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.lw-bar {
+  margin-top: 0.4rem;
+  height: 6px;
+  background: #e8e2d4;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lw-bar-fill {
+  height: 100%;
+  background: var(--danger-color);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.limit-ok {
+  border-color: #def7ec;
+  background: #f3faf5;
+}
+
+.limit-ok-text {
+  font-size: 0.85rem;
+  color: var(--success-color);
+  font-weight: bold;
+  text-align: center;
 }
 </style>
