@@ -1727,7 +1727,7 @@ input:checked + .toggle-slider-sm:before {
 }
 
 .fund-pig {
-  width: 48px;
+  width: 72px;
   height: auto;
   object-fit: contain;
 }
