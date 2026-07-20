@@ -101,7 +101,7 @@
               </span>
             </div>
             <div class="index-chart-canvas-wrap">
-              <canvas :ref="el => setIndexChartRef(ch.label, el)"></canvas>
+              <canvas :id="'idx-chart-' + ch.label.replace(/[^a-zA-Z0-9]/g,'')"></canvas>
               <div v-if="ch.loading" class="chart-loading">Carregando...</div>
             </div>
           </div>
@@ -305,12 +305,7 @@ const showIndexCharts = computed(() =>
 )
 
 const indexChartData = ref([])
-const indexChartRefs = {}
 let indexCharts = []
-
-function setIndexChartRef(label, el) {
-  if (el) indexChartRefs[label] = el
-}
 
 async function loadIndexCharts() {
   for (const c of indexCharts) c.destroy()
@@ -350,10 +345,11 @@ async function loadIndexCharts() {
     indexChartData.value = [...indexChartData.value]
   }
   await nextTick()
-  await new Promise(r => setTimeout(r, 50))
+  await new Promise(r => setTimeout(r, 100))
   for (const item of indexChartData.value) {
     if (!item.closes.length) continue
-    const el = indexChartRefs[item.label]
+    const id = 'idx-chart-' + item.label.replace(/[^a-zA-Z0-9]/g, '')
+    const el = document.getElementById(id)
     if (!el) continue
     const color = item.closes[0] <= item.closes[item.closes.length - 1] ? '#06c167' : '#e60014'
     const ch = new Chart(el, {
