@@ -420,20 +420,30 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   async function switchAccount(accountEmail) {
-    const currentToken = api.getToken()
-    if (currentUser.value?.email) {
-      biometricService.saveAccountToken(currentUser.value.email, currentToken)
+    try {
+      const currentToken = api.getToken()
+      if (currentUser.value?.email) {
+        biometricService.saveAccountToken(currentUser.value.email, currentToken)
+      }
+      const targetToken = biometricService.getAccountToken(accountEmail)
+      if (!targetToken) return false
+      api.setToken(targetToken)
+      const me = await api.me()
+      if (me?.user) {
+        currentUser.value = me.user
+        addToSavedAccounts(me.user)
+      } else {
+        const acc = savedAccounts.value.find(a => a.email === accountEmail)
+        if (acc) {
+          currentUser.value = { id: acc.id, name: acc.name, email: acc.email }
+        }
+      }
+      isBiometricEnabled.value = await biometricService.hasCredential(currentUser.value?.id || '')
+      await loadWalletState()
+      return true
+    } catch {
+      return false
     }
-    const targetToken = biometricService.getAccountToken(accountEmail)
-    if (!targetToken) return false
-    api.setToken(targetToken)
-    const acc = savedAccounts.value.find(a => a.email === accountEmail)
-    if (acc) {
-      currentUser.value = { id: acc.id, name: acc.name, email: acc.email }
-    }
-    isBiometricEnabled.value = await biometricService.hasCredential(acc?.id || '')
-    await loadWalletState()
-    return true
   }
 
   async function updateUserName(newName) {
