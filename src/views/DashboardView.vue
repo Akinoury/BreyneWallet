@@ -1057,10 +1057,10 @@ const renderCharts = async () => {
             borderWidth: 2,
             fill: false,
             tension: 0.35,
-            pointRadius: 3,
+            pointRadius: 1,
             pointBackgroundColor: '#1e3a5f',
             pointBorderColor: '#1e3a5f',
-            pointHoverRadius: 5
+            pointHoverRadius: 4
           },
           {
             label: 'Poder de Compra Real (R$)',
@@ -1070,10 +1070,10 @@ const renderCharts = async () => {
             borderWidth: 2,
             fill: false,
             tension: 0.35,
-            pointRadius: 3,
+            pointRadius: 1,
             pointBackgroundColor: '#2d6a4f',
             pointBorderColor: '#2d6a4f',
-            pointHoverRadius: 5,
+            pointHoverRadius: 4,
             borderDash: [5, 3]
           }
         ]
