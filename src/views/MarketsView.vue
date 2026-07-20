@@ -100,9 +100,9 @@
                 {{ ch.change >= 0 ? '+' : '' }}{{ ch.change?.toFixed(2) }}%
               </span>
             </div>
-            <div class="index-chart-canvas-wrap">
-              <canvas :id="'idx-chart-' + ch.label.replace(/[^a-zA-Z0-9]/g,'')"></canvas>
-              <div v-if="ch.loading" class="chart-loading">Carregando...</div>
+            <div class="index-chart-canvas-wrap" :ref="el => setIdxWrap(i, el)">
+              <canvas v-show="!ch.loading" :id="'idx-chart-' + ch.label.replace(/[^a-zA-Z0-9]/g,'')" width="400" height="180"></canvas>
+              <div v-if="ch.loading" class="chart-loading">Carregando gráfico...</div>
             </div>
           </div>
         </div>
@@ -305,11 +305,17 @@ const showIndexCharts = computed(() =>
 )
 
 const indexChartData = ref([])
+const indexWrapRefs = ref([])
 let indexCharts = []
+
+function setIdxWrap(i, el) {
+  if (el) indexWrapRefs.value[i] = el
+}
 
 async function loadIndexCharts() {
   for (const c of indexCharts) c.destroy()
   indexCharts = []
+  indexWrapRefs.value = []
   if (!showIndexCharts.value) {
     indexChartData.value = []
     return
@@ -340,19 +346,21 @@ async function loadIndexCharts() {
     const prev = meta?.chartPreviousClose ?? closes[0]
     item.price = p
     item.change = prev > 0 ? ((p - prev) / prev) * 100 : 0
-    item.loading = false
     item.closes = closes
-    indexChartData.value = [...indexChartData.value]
+    item.loading = false
   }
+  // Wait for DOM to settle after reactivity
   await nextTick()
-  await new Promise(r => setTimeout(r, 100))
-  for (const item of indexChartData.value) {
+  await new Promise(r => setTimeout(r, 200))
+  for (let i = 0; i < indexChartData.value.length; i++) {
+    const item = indexChartData.value[i]
     if (!item.closes.length) continue
-    const id = 'idx-chart-' + item.label.replace(/[^a-zA-Z0-9]/g, '')
-    const el = document.getElementById(id)
-    if (!el) continue
+    const wrap = indexWrapRefs.value[i]
+    if (!wrap) continue
+    const canvas = wrap.querySelector('canvas')
+    if (!canvas) continue
     const color = item.closes[0] <= item.closes[item.closes.length - 1] ? '#06c167' : '#e60014'
-    const ch = new Chart(el, {
+    const ch = new Chart(canvas, {
       type: 'line',
       data: {
         labels: [],
@@ -478,11 +486,8 @@ const isPreview = computed(() =>
 )
 
 const displayStocks = computed(() => {
-  const list = filteredStocks.value
-  // Hide index cards from grid when index charts are showing
-  const filtered = showIndexCharts.value ? list.filter(s => s.assetType !== 'Índices') : list
-  if (isPreview.value && !showIndexCharts.value) return filtered.slice(0, 50)
-  return filtered
+  if (isPreview.value) return filteredStocks.value.slice(0, 50)
+  return filteredStocks.value
 })
 
 function getExchangeLabel(key) {

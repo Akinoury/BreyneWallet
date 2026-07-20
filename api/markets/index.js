@@ -417,8 +417,5 @@ const ALL_SYMBOLS = [
   'BP.L','CPG.L','CRDA.L','DGE.L','EZJ.L','GSK.L','HL.L','HSBA.L',
   'IMB.L','INF.L','ITRK.L','LLOY.L','MNDI.L','MRO.L','NG.L','PRU.L',
   'RB.L','REL.L','REX.L','RR.L','SDR.L','SGE.L','SMIN.L','SN.L',
-  'SSE.L','STAN.L','SVT.L','TSCO.L','ULVR.L','UU.L','VOD.L','WTB.L',
-
-  // Índices de referência
-  '^BVSP','^GSPC'
+  'SSE.L','STAN.L','SVT.L','TSCO.L','ULVR.L','UU.L','VOD.L','WTB.L'
 ]
