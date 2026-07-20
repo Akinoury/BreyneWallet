@@ -79,7 +79,13 @@
           <h3>Tabela de Acerto de Contas</h3>
           <button class="help-trigger-btn" @click="showHelpModal = true" title="Como funciona?" id="btn-help-acerto">?</button>
         </div>
-        <p>Fechamento financeiro do ciclo atual com base no seu salário.</p>
+        <div style="display:flex; align-items:center; gap: 0.75rem;">
+          <p>Fechamento financeiro do ciclo atual com base no seu salário.</p>
+          <button class="toggle-table-btn" @click="showAcertoTable = !showAcertoTable" :title="showAcertoTable ? 'Recolher' : 'Expandir'">
+            <span v-if="showAcertoTable">▲</span>
+            <span v-else>▼</span>
+          </button>
+        </div>
       </div>
 
       <!-- MODAL: EXPLICAÇÃO DA SISTEMÁTICA -->
@@ -133,7 +139,7 @@
             <th class="text-right">Valor</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-show="showAcertoTable">
           <!-- ENTRADAS -->
           <tr class="row-section-header">
             <td colspan="3">📊 Entradas</td>
@@ -216,6 +222,8 @@
               R$ {{ formatCurrency(store.currentInterest) }}
             </td>
           </tr>
+        </tbody>
+        <tbody>
           <!-- TOTAL FINAL -->
           <tr class="row-total">
             <td>✅ Retorno Total ao Fundo</td>
@@ -573,6 +581,7 @@ const store = useWalletStore()
 
 const fundTxAmount = ref(null)
 const showHelpModal = ref(false)
+const showAcertoTable = ref(true)
 
 // Projeção e Simulação da Selic / Liberdade Financeira
 const targetPassiveIncome = ref(0)
@@ -1775,6 +1784,27 @@ input:checked + .toggle-slider-sm:before {
 .help-trigger-btn:hover {
   background: var(--accent-color);
   color: #fff;
+}
+
+.toggle-table-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-table-btn:hover {
+  border-color: var(--accent-color);
+  background: #fdfcf7;
 }
 
 /* Modal overlay */
