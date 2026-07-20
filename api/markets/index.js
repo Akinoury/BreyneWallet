@@ -2,7 +2,6 @@ import { handleOptions, setCorsHeaders } from '../_lib/cors.js'
 
 const YAHOO_QUOTE = 'https://query2.finance.yahoo.com/v7/finance/quote'
 const YAHOO_CHART = 'https://query1.finance.yahoo.com/v8/finance/chart'
-const YAHOO_SUMMARY = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary'
 const AWESOME_API = 'https://economia.awesomeapi.com.br/json/last'
 const COINGECKO = 'https://api.coingecko.com/api/v3/simple/price'
 
@@ -77,18 +76,31 @@ export default async function handler(req, res) {
 
   if (fundamentals) {
     const sym = fundamentals.toUpperCase()
-    const data = await fetchJSON(`${YAHOO_SUMMARY}/${sym}?modules=defaultKeyStatistics%2CfinancialData`, 10000)
+    const data = await fetchJSON(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=defaultKeyStatistics%2CfinancialData`, 10000)
     const qs = data?.quoteSummary?.result?.[0]
-    if (!qs) return res.json({ error: 'Fundamentals not available' })
-    const ks = qs.defaultKeyStatistics || {}
-    const fd = qs.financialData || {}
-    return res.json({
-      priceToBook: fd.priceToBook?.raw ?? null,
-      trailingPE: fd.trailingPE?.raw ?? null,
-      returnOnEquity: ks.returnOnEquity?.raw ?? null,
-      dividendYield: fd.dividendYield?.raw ?? null,
-      profitMargins: fd.profitMargins?.raw ?? null
-    })
+    if (qs) {
+      const ks = qs.defaultKeyStatistics || {}
+      const fd = qs.financialData || {}
+      return res.json({
+        priceToBook: fd.priceToBook?.raw ?? null,
+        trailingPE: fd.trailingPE?.raw ?? null,
+        returnOnEquity: ks.returnOnEquity?.raw ?? null,
+        dividendYield: fd.dividendYield?.raw ?? null,
+        profitMargins: fd.profitMargins?.raw ?? null
+      })
+    }
+    const fallback = await fetchJSON(`${YAHOO_QUOTE}?symbols=${sym}`, 8000)
+    const q = fallback?.quoteResponse?.result?.[0]
+    if (q) {
+      return res.json({
+        priceToBook: q.priceToBook ?? null,
+        trailingPE: q.trailingPE ?? null,
+        returnOnEquity: null,
+        dividendYield: q.dividendYield ?? null,
+        profitMargins: null
+      })
+    }
+    return res.json({ error: 'Fundamentals not available' })
   }
 
   if (chart) {
