@@ -64,11 +64,10 @@
               <option value="Alimentação">Alimentação</option>
               <option value="Transporte">Transporte</option>
               <option value="Moradia">Moradia</option>
-              <option value="Lazer">Lazer</option>
+              <option value="Contas">Contas</option>
               <option value="Saúde">Saúde</option>
-              <option value="Finanças">Finanças</option>
               <option value="Educação">Educação</option>
-              <option value="Outros">Outros</option>
+              <option value="Lazer">Lazer</option>
             </select>
           </div>
 

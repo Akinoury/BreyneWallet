@@ -47,7 +47,7 @@ export const useWalletStore = defineStore('wallet', () => {
       amount: 276.39,
       type: 'expense',
       expenseType: 'passivo',
-      category: 'Finanças',
+      category: 'Contas',
       date: new Date(Date.now() - 86400000).toISOString()
     }
   ])

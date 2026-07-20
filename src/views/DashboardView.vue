@@ -500,29 +500,52 @@
       </div>
 
       <!-- CATEGORY LIMIT WARNINGS -->
-      <div v-if="categoryWarnings.some(c => c.exceeded)" class="limit-warnings">
-        <h5 class="limit-warnings-title">⚠️ Limites por Categoria Recomendados Foram Excedidos</h5>
-        <div class="limit-warnings-grid">
-          <div
-            v-for="cat in categoryWarnings.filter(c => c.exceeded)"
-            :key="cat.label"
-            class="limit-warning-card"
-          >
-            <div class="lw-label">{{ cat.label }}</div>
-            <div class="lw-values">
-              <span class="lw-spent">Gasto: R$ {{ formatCurrency(cat.spent) }}</span>
-              <span class="lw-max">Máx: R$ {{ formatCurrency(cat.maxAllowed) }}</span>
-              <span class="lw-pct-recommended">Usado: {{ cat.pctSalary.toFixed(1) }}% / Recomendado: {{ cat.pct }}%</span>
-            </div>
-            <div class="lw-bar">
-              <div class="lw-bar-fill" :style="{ width: Math.min(cat.pctUsed, 100) + '%' }"></div>
+      <div class="limit-warnings-section">
+        <div v-if="exceededCategories.length > 0" class="limit-warnings">
+          <h5 class="limit-warnings-title">⚠️ Limites por Categoria Recomendados Foram Excedidos</h5>
+          <div class="limit-warnings-grid">
+            <div
+              v-for="cat in exceededCategories"
+              :key="cat.label"
+              class="limit-warning-card"
+            >
+              <div class="lw-label">{{ cat.label }}</div>
+              <div class="lw-values">
+                <span class="lw-spent">Gasto: R$ {{ formatCurrency(cat.spent) }}</span>
+                <span class="lw-max">Máx: R$ {{ formatCurrency(cat.maxAllowed) }}</span>
+                <span class="lw-pct-recommended">Usado: {{ cat.pctSalary.toFixed(1) }}% / Recomendado: {{ cat.pct }}%</span>
+              </div>
+              <div class="lw-bar">
+                <div class="lw-bar-fill" :style="{ width: Math.min(cat.pctUsed, 100) + '%' }"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-else class="limit-warnings limit-ok">
-        <p class="limit-ok-text">✅ Todos os gastos estão dentro dos limites sugeridos por categoria.</p>
+        <div v-if="healthyCategories.length > 0" class="limit-warnings limit-ok">
+          <h5 class="limit-ok-title">✅ Categorias Saudáveis</h5>
+          <div class="limit-warnings-grid">
+            <div
+              v-for="cat in healthyCategories"
+              :key="cat.label"
+              class="limit-ok-card"
+            >
+              <div class="lw-label">{{ cat.label }}</div>
+              <div class="lw-values">
+                <span class="lw-healthy-spent">Gasto: R$ {{ formatCurrency(cat.spent) }}</span>
+                <span class="lw-max">Máx: R$ {{ formatCurrency(cat.maxAllowed) }}</span>
+                <span class="lw-pct-healthy">Usado: {{ cat.pctSalary.toFixed(1) }}% / Recomendado: {{ cat.pct }}%</span>
+              </div>
+              <div class="lw-bar">
+                <div class="lw-bar-fill lw-bar-fill-ok" :style="{ width: Math.min(cat.pctUsed, 100) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="noCategorySpending" class="limit-warnings limit-ok">
+          <p class="limit-ok-text">Nenhum gasto registrado no ciclo atual.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -681,7 +704,7 @@ const CATEGORY_PCT_LIMITS = [
   { label: '🏠 Moradia (aluguel/financiamento + condomínio + IPTU)', key: 'Moradia', pct: 25 },
   { label: '🚗 Transporte (carro, combustível, seguro, IPVA ou transporte público)', key: 'Transporte', pct: 10 },
   { label: '🍽️ Alimentação', key: 'Alimentação', pct: 15 },
-  { label: '⚡ Contas (água, luz, internet, celular, gás)', key: null, pct: 10 },
+  { label: '⚡ Contas (água, luz, internet, celular, gás)', key: 'Contas', pct: 10 },
   { label: '🏥 Saúde e seguros', key: 'Saúde', pct: 5 },
   { label: '🎓 Educação', key: 'Educação', pct: 2.5 },
   { label: '🎉 Lazer e compras', key: 'Lazer', pct: 2.5 },
@@ -704,6 +727,12 @@ const categoryWarnings = computed(() => {
     return { ...lim, spent, maxAllowed, pctUsed, pctSalary, exceeded }
   })
 })
+
+const exceededCategories = computed(() => categoryWarnings.value.filter(c => c.exceeded))
+
+const healthyCategories = computed(() => categoryWarnings.value.filter(c => !c.exceeded && c.spent > 0))
+
+const noCategorySpending = computed(() => categoryWarnings.value.every(c => c.spent === 0))
 
 const handleFundAction = async (isDeposit) => {
   if (!fundTxAmount.value || fundTxAmount.value <= 0) return
@@ -2300,5 +2329,39 @@ input:checked + .toggle-slider-sm:before {
   color: var(--success-color);
   font-weight: bold;
   text-align: center;
+}
+
+.limit-warnings-section {
+  margin-top: 1.5rem;
+}
+
+.limit-ok-title {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  color: var(--success-color);
+}
+
+.limit-ok-card {
+  padding: 0.75rem 1rem;
+  background: #f3faf5;
+  border: 1px solid #def7ec;
+  border-left: 3px solid var(--success-color);
+  border-radius: 3px;
+}
+
+.lw-healthy-spent {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.lw-pct-healthy {
+  font-weight: bold;
+  color: var(--success-color);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.lw-bar-fill-ok {
+  background: var(--success-color);
 }
 </style>
