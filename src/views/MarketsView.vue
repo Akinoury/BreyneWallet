@@ -174,25 +174,6 @@
             </div>
           </div>
 
-          <div class="trade-section">
-            <h4 class="trade-title">Compra / Venda</h4>
-            <div class="trade-row">
-              <span class="trade-label">Compra (Bid)</span>
-              <span class="trade-value up" v-if="detail.bid">{{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.bid) }}</span>
-              <span class="trade-value dim" v-else>—</span>
-            </div>
-            <div class="trade-row">
-              <span class="trade-label">Venda (Ask)</span>
-              <span class="trade-value down" v-if="detail.ask">{{ detail.currency === 'BRL' ? 'R$' : detail.currency === 'EUR' ? '€' : '$' }} {{ formatPrice(detail.ask) }}</span>
-              <span class="trade-value dim" v-else>—</span>
-            </div>
-            <div class="trade-row">
-              <span class="trade-label">Spread</span>
-              <span class="trade-value" v-if="detail.bid && detail.ask">{{ formatPrice(detail.ask - detail.bid) }}</span>
-              <span class="trade-value dim" v-else>—</span>
-            </div>
-          </div>
-
           <a :href="`https://finance.yahoo.com/quote/${detail.symbol}`" target="_blank" rel="noopener noreferrer" class="btn-yahoo">
             Ver no Yahoo Finance →
           </a>
