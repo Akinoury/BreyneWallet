@@ -305,6 +305,7 @@ const chartRange = ref('1mo')
 let chartInstance = null
 let chartRequestId = 0
 let alertCheckTimer = null
+let indexChartInterval = null
 
 const chartInstances = ref([])
 const chartRefs = {}
@@ -789,7 +790,19 @@ async function lookupTicker() {
   } catch {}
 }
 
-watch(selectedTypes, () => { loadIndexCharts() }, { deep: true })
+watch(selectedTypes, () => {
+  if (showIndexCharts.value) {
+    loadIndexCharts()
+    if (!indexChartInterval) {
+      indexChartInterval = setInterval(loadIndexCharts, 60000)
+    }
+  } else {
+    if (indexChartInterval) {
+      clearInterval(indexChartInterval)
+      indexChartInterval = null
+    }
+  }
+}, { deep: true })
 
 let searchTimer
 watch(searchQuery, (val) => {
@@ -835,6 +848,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (alertCheckTimer) clearInterval(alertCheckTimer)
+  if (indexChartInterval) clearInterval(indexChartInterval)
   for (const c of indexCharts) c.destroy()
   indexCharts = []
 })
