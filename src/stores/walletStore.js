@@ -242,6 +242,9 @@ export const useWalletStore = defineStore('wallet', () => {
       if (result.user) {
         currentUser.value = result.user
         isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
+        addToSavedAccounts(result.user)
+        const token = api.getToken()
+        if (token) biometricService.saveAccountToken(result.user.email, token)
         await loadWalletState()
       }
     } catch {
@@ -363,6 +366,7 @@ export const useWalletStore = defineStore('wallet', () => {
       currentUser.value = result.user
       isBiometricEnabled.value = enableBio
       addToSavedAccounts(result.user)
+      if (result.token) biometricService.saveAccountToken(email, result.token)
       try { localStorage.setItem('breyne_bio_enabled', enableBio ? 'true' : 'false') } catch {}
       await saveWalletState()
     }
@@ -375,6 +379,7 @@ export const useWalletStore = defineStore('wallet', () => {
       currentUser.value = result.user
       isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
       addToSavedAccounts(result.user)
+      if (result.token) biometricService.saveAccountToken(email, result.token)
       await loadWalletState()
     }
     return result
@@ -385,6 +390,10 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   async function logoutUser() {
+    if (currentUser.value?.email) {
+      const token = api.getToken()
+      if (token) biometricService.saveAccountToken(currentUser.value.email, token)
+    }
     currentUser.value = null
     isBiometricEnabled.value = false
     api.logout()
@@ -401,6 +410,8 @@ export const useWalletStore = defineStore('wallet', () => {
       savedAccounts.value.push({ id: user.id, name: user.name, email: user.email })
       biometricService.saveAccount(user)
     }
+    const token = api.getToken()
+    if (token) biometricService.saveAccountToken(user.email, token)
   }
 
   function removeFromSavedAccounts(accountId) {
@@ -409,9 +420,20 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   async function switchAccount(accountEmail) {
-    currentUser.value = null
-    api.logout()
-    return accountEmail
+    const currentToken = api.getToken()
+    if (currentUser.value?.email) {
+      biometricService.saveAccountToken(currentUser.value.email, currentToken)
+    }
+    const targetToken = biometricService.getAccountToken(accountEmail)
+    if (!targetToken) return false
+    api.setToken(targetToken)
+    const acc = savedAccounts.value.find(a => a.email === accountEmail)
+    if (acc) {
+      currentUser.value = { id: acc.id, name: acc.name, email: acc.email }
+    }
+    isBiometricEnabled.value = await biometricService.hasCredential(acc?.id || '')
+    await loadWalletState()
+    return true
   }
 
   async function updateUserName(newName) {

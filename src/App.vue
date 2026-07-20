@@ -124,8 +124,10 @@ const closeDropdown = () => {
 
 const handleSwitchAccount = async (email) => {
   isDropdownOpen.value = false
-  await store.switchAccount(email)
-  router.push({ name: 'login', query: { email } })
+  const ok = await store.switchAccount(email)
+  if (!ok) {
+    router.push({ name: 'login', query: { email } })
+  }
 }
 
 const navigateToAddAccount = async () => {

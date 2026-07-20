@@ -554,10 +554,10 @@ const saveSecuritySettings = async () => {
 }
 
 const handleSwitchAccount = async (email) => {
-  // Guarda na session temporária e faz logoff
-  await store.switchAccount(email)
-  // Redireciona para o login com query param do email para facilitar
-  router.push({ name: 'login', query: { email } })
+  const ok = await store.switchAccount(email)
+  if (!ok) {
+    router.push({ name: 'login', query: { email } })
+  }
 }
 
 const handleEnrollBiometric = async () => {

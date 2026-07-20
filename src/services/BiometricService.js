@@ -3,7 +3,8 @@ const STORAGE_KEYS = {
   ENABLED: 'breyne_bio_enabled',
   SAVED_ACCOUNTS: 'breyne_saved_accounts',
   USER: 'breyne_user',
-  TOKENS: 'breyne_bio_tokens'
+  TOKENS: 'breyne_bio_tokens',
+  ACCOUNT_TOKENS: 'breyne_account_tokens'
 }
 
 const SERVER_ID = 'breyne-wallet'
@@ -150,7 +151,38 @@ class BiometricService {
 
   removeSavedAccount(userId) {
     const accounts = this.getSavedAccounts()
+    const account = accounts.find(a => a.id === userId)
+    if (account) this.removeAccountToken(account.email)
     localStorage.setItem(STORAGE_KEYS.SAVED_ACCOUNTS, JSON.stringify(accounts.filter(a => a.id !== userId)))
+  }
+
+  saveAccountToken(email, token) {
+    if (!email || !token) return
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.ACCOUNT_TOKENS)
+      const tokens = raw ? JSON.parse(raw) : {}
+      tokens[email] = token
+      localStorage.setItem(STORAGE_KEYS.ACCOUNT_TOKENS, JSON.stringify(tokens))
+    } catch {}
+  }
+
+  getAccountToken(email) {
+    if (!email) return null
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.ACCOUNT_TOKENS)
+      const tokens = raw ? JSON.parse(raw) : {}
+      return tokens[email] || null
+    } catch { return null }
+  }
+
+  removeAccountToken(email) {
+    if (!email) return
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.ACCOUNT_TOKENS)
+      const tokens = raw ? JSON.parse(raw) : {}
+      delete tokens[email]
+      localStorage.setItem(STORAGE_KEYS.ACCOUNT_TOKENS, JSON.stringify(tokens))
+    } catch {}
   }
 
   async isSupported() {
