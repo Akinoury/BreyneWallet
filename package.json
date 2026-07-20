@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:android": "set CAPACITOR_BUILD=true&&set VITE_API_URL=https://breyne-wallet.vercel.app&&vite build&&npx cap sync android",
+    "build:android": "set CAPACITOR_BUILD=true&&set VITE_API_URL=https://www.breyne.app&&vite build&&npx cap sync android",
     "preview": "vite preview"
   },
   "dependencies": {
