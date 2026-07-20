@@ -254,6 +254,9 @@
         </div>
 
         <div class="fund-balance-display">
+          <div class="fund-pig-container">
+            <img src="/pig.png" alt="Porquinho" class="fund-pig" />
+          </div>
           <small class="fund-label">Saldo Atual (Tesouro Reserva)</small>
           <h2>R$ {{ formatCurrency(store.emergencyFund) }}</h2>
         </div>
@@ -429,7 +432,7 @@
                 e {{ financialIndependenceYears.months }} {{ financialIndependenceYears.months === 1 ? 'mês' : 'meses' }}
               </span>
             </h4>
-            <span class="sim-card-sub text-purple">
+            <span class="sim-card-sub text-purple" style="text-align: left;">
               Patrimônio Alvo: <strong>R$ {{ formatCurrency(financialIndependenceYears.targetWealth) }}</strong>
             </span>
           </div>
@@ -505,8 +508,12 @@
       <!-- CATEGORY LIMIT WARNINGS -->
       <div class="limit-warnings-section">
         <div v-if="exceededCategories.length > 0" class="limit-warnings">
-          <h5 class="limit-warnings-title">⚠️ Limites por Categoria Recomendados Foram Excedidos</h5>
-          <div class="limit-warnings-grid">
+          <div class="flex-between" style="cursor: pointer;" @click="showLimitExceeded = !showLimitExceeded">
+            <h5 class="limit-warnings-title">⚠️ Limites por Categoria Recomendados Foram Excedidos</h5>
+            <span v-if="showLimitExceeded">▲</span>
+            <span v-else>▼</span>
+          </div>
+          <div v-if="showLimitExceeded" class="limit-warnings-grid">
             <div
               v-for="cat in exceededCategories"
               :key="cat.label"
@@ -526,8 +533,12 @@
         </div>
 
         <div v-if="healthyCategories.length > 0" class="limit-warnings limit-ok">
-          <h5 class="limit-ok-title">✅ Categorias Saudáveis</h5>
-          <div class="limit-warnings-grid">
+          <div class="flex-between" style="cursor: pointer;" @click="showHealthyCats = !showHealthyCats">
+            <h5 class="limit-ok-title">✅ Categorias Saudáveis</h5>
+            <span v-if="showHealthyCats">▲</span>
+            <span v-else>▼</span>
+          </div>
+          <div v-if="showHealthyCats" class="limit-warnings-grid">
             <div
               v-for="cat in healthyCategories"
               :key="cat.label"
@@ -575,10 +586,14 @@ Chart.register(
 const store = useWalletStore()
 
 const STORAGE_KEY_ACERTO_VISIBLE = 'breyne_acerto_table_visible'
+const STORAGE_KEY_LIMIT_EXCEEDED = 'breyne_limit_exceeded_visible'
+const STORAGE_KEY_HEALTHY_CATS = 'breyne_healthy_cats_visible'
 
 const fundTxAmount = ref(null)
 const showHelpModal = ref(false)
 const showAcertoTable = ref(localStorage.getItem(STORAGE_KEY_ACERTO_VISIBLE) !== 'false')
+const showLimitExceeded = ref(localStorage.getItem(STORAGE_KEY_LIMIT_EXCEEDED) !== 'false')
+const showHealthyCats = ref(localStorage.getItem(STORAGE_KEY_HEALTHY_CATS) !== 'false')
 
 const totalCards = 3
 const currentCardIndex = ref(0)
@@ -638,6 +653,12 @@ const targetPassiveIncome = ref(0)
 
 watch(showAcertoTable, (val) => {
   localStorage.setItem(STORAGE_KEY_ACERTO_VISIBLE, val ? 'true' : 'false')
+})
+watch(showLimitExceeded, (val) => {
+  localStorage.setItem(STORAGE_KEY_LIMIT_EXCEEDED, val ? 'true' : 'false')
+})
+watch(showHealthyCats, (val) => {
+  localStorage.setItem(STORAGE_KEY_HEALTHY_CATS, val ? 'true' : 'false')
 })
 
 const selicRate = ref(10.75)
@@ -1705,6 +1726,18 @@ input:checked + .toggle-slider-sm:before {
   font-weight: bold;
 }
 
+.fund-pig-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.fund-pig {
+  width: 64px;
+  height: auto;
+  object-fit: contain;
+}
+
 .fund-balance-display h2 {
   font-size: 2.2rem;
   font-weight: bold;
@@ -2254,9 +2287,6 @@ input:checked + .toggle-slider-sm:before {
 
 .sim-card-center {
   text-align: center;
-}
-.sim-card-center .sim-card-sub {
-  text-align: left;
 }
 
 .sim-card-label {
