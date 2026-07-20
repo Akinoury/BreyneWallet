@@ -49,6 +49,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globIgnores: ['pig.png'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/economia\.awesomeapi\.com\.br\/.*/i,
