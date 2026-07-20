@@ -567,7 +567,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   Chart,
   LineElement, BarElement, PointElement, ArcElement,
@@ -1326,8 +1326,7 @@ watch(() => store.monthlyContribution, () => {
 }
 
 .status-card {
-  min-width: 260px;
-  flex: 1 0 30%;
+  flex: 0 0 100%;
   scroll-snap-align: start;
   text-align: left;
   border: 1px solid var(--border-color);
@@ -1359,6 +1358,36 @@ watch(() => store.monthlyContribution, () => {
 
 .dot.active {
   background: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .status-carousel-wrapper {
+    display: block;
+  }
+  .carousel-arrow {
+    display: none;
+  }
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    -webkit-overflow-scrolling: auto;
+    scrollbar-width: auto;
+    flex: none;
+  }
+  .status-grid::-webkit-scrollbar {
+    display: block;
+  }
+  .status-card {
+    flex: none;
+    min-width: 0;
+    scroll-snap-align: none;
+  }
+  .carousel-dots {
+    display: none;
+  }
 }
 
 .border-blue {
@@ -2389,12 +2418,18 @@ input:checked + .toggle-slider-sm:before {
   .salary-input-group { width: 100%; }
   .salary-input { width: 100%; }
 }
+@media (max-width: 767px) {
+  .status-grid {
+    gap: 0;
+  }
+  .carousel-arrow {
+    display: none;
+  }
+}
 @media (max-width: 600px) {
   .card-value { font-size: 1.2rem; }
   .card-limit-value { font-size: 1.2rem; }
   .card-limit-divider { width: 60%; }
-  .status-card { min-width: 220px; }
-  .carousel-arrow { display: none; }
   .settlement-table { font-size: 0.75rem; }
   .settlement-table th,
   .settlement-table td { padding: 0.35rem 0.4rem; }
