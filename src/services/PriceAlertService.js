@@ -29,15 +29,6 @@ export const priceAlertService = {
 
   add(symbol, targetPrice, direction = 'above', basisPrice = 0) {
     const alerts = load()
-    const existing = alerts.find(a => a.symbol === symbol && a.active)
-    if (existing) {
-      existing.targetPrice = targetPrice
-      existing.direction = direction
-      existing.basisPrice = basisPrice
-      existing.basisDate = today()
-      save(alerts)
-      return existing
-    }
     const alert = { id: nextId++, symbol, targetPrice, direction, active: true, basisPrice, basisDate: today() }
     alerts.push(alert)
     save(alerts)

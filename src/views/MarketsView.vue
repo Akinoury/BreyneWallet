@@ -287,6 +287,7 @@ const chartRange = ref('1mo')
 let chartInstance = null
 let chartRequestId = 0
 let alertCheckTimer = null
+let fetchTimer = null
 let indexChartInterval = null
 
 const chartInstances = ref([])
@@ -804,10 +805,12 @@ onMounted(() => {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission()
   }
+  fetchTimer = setInterval(fetchAll, 30000)
   alertCheckTimer = setInterval(checkAlerts, 30000)
 })
 
 onUnmounted(() => {
+  if (fetchTimer) clearInterval(fetchTimer)
   if (alertCheckTimer) clearInterval(alertCheckTimer)
   if (indexChartInterval) clearInterval(indexChartInterval)
   for (const c of indexCharts) c.destroy()
