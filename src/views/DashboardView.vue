@@ -24,52 +24,59 @@
       </div>
     </div>
 
-    <!-- QUICK STATUS CARDS -->
-    <div class="status-grid">
-      <div :class="['status-card', 'glass-panel', 'border-blue', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
-        <span class="card-label">Gasto × Limite ({{ store.consumptionRate }}%)</span>
-        <div class="card-limit-stacked">
-          <span class="card-limit-value card-limit-spent">R$ {{ formatCurrency(store.totalReturn) }}</span>
-          <div class="card-limit-divider">
-            <span class="card-limit-line"></span>
-            <span class="card-limit-x">x</span>
-            <span class="card-limit-line"></span>
+    <!-- QUICK STATUS CARDS (Carrossel) -->
+    <div class="status-carousel-wrapper" tabindex="0" ref="carouselWrapperRef" @keydown="onCarouselKeydown">
+      <button class="carousel-arrow carousel-arrow-left" @click="prevCard" :disabled="currentCardIndex === 0" aria-label="Anterior">‹</button>
+      <div class="status-grid" ref="statusGridRef" @scroll="onScroll" @touchstart="onTouchStart" @touchend="onTouchEnd">
+        <div :class="['status-card', 'glass-panel', 'border-blue', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
+          <span class="card-label">Gasto × Limite ({{ store.consumptionRate }}%)</span>
+          <div class="card-limit-stacked">
+            <span class="card-limit-value card-limit-spent">R$ {{ formatCurrency(store.totalReturn) }}</span>
+            <div class="card-limit-divider">
+              <span class="card-limit-line"></span>
+              <span class="card-limit-x">x</span>
+              <span class="card-limit-line"></span>
+            </div>
+            <span class="card-limit-value card-limit-max">R$ {{ formatCurrency(store.limitConsumption) }}</span>
           </div>
-          <span class="card-limit-value card-limit-max">R$ {{ formatCurrency(store.limitConsumption) }}</span>
+          <span class="card-sub text-blue">
+            {{ store.totalReturn > store.limitConsumption ? '⬆ Excedeu o Limite' : '✅ Retorno Total ao Fundo' }}
+          </span>
         </div>
-        <span class="card-sub text-blue">
-          {{ store.totalReturn > store.limitConsumption ? '⬆ Excedeu o Limite' : '✅ Retorno Total ao Fundo' }}
-        </span>
-      </div>
 
-      <div :class="['status-card', 'glass-panel', 'border-purple', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
-        <span class="card-label">Disponível para Investir Neste Mês</span>
-        <div class="card-limit-stacked">
-          <span class="card-limit-value card-invest-planned">R$ {{ formatCurrency(store.availableToInvest) }}</span>
-          <div class="card-limit-divider">
-            <span class="card-limit-line"></span>
-            <span class="card-limit-x">x</span>
-            <span class="card-limit-line"></span>
+        <div :class="['status-card', 'glass-panel', 'border-purple', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
+          <span class="card-label">Disponível para Investir Neste Mês</span>
+          <div class="card-limit-stacked">
+            <span class="card-limit-value card-invest-planned">R$ {{ formatCurrency(store.availableToInvest) }}</span>
+            <div class="card-limit-divider">
+              <span class="card-limit-line"></span>
+              <span class="card-limit-x">x</span>
+              <span class="card-limit-line"></span>
+            </div>
+            <span class="card-limit-value card-invest-available">R$ {{ formatCurrency(store.investedValue) }}</span>
           </div>
-          <span class="card-limit-value card-invest-available">R$ {{ formatCurrency(store.investedValue) }}</span>
+          <span class="card-sub text-purple">
+            {{ store.penaltyValue > 0
+              ? `⬆ Planejado R$ ${formatCurrency(store.investedValue)} − Penalidades`
+              : `✅ Planejado (${store.investmentRate}%): R$ ${formatCurrency(store.investedValue)}`
+            }}
+          </span>
         </div>
-        <span class="card-sub text-purple">
-          {{ store.penaltyValue > 0
-            ? `⬆ Planejado R$ ${formatCurrency(store.investedValue)} − Penalidades`
-            : `✅ Planejado (${store.investmentRate}%): R$ ${formatCurrency(store.investedValue)}`
-          }}
-        </span>
-      </div>
 
-      <div :class="['status-card', 'glass-panel', 'border-danger', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
-        <span class="card-label">Excedente de Limite</span>
-        <h3 class="card-value" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
-          R$ {{ formatCurrency(store.exceededValue) }}
-        </h3>
-        <span class="card-sub" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
-          {{ store.exceededValue > 0 ? `Penalidade de ${store.penaltyRate}% Aplicada` : 'Dentro do Limite Recomendado' }}
-        </span>
+        <div :class="['status-card', 'glass-panel', 'border-danger', store.totalReturn > store.limitConsumption ? 'card-bg-danger' : 'card-bg-success']">
+          <span class="card-label">Excedente de Limite</span>
+          <h3 class="card-value" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+            R$ {{ formatCurrency(store.exceededValue) }}
+          </h3>
+          <span class="card-sub card-sub-center" :class="store.exceededValue > 0 ? 'text-danger' : 'text-success'">
+            {{ store.exceededValue > 0 ? `Penalidade de ${store.penaltyRate}% Aplicada` : 'Dentro do Limite Recomendado' }}
+          </span>
+        </div>
       </div>
+      <button class="carousel-arrow carousel-arrow-right" @click="nextCard" :disabled="currentCardIndex >= maxCardIndex" aria-label="Próximo">›</button>
+    </div>
+    <div class="carousel-dots">
+      <span v-for="i in totalCards" :key="i" :class="['dot', { active: i - 1 === currentCardIndex }]" @click="scrollToCard(i - 1)"></span>
     </div>
 
     <!-- SECTION: TABELA DE ACERTO DE CONTAS -->
@@ -560,7 +567,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import {
   Chart,
   LineElement, BarElement, PointElement, ArcElement,
@@ -584,6 +591,59 @@ const STORAGE_KEY_ACERTO_VISIBLE = 'breyne_acerto_table_visible'
 const fundTxAmount = ref(null)
 const showHelpModal = ref(false)
 const showAcertoTable = ref(localStorage.getItem(STORAGE_KEY_ACERTO_VISIBLE) !== 'false')
+
+const totalCards = 3
+const currentCardIndex = ref(0)
+const maxCardIndex = computed(() => totalCards - 1)
+const statusGridRef = ref(null)
+const carouselWrapperRef = ref(null)
+const touchStartX = ref(0)
+
+function onScroll() {
+  const el = statusGridRef.value
+  if (!el) return
+  const cardWidth = el.children[0]?.offsetWidth || 1
+  const gap = 20
+  currentCardIndex.value = Math.round(el.scrollLeft / (cardWidth + gap))
+}
+
+function scrollToCard(index) {
+  const el = statusGridRef.value
+  if (!el) return
+  const cardWidth = el.children[0]?.offsetWidth || 1
+  const gap = 20
+  el.scrollTo({ left: index * (cardWidth + gap), behavior: 'smooth' })
+  currentCardIndex.value = index
+}
+
+function nextCard() {
+  if (currentCardIndex.value < maxCardIndex.value) {
+    scrollToCard(currentCardIndex.value + 1)
+  }
+}
+
+function prevCard() {
+  if (currentCardIndex.value > 0) {
+    scrollToCard(currentCardIndex.value - 1)
+  }
+}
+
+function onCarouselKeydown(e) {
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextCard() }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevCard() }
+}
+
+function onTouchStart(e) {
+  touchStartX.value = e.touches[0].clientX
+}
+
+function onTouchEnd(e) {
+  const diff = touchStartX.value - e.changedTouches[0].clientX
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) nextCard()
+    else prevCard()
+  }
+}
 
 // Projeção e Simulação da Selic / Liberdade Financeira
 const targetPassiveIncome = ref(0)
@@ -1214,19 +1274,91 @@ watch(() => store.monthlyContribution, () => {
   text-align: right;
 }
 
-/* Status Cards Grid */
+/* Status Cards Carrossel */
+.status-carousel-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  outline: none;
+}
+
+.carousel-arrow {
+  flex-shrink: 0;
+  width: 32px;
+  height: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+  padding: 0 0.25rem;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  background: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+.carousel-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
 .status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  display: flex;
   gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex: 1;
+}
+
+.status-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .status-card {
+  min-width: 260px;
+  flex: 1 0 30%;
+  scroll-snap-align: start;
   text-align: left;
   border: 1px solid var(--border-color);
   border-left: 5px solid var(--border-color);
   border-radius: 3px;
   background: #ffffff;
+}
+
+.card-sub-center {
+  text-align: center;
+  display: block;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cdc7b1;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dot.active {
+  background: var(--text-primary);
 }
 
 .border-blue {
@@ -2261,6 +2393,8 @@ input:checked + .toggle-slider-sm:before {
   .card-value { font-size: 1.2rem; }
   .card-limit-value { font-size: 1.2rem; }
   .card-limit-divider { width: 60%; }
+  .status-card { min-width: 220px; }
+  .carousel-arrow { display: none; }
   .settlement-table { font-size: 0.75rem; }
   .settlement-table th,
   .settlement-table td { padding: 0.35rem 0.4rem; }
