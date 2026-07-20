@@ -251,7 +251,6 @@
       <div class="emergency-fund-card glass-panel">
         <div class="flex-between" style="margin-bottom: 1rem;">
           <h3>Fundo de Emergência</h3>
-          <span class="fund-badge">Reserva de Segurança</span>
         </div>
 
         <div class="fund-balance-display">
@@ -391,7 +390,7 @@
 
         <!-- Row 1 -->
         <div class="sim-card sim-card-dividendos">
-          <span class="sim-card-label">📊 Dividendos Atuais do Fundo</span>
+          <span class="sim-card-label">📊 Dividendos do Fundo</span>
           <h4 class="sim-card-value text-accent">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}</h4>
           <span class="sim-card-sub text-muted">
             {{ (monthlyRate * 100).toFixed(2) }}% sobre R$ {{ formatCurrency(store.emergencyFund) }}
@@ -413,7 +412,7 @@
         </div>
 
         <div class="sim-card target-indep-card" :class="{ 'reached-card': financialIndependenceYears.alreadyReached }">
-          <span class="sim-card-label">Tempo para Liberdade Financeira</span>
+          <span class="sim-card-label">Liberdade Financeira</span>
           
           <div v-if="financialIndependenceYears.alreadyReached">
             <h4 class="sim-card-value text-success">Conquistado! 🚀</h4>
@@ -462,7 +461,7 @@
           <!-- Inflation-Adjusted Chart -->
           <div class="chart-card glass-panel">
             <div class="chart-card-header">
-              <span class="chart-card-label">Poder de Compra vs. Juros Nominais (30 anos)</span>
+              <span class="chart-card-label">Poder de Compra vs. Juros (30a)</span>
               <small class="chart-card-sub">Saldo Nominal x Poder de Compra Ajustado (Inflação {{ inflationRate }}% a.a.)</small>
             </div>
             <canvas id="chart-inflation" height="200"></canvas>
@@ -482,7 +481,7 @@
         <!-- Stacked area: Principal vs Juros -->
         <div class="chart-card glass-panel chart-wide">
           <div class="chart-card-header">
-            <span class="chart-card-label">Capital Investido vs. Juros Gerados (30 anos)</span>
+            <span class="chart-card-label">Capital vs. Juros (30a)</span>
             <small class="chart-card-sub">O poder dos juros compostos ao longo do tempo</small>
           </div>
           <canvas id="chart-stacked" height="160"></canvas>
