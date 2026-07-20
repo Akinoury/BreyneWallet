@@ -100,9 +100,11 @@
                 {{ ch.change >= 0 ? '+' : '' }}{{ ch.change?.toFixed(2) }}%
               </span>
             </div>
-            <div class="index-chart-canvas-wrap" :ref="el => setIdxWrap(i, el)">
-              <canvas v-show="!ch.loading" :id="'idx-chart-' + ch.label.replace(/[^a-zA-Z0-9]/g,'')" width="400" height="180"></canvas>
-              <div v-if="ch.loading" class="chart-loading">Carregando gráfico...</div>
+            <div class="index-chart-canvas-wrap">
+              <svg v-if="ch.path" viewBox="0 0 400 180" preserveAspectRatio="none" class="index-svg">
+                <path :d="ch.path" fill="none" :stroke="ch.stroke" stroke-width="2" vector-effect="non-scaling-stroke" />
+              </svg>
+              <div v-else class="chart-loading">Carregando gráfico...</div>
             </div>
           </div>
         </div>
@@ -305,17 +307,26 @@ const showIndexCharts = computed(() =>
 )
 
 const indexChartData = ref([])
-const indexWrapRefs = ref([])
-let indexCharts = []
 
-function setIdxWrap(i, el) {
-  if (el) indexWrapRefs.value[i] = el
+function calcSvgPath(closes) {
+  if (closes.length < 2) return ''
+  const min = Math.min(...closes)
+  const max = Math.max(...closes)
+  const range = max - min || 1
+  const w = 400
+  const h = 180
+  const padding = 10
+  const drawH = h - padding * 2
+  const drawW = w - padding * 2
+  const points = closes.map((c, i) => {
+    const x = padding + (i / (closes.length - 1)) * drawW
+    const y = padding + (1 - (c - min) / range) * drawH
+    return `${x},${y}`
+  })
+  return 'M' + points.join(' L')
 }
 
 async function loadIndexCharts() {
-  for (const c of indexCharts) c.destroy()
-  indexCharts = []
-  indexWrapRefs.value = []
   if (!showIndexCharts.value) {
     indexChartData.value = []
     return
@@ -329,7 +340,8 @@ async function loadIndexCharts() {
     change: 0,
     currency: currencies[i],
     loading: true,
-    closes: []
+    path: '',
+    stroke: '#06c167'
   }))
   const results = await Promise.all(symbols.map(sym =>
     fetch(`${API_BASE}/api/markets?chart=${sym}&range=1y&interval=1d`)
@@ -344,49 +356,12 @@ async function loadIndexCharts() {
     const item = indexChartData.value[i]
     const p = meta?.regularMarketPrice ?? closes[closes.length - 1]
     const prev = meta?.chartPreviousClose ?? closes[0]
+    const up = closes[0] <= closes[closes.length - 1]
     item.price = p
     item.change = prev > 0 ? ((p - prev) / prev) * 100 : 0
-    item.closes = closes
+    item.path = calcSvgPath(closes)
+    item.stroke = up ? '#06c167' : '#e60014'
     item.loading = false
-  }
-  // Wait for DOM to settle after reactivity
-  await nextTick()
-  await new Promise(r => setTimeout(r, 200))
-  for (let i = 0; i < indexChartData.value.length; i++) {
-    const item = indexChartData.value[i]
-    if (!item.closes.length) continue
-    const wrap = indexWrapRefs.value[i]
-    if (!wrap) continue
-    const canvas = wrap.querySelector('canvas')
-    if (!canvas) continue
-    const color = item.closes[0] <= item.closes[item.closes.length - 1] ? '#06c167' : '#e60014'
-    const ch = new Chart(canvas, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          data: item.closes,
-          borderColor: color,
-          backgroundColor: color + '22',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 0,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { display: false },
-          y: { display: false }
-        },
-        elements: { point: { radius: 0 } }
-      }
-    })
-    indexCharts.push(ch)
   }
 }
 
@@ -1193,6 +1168,11 @@ onUnmounted(() => {
 .index-chart-canvas-wrap {
   height: 180px;
   position: relative;
+}
+.index-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Modal */
