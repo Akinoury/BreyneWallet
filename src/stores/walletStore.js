@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { api } from '../services/api'
 import { biometricService } from '../services/BiometricService'
 import { notificationService } from '../services/NotificationService'
+import { ensureSession, replaceSession, clearSession } from '../services/session'
 
 export const useWalletStore = defineStore('wallet', () => {
   const salary = ref(1420.00)
@@ -236,24 +237,23 @@ export const useWalletStore = defineStore('wallet', () => {
 
   async function loadFromLocalStorage() {
     if (currentUser.value) return true
-    const token = api.getToken()
-    if (!token) return false
     if (loadFromLocalStoragePromise) return loadFromLocalStoragePromise
 
     loadFromLocalStoragePromise = (async () => {
       try {
-        if (api.isTokenExpired(token)) throw new Error('Token expirado.')
-        const result = await api.me()
-        if (!result.user) throw new Error('Usuário não encontrado.')
-        currentUser.value = result.user
-        isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
-        addToSavedAccounts(result.user)
+        const user = await ensureSession()
+        if (!user) {
+          currentUser.value = null
+          return false
+        }
+        currentUser.value = user
+        isBiometricEnabled.value = await biometricService.hasCredential(user.id)
+        addToSavedAccounts(user)
         const t = api.getToken()
-        if (t) biometricService.saveAccountToken(result.user.email, t)
+        if (t) biometricService.saveAccountToken(user.email, t)
         await loadWalletState()
         return true
       } catch {
-        api.logout()
         currentUser.value = null
         return false
       } finally {
@@ -385,6 +385,7 @@ export const useWalletStore = defineStore('wallet', () => {
     const result = await api.register(name, email, password)
     if (result.success) {
       currentUser.value = result.user
+      replaceSession(result.user)
       isBiometricEnabled.value = enableBio
       addToSavedAccounts(result.user)
       if (result.token) biometricService.saveAccountToken(email, result.token)
@@ -398,6 +399,7 @@ export const useWalletStore = defineStore('wallet', () => {
     const result = await api.login(email, password)
     if (result.success) {
       currentUser.value = result.user
+      replaceSession(result.user)
       isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
       addToSavedAccounts(result.user)
       if (result.token) biometricService.saveAccountToken(email, result.token)
@@ -418,6 +420,7 @@ export const useWalletStore = defineStore('wallet', () => {
     currentUser.value = null
     isBiometricEnabled.value = false
     api.logout()
+    clearSession()
     try {
       localStorage.removeItem('breyne_user')
       localStorage.removeItem('breyne_bio_enabled')
@@ -456,6 +459,7 @@ export const useWalletStore = defineStore('wallet', () => {
       if (!targetToken) {
         api.logout()
         currentUser.value = null
+        clearSession()
         return false
       }
       api.setToken(targetToken)
@@ -469,6 +473,7 @@ export const useWalletStore = defineStore('wallet', () => {
         }
       }
       if (currentUser.value) {
+        replaceSession(currentUser.value)
         addToSavedAccounts(currentUser.value)
         const tk = api.getToken()
         if (tk) biometricService.saveAccountToken(currentUser.value.email, tk)
@@ -479,6 +484,7 @@ export const useWalletStore = defineStore('wallet', () => {
     } catch {
       api.logout()
       currentUser.value = null
+      clearSession()
       return false
     }
   }

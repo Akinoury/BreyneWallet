@@ -77,21 +77,24 @@
 
       <!-- LIST OF TRANSACTIONS -->
       <div class="list-card glass-panel">
-        <div class="flex-between" style="margin-bottom: 1rem;">
+        <div class="flex-between" style="margin-bottom: 1.5rem;">
           <h3>Histórico de Despesas</h3>
           <div class="count-area">
             <span class="count-badge">{{ filteredTransactions.length }} Despesas</span>
+            <div class="clear-menu-wrap" ref="clearMenuRef">
+              <button class="filter-toggle-btn" :disabled="!hasAnyExpense" :title="hasAnyExpense ? 'Limpar despesas' : 'Nenhuma despesa para limpar'" @click="toggleClearMenu">
+                🧹
+              </button>
+              <div v-if="clearMenuOpen" class="clear-menu">
+                <button class="clear-menu-item" :disabled="!hasPassivos" @click="pickClear('passivo')">💸 Limpar Passivos</button>
+                <button class="clear-menu-item" :disabled="!hasCompras" @click="pickClear('compra')">🛒 Limpar Compras</button>
+                <button class="clear-menu-item clear-menu-item-danger" :disabled="!hasAnyExpense" @click="pickClear('all')">🗑️ Limpar Tudo</button>
+              </div>
+            </div>
             <button class="filter-toggle-btn" @click="showFilters = !showFilters" :title="showFilters ? 'Ocultar filtros' : 'Mostrar filtros'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
             </button>
           </div>
-        </div>
-
-        <div class="clear-row">
-          <span class="clear-label">Ações:</span>
-          <button class="btn-clear" :disabled="!hasPassivos" @click="requestClear('passivo')">💸 Limpar Passivos</button>
-          <button class="btn-clear" :disabled="!hasCompras" @click="requestClear('compra')">🛒 Limpar Compras</button>
-          <button class="btn-clear btn-clear-all" :disabled="!hasAnyExpense" @click="requestClear('all')">🗑️ Limpar Tudo</button>
         </div>
 
         <div v-show="showFilters" class="filter-bar">
@@ -176,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useWalletStore } from '../stores/walletStore'
 
 const store = useWalletStore()
@@ -195,13 +198,27 @@ const confirmOpen = ref(false)
 const confirmMessage = ref('')
 const pendingClear = ref(null)
 
+const clearMenuOpen = ref(false)
+const clearMenuRef = ref(null)
+
 const typeOptions = [
   { value: 'compra', short: 'Compra', full: 'Compra (Gasto Comum)' },
   { value: 'passivo', short: 'Passivo', full: 'Passivo (Dívidas/Compromissos)' }
 ]
 
+function onDocClick(e) {
+  if (clearMenuOpen.value && clearMenuRef.value && !clearMenuRef.value.contains(e.target)) {
+    clearMenuOpen.value = false
+  }
+}
+
 onMounted(() => {
+  document.addEventListener('click', onDocClick)
   store.loadFromLocalStorage()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
 })
 
 const allTransactions = computed(() => {
@@ -271,6 +288,15 @@ const handleSubmit = () => {
     expenseType.value = 'compra'
     category.value = 'Alimentação'
   }
+}
+
+const toggleClearMenu = () => {
+  clearMenuOpen.value = !clearMenuOpen.value
+}
+
+const pickClear = (type) => {
+  clearMenuOpen.value = false
+  requestClear(type)
 }
 
 const requestClear = (type) => {
@@ -403,60 +429,59 @@ const confirmClear = async () => {
   gap: 0.4rem;
 }
 
-.clear-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.25rem;
-  padding-top: 0.9rem;
-  padding-bottom: 0.9rem;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+.clear-menu-wrap {
+  position: relative;
 }
 
-.clear-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-  font-weight: bold;
-  margin-right: 0.25rem;
-}
-
-.btn-clear {
-  background: transparent;
+.clear-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 190px;
+  background: #ffffff;
   border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 0.4rem 0.75rem;
-  font-size: 0.78rem;
-  font-weight: bold;
-  cursor: pointer;
   border-radius: 3px;
-  transition: all 0.15s;
+  box-shadow: 0 4px 15px rgba(11, 29, 51, 0.12);
+  z-index: 120;
+  padding: 0.35rem 0;
+  text-align: left;
+}
+
+.clear-menu::before {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px; right: 3px; bottom: 3px;
+  border: 1px solid rgba(138, 111, 62, 0.15);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.clear-menu-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  cursor: pointer;
   font-family: "Times New Roman", Times, Georgia, serif;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  transition: all 0.15s;
 }
 
-.btn-clear:hover:not(:disabled) {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
+.clear-menu-item:hover:not(:disabled) {
   background: #fdfcf7;
+  color: var(--accent-color);
 }
 
-.btn-clear-all {
-  margin-left: auto;
-}
-
-.btn-clear-all:hover:not(:disabled) {
-  border-color: var(--danger-color);
-  color: var(--danger-color);
+.clear-menu-item-danger:hover:not(:disabled) {
   background: #fdf2f2;
+  color: var(--danger-color);
 }
 
-.btn-clear:disabled {
+.clear-menu-item:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -529,6 +554,16 @@ const confirmClear = async () => {
 .filter-toggle-btn:hover {
   border-color: var(--text-primary);
   color: var(--text-primary);
+}
+
+.filter-toggle-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.filter-toggle-btn:disabled:hover {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .filter-bar {
@@ -733,6 +768,8 @@ const confirmClear = async () => {
   .header-section { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .quick-totals { flex-direction: column; gap: 0.4rem; align-items: stretch; width: 100%; }
   .total-badge { display: flex; justify-content: space-between; }
+  .count-area { flex-wrap: wrap; }
+  .clear-menu { right: auto; left: auto; }
   .tx-list { max-height: 300px; }
   .tx-item { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
   .tx-actions { width: 100%; justify-content: flex-end; }

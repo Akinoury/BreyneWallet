@@ -87,6 +87,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useWalletStore } from '../stores/walletStore'
 import { biometricService } from '../services/BiometricService'
 import { api } from '../services/api'
+import { replaceSession } from '../services/session'
 
 const router = useRouter()
 const route = useRoute()
@@ -205,6 +206,7 @@ const triggerBiometricScan = async () => {
         name: result.user.name,
         email: result.user.email
       }
+      replaceSession(store.currentUser)
       try { await store.loadWalletState() } catch (e) { console.warn('Load wallet after biometric:', e) }
     }
 

@@ -36,6 +36,7 @@ import { useRouter } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { useWalletStore } from '../stores/walletStore'
 import { biometricService } from '../services/BiometricService'
+import { replaceSession } from '../services/session'
 
 const router = useRouter()
 const store = useWalletStore()
@@ -97,6 +98,7 @@ async function startScan() {
         name: result.user.name,
         email: result.user.email
       }
+      replaceSession(store.currentUser)
       try { await store.loadWalletState() } catch {}
     }
 
