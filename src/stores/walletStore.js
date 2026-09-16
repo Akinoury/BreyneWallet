@@ -232,25 +232,36 @@ export const useWalletStore = defineStore('wallet', () => {
     await saveWalletState()
   }
 
-  async function loadFromLocalStorage() {
-    if (currentUser.value) return
-    const token = api.getToken()
-    if (!token) return
+  let loadFromLocalStoragePromise = null
 
-    try {
-      const result = await api.me()
-      if (result.user) {
+  async function loadFromLocalStorage() {
+    if (currentUser.value) return true
+    const token = api.getToken()
+    if (!token) return false
+    if (loadFromLocalStoragePromise) return loadFromLocalStoragePromise
+
+    loadFromLocalStoragePromise = (async () => {
+      try {
+        if (api.isTokenExpired(token)) throw new Error('Token expirado.')
+        const result = await api.me()
+        if (!result.user) throw new Error('Usuário não encontrado.')
         currentUser.value = result.user
         isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
         addToSavedAccounts(result.user)
         const t = api.getToken()
         if (t) biometricService.saveAccountToken(result.user.email, t)
         await loadWalletState()
+        return true
+      } catch {
+        api.logout()
+        currentUser.value = null
+        return false
+      } finally {
+        loadFromLocalStoragePromise = null
       }
-    } catch {
-      api.logout()
-      currentUser.value = null
-    }
+    })()
+
+    return loadFromLocalStoragePromise
   }
 
   async function addTransaction(description, amount, expenseType, category) {
@@ -277,6 +288,16 @@ export const useWalletStore = defineStore('wallet', () => {
 
   async function deleteTransaction(id) {
     transactions.value = transactions.value.filter(t => t.id !== id)
+    await saveWalletState()
+  }
+
+  async function clearTransactionsByType(expenseTypeToClear) {
+    transactions.value = transactions.value.filter(t => t.isFixed || t.expenseType !== expenseTypeToClear)
+    await saveWalletState()
+  }
+
+  async function clearAllTransactions() {
+    transactions.value = transactions.value.filter(t => t.isFixed)
     await saveWalletState()
   }
 
@@ -557,6 +578,8 @@ export const useWalletStore = defineStore('wallet', () => {
 
     addTransaction,
     deleteTransaction,
+    clearTransactionsByType,
+    clearAllTransactions,
     addInvestment,
     deleteInvestment,
     updateInvestment,

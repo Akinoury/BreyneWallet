@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { useWalletStore } from './stores/walletStore'
@@ -88,7 +88,11 @@ const isDropdownOpen = ref(false)
 const showBiometricGate = ref(false)
 
 onMounted(async () => {
-  await store.loadFromLocalStorage()
+  const ok = await store.loadFromLocalStorage()
+  if (!ok && !['/login', '/register', '/forgot-password'].includes(route.path)) {
+    router.replace('/login')
+    return
+  }
   const platform = Capacitor.getPlatform()
   const isNative = platform === 'android' || platform === 'ios'
   if (
@@ -98,6 +102,12 @@ onMounted(async () => {
   ) {
     await nextTick()
     showBiometricGate.value = true
+  }
+})
+
+watch(() => store.currentUser, (user) => {
+  if (!user && !['/login', '/register', '/forgot-password'].includes(route.path)) {
+    router.replace('/login')
   }
 })
 

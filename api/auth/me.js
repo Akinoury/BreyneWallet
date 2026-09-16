@@ -12,17 +12,20 @@ export default async function handler(req, res) {
   try {
     const authHeader = req.headers.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.warn('Me 401: token não fornecido no header Authorization')
       return res.status(401).json({ error: 'Token não fornecido.' })
     }
 
     const token = authHeader.split(' ')[1]
     const payload = verifyToken(token)
     if (!payload) {
+      console.warn('Me 401: token inválido ou expirado', String(token).slice(0, 25) + '...')
       return res.status(401).json({ error: 'Token inválido ou expirado.' })
     }
 
     const user = await findUserById(payload.userId)
     if (!user) {
+      console.warn('Me 401: usuário não encontrado no Blob', payload.userId)
       return res.status(401).json({ error: 'Usuário não encontrado.' })
     }
 

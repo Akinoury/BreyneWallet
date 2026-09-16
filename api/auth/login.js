@@ -19,6 +19,7 @@ export default async function handler(req, res) {
 
     const user = await findUserByEmail(email)
     if (!user) {
+      console.warn('Login: usuário não encontrado para e-mail', String(email).toLowerCase())
       return res.status(401).json({ error: 'E-mail ou senha incorretos.' })
     }
 

@@ -12,6 +12,20 @@ function clearToken() {
   try { localStorage.removeItem('breyne_token') } catch {}
 }
 
+function decodeToken(token) {
+  try {
+    const part = token.split('.')[1]
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(b64))
+  } catch { return null }
+}
+
+function isTokenExpired(token) {
+  const payload = decodeToken(token)
+  if (!payload || !payload.exp) return false
+  return Date.now() >= payload.exp * 1000
+}
+
 async function request(path, options = {}) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json', ...options.headers }
@@ -86,5 +100,6 @@ export const api = {
   },
 
   getToken,
-  setToken
+  setToken,
+  isTokenExpired
 }

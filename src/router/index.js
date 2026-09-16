@@ -5,6 +5,7 @@ import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import TransactionsView from '../views/TransactionsView.vue'
 import InvestmentsView from '../views/InvestmentsView.vue'
+import { api } from '../services/api'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +69,10 @@ function getToken() {
 }
 
 router.beforeEach((to, from, next) => {
+  const token = getToken()
+  if (token && api.isTokenExpired(token)) {
+    api.logout()
+  }
   const hasToken = getToken() !== null
   const authRoutes = ['login', 'register', 'forgot-password']
 

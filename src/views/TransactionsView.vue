@@ -77,7 +77,7 @@
 
       <!-- LIST OF TRANSACTIONS -->
       <div class="list-card glass-panel">
-        <div class="flex-between" style="margin-bottom: 1.5rem;">
+        <div class="flex-between" style="margin-bottom: 1rem;">
           <h3>Histórico de Despesas</h3>
           <div class="count-area">
             <span class="count-badge">{{ filteredTransactions.length }} Despesas</span>
@@ -85,6 +85,13 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
             </button>
           </div>
+        </div>
+
+        <div class="clear-row">
+          <span class="clear-label">Ações:</span>
+          <button class="btn-clear" :disabled="!hasPassivos" @click="requestClear('passivo')">💸 Limpar Passivos</button>
+          <button class="btn-clear" :disabled="!hasCompras" @click="requestClear('compra')">🛒 Limpar Compras</button>
+          <button class="btn-clear btn-clear-all" :disabled="!hasAnyExpense" @click="requestClear('all')">🗑️ Limpar Tudo</button>
         </div>
 
         <div v-show="showFilters" class="filter-bar">
@@ -153,6 +160,18 @@
         </ul>
       </div>
     </div>
+
+    <!-- CONFIRM CLEAR MODAL -->
+    <div v-if="confirmOpen" class="confirm-overlay" @click.self="cancelConfirm">
+      <div class="confirm-modal glass-panel">
+        <h3>Confirmar Limpeza</h3>
+        <p class="confirm-message">{{ confirmMessage }}</p>
+        <div class="confirm-actions">
+          <button class="btn-secondary" @click="cancelConfirm">Cancelar</button>
+          <button class="btn-danger" @click="confirmClear">Sim, Limpar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -171,6 +190,10 @@ const selectFocused = ref(false)
 const filterType = ref('all')
 const filterCategory = ref('all')
 const showFilters = ref(false)
+
+const confirmOpen = ref(false)
+const confirmMessage = ref('')
+const pendingClear = ref(null)
 
 const typeOptions = [
   { value: 'compra', short: 'Compra', full: 'Compra (Gasto Comum)' },
@@ -213,6 +236,16 @@ const filteredTransactions = computed(() => {
   return list
 })
 
+const hasCompras = computed(() =>
+  store.transactions.some(t => !t.isFixed && t.expenseType === 'compra')
+)
+
+const hasPassivos = computed(() =>
+  store.transactions.some(t => !t.isFixed && t.expenseType === 'passivo')
+)
+
+const hasAnyExpense = computed(() => hasCompras.value || hasPassivos.value)
+
 const formatCurrency = (val) => {
   return Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -237,6 +270,34 @@ const handleSubmit = () => {
     amount.value = null
     expenseType.value = 'compra'
     category.value = 'Alimentação'
+  }
+}
+
+const requestClear = (type) => {
+  if (type === 'all') {
+    confirmMessage.value = 'Todas suas despesas serão deletadas.'
+  } else if (type === 'compra') {
+    confirmMessage.value = 'Todas as compras serão deletadas.'
+  } else {
+    confirmMessage.value = 'Todos os passivos serão deletados.'
+  }
+  pendingClear.value = type
+  confirmOpen.value = true
+}
+
+const cancelConfirm = () => {
+  confirmOpen.value = false
+  pendingClear.value = null
+}
+
+const confirmClear = async () => {
+  const type = pendingClear.value
+  confirmOpen.value = false
+  pendingClear.value = null
+  if (type === 'all') {
+    await store.clearAllTransactions()
+  } else if (type) {
+    await store.clearTransactionsByType(type)
   }
 }
 </script>
@@ -340,6 +401,116 @@ const handleSubmit = () => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+.clear-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.clear-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  font-weight: bold;
+  margin-right: 0.25rem;
+}
+
+.btn-clear {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-clear:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: #fdfcf7;
+}
+
+.btn-clear-all {
+  margin-left: auto;
+}
+
+.btn-clear-all:hover:not(:disabled) {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+  background: #fdf2f2;
+}
+
+.btn-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 29, 51, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 1rem;
+}
+
+.confirm-modal {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  padding: 2rem 2rem 1.5rem;
+}
+
+.confirm-message {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.confirm-actions .btn-secondary,
+.confirm-actions .btn-danger {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+}
+
+.btn-danger {
+  background: var(--danger-color);
+  color: #fff;
+  border: 1px solid var(--danger-color);
+  border-radius: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background: #a93226;
+  border-color: #a93226;
 }
 
 .filter-toggle-btn {
