@@ -29,6 +29,8 @@ export default async function handler(req, res) {
     walletData._updatedAt = Date.now()
     await saveWallet(payload.userId, walletData)
 
+    console.log(`[data/save] userId=${payload.userId} email=${payload.email} tx=${Array.isArray(walletData.transactions) ? walletData.transactions.length : 0} inv=${Array.isArray(walletData.investments) ? walletData.investments.length : 0}`)
+
     return res.json({ success: true, updatedAt: walletData._updatedAt })
   } catch (err) {
     console.error('Save error:', err)

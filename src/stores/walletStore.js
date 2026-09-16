@@ -55,6 +55,7 @@ export const useWalletStore = defineStore('wallet', () => {
 
   const currentUser = ref(null)
   const isBiometricEnabled = ref(false)
+  const walletLoaded = ref(false)
 
   const limitConsumption = computed(() => {
     const rate = Number(consumptionRate.value) || 0
@@ -202,8 +203,54 @@ export const useWalletStore = defineStore('wallet', () => {
     monthlyContribution.value = w.monthlyContribution ?? monthlyContribution.value
   }
 
+  function resetWalletState() {
+    salary.value = 1420.00
+    useManualLimit.value = true
+    expenseTaxRate.value = 15
+    emergencyFund.value = 250.00
+    profilePhotoUrl.value = ''
+    monthlyContribution.value = 0
+    consumptionRate.value = 70
+    fundReturnRate.value = 0.00
+    investmentRate.value = 30
+    investmentBonusRate.value = 5.00
+    penaltyRate.value = 30
+    investments.value = [
+      { id: 1, name: 'WEGE3', amount: 1500.00, type: 'national', category: 'Ações' },
+      { id: 2, name: 'MXRF11', amount: 800.00, type: 'national', category: 'FIIs' },
+      { id: 3, name: 'Tesouro Selic', amount: 3000.00, type: 'national', category: 'Renda Fixa' },
+      { id: 4, name: 'AAPL (Apple)', amount: 2500.00, type: 'international', category: 'Stocks' },
+      { id: 5, name: 'O (Realty Income)', amount: 1200.00, type: 'international', category: 'REITs' },
+      { id: 6, name: 'BTC (Bitcoin)', amount: 950.00, type: 'international', category: 'Crypto' }
+    ]
+    transactions.value = [
+      {
+        id: 1,
+        description: 'Compras Mensais Supermercado',
+        amount: 400.00,
+        type: 'expense',
+        expenseType: 'compra',
+        category: 'Alimentação',
+        date: new Date().toISOString()
+      },
+      {
+        id: 2,
+        description: 'Parcelamento Fatura Cartão',
+        amount: 276.39,
+        type: 'expense',
+        expenseType: 'passivo',
+        category: 'Contas',
+        date: new Date(Date.now() - 86400000).toISOString()
+      }
+    ]
+  }
+
   async function saveWalletState() {
     if (!currentUser.value) return
+    if (!walletLoaded.value) {
+      console.warn('Save blocked: carteira ainda não carregada, evitando sobrescrever dados reais com seed.')
+      return
+    }
     isSyncing.value = true
     try {
       const payload = buildWalletPayload()
@@ -219,11 +266,14 @@ export const useWalletStore = defineStore('wallet', () => {
     if (!currentUser.value) return false
     try {
       const result = await api.loadWallet()
+      walletLoaded.value = true
       if (result.data) {
         applyWalletData(result.data)
         return true
       }
+      return true
     } catch (e) {
+      walletLoaded.value = false
       console.warn('Load from server failed:', e)
     }
     return false
@@ -236,7 +286,7 @@ export const useWalletStore = defineStore('wallet', () => {
   let loadFromLocalStoragePromise = null
 
   async function loadFromLocalStorage() {
-    if (currentUser.value) return true
+    if (currentUser.value && walletLoaded.value) return true
     if (loadFromLocalStoragePromise) return loadFromLocalStoragePromise
 
     loadFromLocalStoragePromise = (async () => {
@@ -244,6 +294,7 @@ export const useWalletStore = defineStore('wallet', () => {
         const user = await ensureSession()
         if (!user) {
           currentUser.value = null
+          walletLoaded.value = false
           return false
         }
         currentUser.value = user
@@ -255,6 +306,7 @@ export const useWalletStore = defineStore('wallet', () => {
         return true
       } catch {
         currentUser.value = null
+        walletLoaded.value = false
         return false
       } finally {
         loadFromLocalStoragePromise = null
@@ -390,6 +442,8 @@ async function clearAllTransactions() {
       addToSavedAccounts(result.user)
       if (result.token) biometricService.saveAccountToken(email, result.token)
       try { localStorage.setItem('breyne_bio_enabled', enableBio ? 'true' : 'false') } catch {}
+      resetWalletState()
+      walletLoaded.value = true
       await saveWalletState()
     }
     return { success: result.success, autoSignedIn: true, user: result.user }
@@ -403,6 +457,8 @@ async function clearAllTransactions() {
       isBiometricEnabled.value = await biometricService.hasCredential(result.user.id)
       addToSavedAccounts(result.user)
       if (result.token) biometricService.saveAccountToken(email, result.token)
+      resetWalletState()
+      walletLoaded.value = false
       await loadWalletState()
     }
     return result
@@ -419,6 +475,7 @@ async function clearAllTransactions() {
     }
     currentUser.value = null
     isBiometricEnabled.value = false
+    walletLoaded.value = false
     api.logout()
     clearSession()
     try {
@@ -464,14 +521,12 @@ async function clearAllTransactions() {
       }
       api.setToken(targetToken)
       const me = await api.me()
-      if (me?.user) {
-        currentUser.value = me.user
-      } else {
-        const acc = savedAccounts.value.find(a => a.email === accountEmail)
-        if (acc) {
-          currentUser.value = { id: acc.id, name: acc.name, email: acc.email }
-        }
+      if (!me?.user) {
+        throw new Error('Identidade inválida ao alternar conta')
       }
+      currentUser.value = me.user
+      resetWalletState()
+      walletLoaded.value = false
       if (currentUser.value) {
         replaceSession(currentUser.value)
         addToSavedAccounts(currentUser.value)
@@ -484,6 +539,7 @@ async function clearAllTransactions() {
     } catch {
       api.logout()
       currentUser.value = null
+      walletLoaded.value = false
       clearSession()
       return false
     }
@@ -552,6 +608,7 @@ async function clearAllTransactions() {
     transactions,
     currentUser,
     isBiometricEnabled,
+    walletLoaded,
     usdToBrl,
     isSyncing,
     profilePhotoUrl,
@@ -594,6 +651,7 @@ async function clearAllTransactions() {
     saveToLocalStorage,
     loadFromLocalStorage,
     loadWalletState,
+    resetWalletState,
 
     registerUser,
     loginUser,

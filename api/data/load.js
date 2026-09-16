@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     }
 
     const walletData = await loadWallet(payload.userId)
+    console.log(`[data/load] userId=${payload.userId} email=${payload.email} found=${!!walletData}`)
     return res.json({ success: true, data: walletData || null })
   } catch (err) {
     console.error('Load error:', err)

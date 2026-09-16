@@ -99,6 +99,8 @@ async function startScan() {
         email: result.user.email
       }
       replaceSession(store.currentUser)
+      store.resetWalletState()
+      store.walletLoaded = false
       try { await store.loadWalletState() } catch {}
     }
 

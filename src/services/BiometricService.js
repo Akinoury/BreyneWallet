@@ -205,7 +205,19 @@ class BiometricService {
 
     if (match.credential_type === 'native') {
       const p = getPlugin()
-      if (p) { try { const creds = await p.getCredentials({ server: SERVER_ID }); return !!creds?.password } catch { return false } }
+      if (p) {
+        try {
+          const creds = await p.getCredentials({ server: SERVER_ID + ':' + userId })
+          if (creds?.password) return true
+        } catch {}
+        try {
+          const legacy = await p.getCredentials({ server: SERVER_ID })
+          if (legacy?.password) {
+            try { return JSON.parse(legacy.password).user_id === userId } catch { return false }
+          }
+        } catch {}
+        return false
+      }
       return false
     }
 
@@ -271,7 +283,7 @@ class BiometricService {
         await p.setCredentials({
           username: userEmail,
           password: JSON.stringify(tokenData),
-          server: SERVER_ID
+          server: SERVER_ID + ':' + userId
         })
 
         cacheEntry = {
@@ -330,7 +342,26 @@ class BiometricService {
           description: 'Toque no sensor biométrico'
         })
 
-        const credentials = await p.getCredentials({ server: SERVER_ID })
+        const ids = Array.isArray(userIds) && userIds.length > 0
+          ? userIds
+          : this.#getCache().filter(c => !c.revoked).map(c => c.user_id)
+
+        let credentials = null
+        for (const uid of ids) {
+          if (!uid) continue
+          try {
+            const c = await p.getCredentials({ server: SERVER_ID + ':' + uid })
+            if (c?.password) { credentials = c; break }
+          } catch {}
+        }
+
+        if (!credentials) {
+          try {
+            const legacy = await p.getCredentials({ server: SERVER_ID })
+            if (legacy?.password) credentials = legacy
+          } catch {}
+        }
+
         if (!credentials?.password) {
           return { success: false, message: 'Nenhuma credencial encontrada. Cadastre a biometria primeiro.' }
         }
@@ -377,10 +408,14 @@ class BiometricService {
 
   async deleteCredential(recordId, credentialId) {
     const cache = this.#getCache()
+    const record = cache.find(c => c.id === recordId)
     this.#setCache(cache.filter(c => c.id !== recordId))
 
     const p = getPlugin()
-    if (p) { try { await p.deleteCredentials({ server: SERVER_ID }) } catch {} }
+    if (p) {
+      const server = record?.user_id ? SERVER_ID + ':' + record.user_id : SERVER_ID
+      try { await p.deleteCredentials({ server }) } catch {}
+    }
     clearTokens()
     return { success: true, message: 'Biometria removida.' }
   }
