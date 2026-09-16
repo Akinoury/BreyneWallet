@@ -291,15 +291,15 @@ export const useWalletStore = defineStore('wallet', () => {
     await saveWalletState()
   }
 
-  async function clearTransactionsByType(expenseTypeToClear) {
-    transactions.value = transactions.value.filter(t => t.isFixed || t.expenseType !== expenseTypeToClear)
-    await saveWalletState()
-  }
+async function clearTransactionsByType(expenseTypeToClear) {
+  transactions.value = transactions.value.filter(t => t.isFixed || t.expenseType === 'bonus' || t.expenseType !== expenseTypeToClear)
+  await saveWalletState()
+}
 
-  async function clearAllTransactions() {
-    transactions.value = transactions.value.filter(t => t.isFixed)
-    await saveWalletState()
-  }
+async function clearAllTransactions() {
+  transactions.value = transactions.value.filter(t => t.isFixed || t.expenseType === 'bonus')
+  await saveWalletState()
+}
 
   async function addInvestment(name, amount, type, category) {
     if (amount <= 0 || isNaN(amount) || !name) return false

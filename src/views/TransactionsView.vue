@@ -133,7 +133,7 @@
               <div class="tx-meta">
                 <span class="tx-desc-text">{{ t.description }}</span>
                 <div class="tx-labels">
-                  <span class="badge" :class="'badge-' + t.expenseType">{{ t.expenseType }}</span>
+                  <span class="badge" :class="'badge-' + t.expenseType">{{ t.expenseType === 'bonus' ? 'Bônus' : t.expenseType }}</span>
                   <span class="cat-label-text">{{ t.category }}</span>
                   <span class="date-text" v-if="!t.isFixed">{{ formatDate(t.date) }}</span>
                   <span class="date-text" v-else>Fixo</span>
@@ -229,7 +229,7 @@ const allTransactions = computed(() => {
       description: 'Bônus de Incentivo ao Investimento (Fixo)',
       amount: store.investmentBonus,
       type: 'expense',
-      expenseType: 'compra',
+      expenseType: 'bonus',
       category: 'Investimentos',
       isFixed: true
     })
