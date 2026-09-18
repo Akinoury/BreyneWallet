@@ -582,6 +582,23 @@ let chartIncome = null
 let chartStacked = null
 let chartInflation = null
 
+const chartAnimation = { duration: 900, easing: 'easeOutQuart' }
+const chartTooltipStyle = {
+  backgroundColor: 'rgba(11, 29, 51, 0.94)',
+  titleColor: '#faf9f5',
+  bodyColor: '#faf9f5',
+  borderWidth: 1,
+  borderColor: 'rgba(250, 249, 245, 0.2)',
+  padding: 10,
+  cornerRadius: 8,
+  boxPadding: 4,
+  titleFont: { family: 'Georgia, serif', size: 12, weight: 'bold' },
+  bodyFont: { family: 'Georgia, serif', size: 11 }
+}
+const onChartHover = (event, chartElement) => {
+  event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default'
+}
+
 const buildChartData = () => {
   const r  = monthlyRate.value
   const C  = Number(store.monthlyContribution) || 0
@@ -639,16 +656,24 @@ const renderCharts = async () => {
         label: 'Renda Passiva Mensal (R$)',
         data: milestones.map(y => Number((calculateAccumulation(y * 12) * monthlyRate.value).toFixed(2))),
         backgroundColor: 'rgba(30,58,95,0.75)',
+        hoverBackgroundColor: 'rgba(184,134,11,0.9)',
         borderColor: palette.navy,
         borderWidth: 1,
-        borderRadius: 3
+        borderRadius: 3,
+        hoverBorderColor: palette.gold
       }]
     },
     options: {
       responsive: true,
+      animation: chartAnimation,
+      interaction: { mode: 'index', intersect: false },
+      onHover: onChartHover,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês` } }
+        tooltip: {
+          ...chartTooltipStyle,
+          callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês` }
+        }
       },
       scales: {
         y: { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
@@ -668,29 +693,43 @@ const renderCharts = async () => {
           label: 'Juros Acumulados (R$)',
           data: interests,
           backgroundColor: 'rgba(45,106,79,0.45)',
+          hoverBackgroundColor: 'rgba(45,106,79,0.6)',
           borderColor: palette.green,
           borderWidth: 1.5,
           fill: true,
           tension: 0.35,
-          pointRadius: 2
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: palette.green,
+          pointHitRadius: 10
         },
         {
           label: 'Capital Aportado (R$)',
           data: contributions,
           backgroundColor: 'rgba(30,58,95,0.30)',
+          hoverBackgroundColor: 'rgba(30,58,95,0.45)',
           borderColor: palette.navy,
           borderWidth: 1.5,
           fill: true,
           tension: 0.35,
-          pointRadius: 2
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: palette.navy,
+          pointHitRadius: 10
         }
       ]
     },
     options: {
       responsive: true,
+      animation: chartAnimation,
+      interaction: { mode: 'index', intersect: false },
+      onHover: onChartHover,
       plugins: {
         legend: { position: 'bottom', labels: { font: { family: 'Georgia, serif', size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` } }
+        tooltip: {
+          ...chartTooltipStyle,
+          callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` }
+        }
       },
       scales: {
         y: { stacked: false, ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
@@ -723,7 +762,10 @@ const renderCharts = async () => {
           pointRadius: 2,
           pointBackgroundColor: '#1e3a5f',
           pointBorderColor: '#1e3a5f',
-          pointHoverRadius: 4
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#1e3a5f',
+          pointHoverBorderColor: '#ffffff',
+          pointHitRadius: 12
         },
         {
           label: 'Poder de Compra Real (R$)',
@@ -736,16 +778,23 @@ const renderCharts = async () => {
           pointRadius: 2,
           pointBackgroundColor: '#2d6a4f',
           pointBorderColor: '#2d6a4f',
-          pointHoverRadius: 4,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#2d6a4f',
+          pointHoverBorderColor: '#ffffff',
+          pointHitRadius: 12,
           borderDash: [5, 3]
         }
       ]
     },
     options: {
       responsive: true,
+      animation: chartAnimation,
+      interaction: { mode: 'index', intersect: false },
+      onHover: onChartHover,
       plugins: {
         legend: { position: 'bottom', labels: { font: { family: 'Georgia, serif', size: 11 } } },
         tooltip: {
+          ...chartTooltipStyle,
           callbacks: {
             label: ctx => {
               const label = ctx.dataset.label || ''
@@ -1881,19 +1930,24 @@ function exportCSV() {
 }
 
 .sim-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfbf8 100%);
+  border: 1px solid rgba(205, 199, 177, 0.7);
   border-radius: var(--radius-md);
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 14px rgba(11, 29, 51, 0.045);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .sim-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 12px 26px rgba(11, 29, 51, 0.09);
 }
 
 .sim-card-center {
@@ -1913,6 +1967,7 @@ function exportCSV() {
   font-weight: bold;
   color: var(--text-primary);
   margin: 0.2rem 0;
+  animation: valuePop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 
 .sim-card-sub {
@@ -2015,5 +2070,16 @@ function exportCSV() {
 @media (max-width: 600px) {
   .simulator-inputs-grid { padding: 1rem; gap: 1rem; }
   .sim-card-value { font-size: 1.2rem; }
+}
+
+@keyframes valuePop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>
