@@ -62,6 +62,8 @@ p {
   padding: 1.75rem;
   box-shadow: 0 4px 12px rgba(11, 29, 51, 0.05); /* Soft professional shadow */
   position: relative;
+  animation: panelIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  will-change: opacity, transform;
 }
 
 
@@ -87,6 +89,8 @@ p {
   background-color: var(--accent-color);
   color: #fff;
   border-color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(11, 29, 51, 0.14);
 }
 
 .btn-primary:active {
@@ -111,6 +115,8 @@ p {
   background-color: rgba(11, 29, 51, 0.05);
   border-color: var(--accent-color);
   color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(11, 29, 51, 0.1);
 }
 
 .input-field {
@@ -165,6 +171,10 @@ p {
 .nav-link:hover, .nav-link.router-link-active {
   color: var(--accent-color);
   border-bottom-color: var(--accent-color);
+}
+
+.nav-link:hover {
+  transform: translateY(-1px);
 }
 
 /* --- TRADITIONAL BADGES --- */
@@ -291,6 +301,29 @@ p {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Panel entrance: same springy card-in used in the tutorial */
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

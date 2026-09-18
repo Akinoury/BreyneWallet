@@ -1299,6 +1299,8 @@ input:checked + .toggle-slider-sm:before {
   height: 100%;
   background: var(--success-color);
   border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  animation: barGrow 0.8s ease-out;
 }
 
 .fund-actions-area {
@@ -1801,7 +1803,8 @@ input:checked + .toggle-slider-sm:before {
   height: 100%;
   background: var(--danger-color);
   border-radius: var(--radius-sm);
-  transition: width 0.4s ease;
+  transition: width 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  animation: barGrow 0.7s ease-out;
 }
 
 .limit-ok {
@@ -1848,5 +1851,9 @@ input:checked + .toggle-slider-sm:before {
 
 .lw-bar-fill-ok {
   background: var(--success-color);
+}
+
+@keyframes barGrow {
+  from { width: 0; }
 }
 </style>
