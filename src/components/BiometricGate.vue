@@ -135,7 +135,7 @@ async function handleLogout() {
 .bio-gate-card {
   background: #ffffff;
   border: 1px solid var(--border-color, #cdc7b1);
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   padding: 2.5rem 2rem;
   max-width: 360px;
   width: 90%;
@@ -241,7 +241,7 @@ async function handleLogout() {
   background: var(--text-primary, #0b1d33);
   color: #fff;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   font-weight: bold;
   font-size: 0.9rem;
   cursor: pointer;

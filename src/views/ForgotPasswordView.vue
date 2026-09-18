@@ -161,7 +161,7 @@ const startCountdown = () => {
 
 .alert-box {
   padding: 0.75rem 1rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
   text-align: left;
@@ -241,7 +241,7 @@ const startCountdown = () => {
   width: 100%;
   height: 6px;
   background: var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   margin-bottom: 0.5rem;
 }

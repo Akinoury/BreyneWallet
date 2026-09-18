@@ -353,7 +353,7 @@ const confirmClear = async () => {
   display: flex;
   flex-direction: column;
   padding: 0.5rem 1rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   text-align: right;
   min-width: 120px;
   border: 1px solid var(--border-color);
@@ -416,7 +416,7 @@ const confirmClear = async () => {
   background: #ffffff;
   border: 1px solid var(--border-color);
   padding: 0.2rem 0.6rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: bold;
   color: var(--text-primary);
@@ -438,9 +438,11 @@ const confirmClear = async () => {
   top: calc(100% + 6px);
   right: 0;
   min-width: 190px;
+  width: max-content;
+  max-width: calc(100vw - 1.5rem);
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 15px rgba(11, 29, 51, 0.12);
   z-index: 120;
   padding: 0.35rem 0;
@@ -452,7 +454,7 @@ const confirmClear = async () => {
   position: absolute;
   top: 3px; left: 3px; right: 3px; bottom: 3px;
   border: 1px solid rgba(138, 111, 62, 0.15);
-  border-radius: 1px;
+  border-radius: calc(var(--radius-lg) - 3px);
   pointer-events: none;
 }
 
@@ -525,7 +527,7 @@ const confirmClear = async () => {
   background: var(--danger-color);
   color: #fff;
   border: 1px solid var(--danger-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -541,7 +543,7 @@ const confirmClear = async () => {
 .filter-toggle-btn {
   background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   padding: 0.2rem 0.35rem;
   cursor: pointer;
   color: var(--text-secondary);
@@ -587,7 +589,7 @@ const confirmClear = async () => {
   font-size: 0.78rem;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   transition: all 0.15s;
   font-family: "Times New Roman", Times, Georgia, serif;
 }
@@ -649,7 +651,7 @@ const confirmClear = async () => {
 .tx-type-indicator {
   width: 36px;
   height: 36px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -741,7 +743,7 @@ const confirmClear = async () => {
   color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: bold;
   transition: all 0.2s;
@@ -769,9 +771,31 @@ const confirmClear = async () => {
   .quick-totals { flex-direction: column; gap: 0.4rem; align-items: stretch; width: 100%; }
   .total-badge { display: flex; justify-content: space-between; }
   .count-area { flex-wrap: wrap; }
-  .clear-menu { right: auto; left: auto; }
+  .clear-menu {
+    position: fixed;
+    top: auto;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(280px, calc(100vw - 1.5rem));
+    max-width: calc(100vw - 1.5rem);
+    min-width: 0;
+    padding: 0.4rem 0;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 40px rgba(11, 29, 51, 0.22);
+    animation: menuPopIn 0.18s ease;
+  }
+  .clear-menu::before {
+    border-radius: calc(var(--radius-lg) - 3px);
+  }
   .tx-list { max-height: 300px; }
   .tx-item { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
   .tx-actions { width: 100%; justify-content: flex-end; }
+}
+
+@keyframes menuPopIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 </style>

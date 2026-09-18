@@ -264,7 +264,7 @@ const playBeep = (freq, type, duration) => {
   max-width: 960px;
   background: #fdfaf3;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 8px 30px rgba(11, 29, 51, 0.08);
 }
@@ -360,7 +360,7 @@ const playBeep = (freq, type, duration) => {
 
 .alert-box {
   padding: 0.75rem 1rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
   text-align: left;
@@ -465,7 +465,7 @@ const playBeep = (freq, type, duration) => {
   margin-top: 1.25rem;
   cursor: pointer;
   padding: 0.65rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: #fdfcf7;
   border: 1px solid var(--border-color);
   transition: all 0.2s;

@@ -616,7 +616,7 @@ function exportCSV() {
   display: flex;
   height: 14px;
   background: #cdc7b1;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -675,7 +675,7 @@ function exportCSV() {
   display: flex;
   align-items: stretch;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   height: 44px;
   box-sizing: border-box;
@@ -726,7 +726,7 @@ function exportCSV() {
   border: 1px solid var(--accent-color);
   color: var(--accent-color);
   background: transparent;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 1rem;
   font-size: 0.78rem;
   font-weight: bold;
@@ -789,7 +789,7 @@ function exportCSV() {
   margin-bottom: 0.75rem;
   padding: 0.4rem 0.6rem;
   background: rgba(30,70,37,0.06);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(30,70,37,0.15);
 }
 
@@ -838,7 +838,7 @@ function exportCSV() {
   padding: 0.2rem 0.4rem;
   font-size: 0.75rem;
   font-weight: bold;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s;
 }
 
@@ -853,7 +853,7 @@ function exportCSV() {
   border: 1px solid #f8b4b4;
   color: var(--danger-color);
   padding: 0.75rem 1.25rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   text-align: left;
   font-size: 0.88rem;
   line-height: 1.4;
@@ -863,7 +863,7 @@ function exportCSV() {
   border: 1px solid var(--success-color);
   color: var(--success-color);
   background: transparent;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 1rem;
   font-size: 0.78rem;
   font-weight: bold;
@@ -913,6 +913,7 @@ function exportCSV() {
   padding: 1.75rem 1.5rem 1.25rem;
   position: relative;
   text-align: left;
+  border-radius: var(--radius-lg);
   animation: scaleIn 0.2s ease;
 }
 .edit-modal-close {
@@ -973,7 +974,7 @@ function exportCSV() {
   color: var(--accent-color);
   background: rgba(0,84,160,0.06);
   padding: 0.45rem 0.75rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(0,84,160,0.12);
   letter-spacing: 0.5px;
 }
@@ -981,7 +982,7 @@ function exportCSV() {
   display: flex;
   align-items: stretch;
   border: 1.5px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   height: 44px;
   transition: border-color 0.15s;
@@ -1013,7 +1014,7 @@ function exportCSV() {
 }
 .edit-modal-select {
   border: 1.5px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0 0.75rem;
   font-size: 0.9rem;
   font-family: inherit;
@@ -1040,7 +1041,7 @@ function exportCSV() {
 .btn-cancel-modal {
   border: 1.5px solid var(--border-color);
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0.55rem 1.25rem;
   font-size: 0.82rem;
   font-weight: bold;
@@ -1059,7 +1060,7 @@ function exportCSV() {
   border: none;
   background: var(--text-primary);
   color: #fff;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0.55rem 1.25rem;
   font-size: 0.82rem;
   font-weight: bold;
@@ -1140,7 +1141,7 @@ function exportCSV() {
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0.3rem 0.5rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   transition: background 0.15s;
 }
 .legend-item:hover,

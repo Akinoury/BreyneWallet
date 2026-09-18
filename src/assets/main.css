@@ -12,6 +12,9 @@
   --border-color: #cdc7b1; /* Classic soft gold border */
   --glass-bg: #ffffff;
   --glass-border: #cdc7b1;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
 }
 
 * {
@@ -55,7 +58,7 @@ p {
 .glass-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 4px; /* More rectangular, formal traditional layout */
+  border-radius: var(--radius-md); /* Rounded, natural look across app */
   padding: 1.75rem;
   box-shadow: 0 4px 12px rgba(11, 29, 51, 0.05); /* Soft professional shadow */
   position: relative;
@@ -67,7 +70,7 @@ p {
   background-color: var(--text-primary); /* Navy Blue background */
   color: #faf9f5;
   border: 1px solid var(--accent-color); /* Gold border */
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
   font-weight: bold;
@@ -94,7 +97,7 @@ p {
   background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--text-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
   font-weight: bold;
@@ -115,7 +118,7 @@ p {
   background-color: #ffffff;
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   font-size: 1rem;
   outline: none;
@@ -167,7 +170,7 @@ p {
 /* --- TRADITIONAL BADGES --- */
 .badge {
   padding: 0.25rem 0.6rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: bold;
   text-transform: uppercase;
@@ -230,7 +233,7 @@ p {
   background-color: #ffffff;
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.75rem 2rem 0.75rem 0.75rem;
   font-size: 1rem;
   outline: none;

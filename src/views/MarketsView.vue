@@ -847,7 +847,7 @@ onUnmounted(() => {
 .btn-back {
   border: 1px solid var(--border-color);
   background: transparent;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 1rem;
   font-size: 0.78rem;
   font-weight: bold;
@@ -874,7 +874,7 @@ onUnmounted(() => {
 }
 .ticker-bar::-webkit-scrollbar { height: 5px; }
 .ticker-bar::-webkit-scrollbar-track { background: transparent; }
-.ticker-bar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+.ticker-bar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: var(--radius-sm); }
 
 .ticker-item {
   flex-shrink: 0;
@@ -947,7 +947,7 @@ onUnmounted(() => {
 .chip {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.75rem;
   font-size: 0.75rem;
   font-weight: bold;
@@ -967,7 +967,7 @@ onUnmounted(() => {
 
 .search-input {
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.6rem;
   font-size: 0.78rem;
   font-family: inherit;
@@ -983,7 +983,7 @@ onUnmounted(() => {
 .search-btn {
   background: #fff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.5rem;
   font-size: 0.78rem;
   cursor: pointer;
@@ -1033,7 +1033,7 @@ onUnmounted(() => {
 .stock-card {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.85rem;
   text-align: left;
   cursor: pointer;
@@ -1083,7 +1083,7 @@ onUnmounted(() => {
   font-size: 0.6rem;
   font-weight: bold;
   padding: 0.1rem 0.35rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -1154,7 +1154,7 @@ onUnmounted(() => {
 .index-chart-card {
   background: #fff;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0.75rem;
 }
 .index-chart-header {
@@ -1209,6 +1209,7 @@ onUnmounted(() => {
   overflow-y: auto;
   padding: 1.5rem;
   position: relative;
+  border-radius: var(--radius-lg);
 }
 
 .modal-close {
@@ -1254,7 +1255,7 @@ onUnmounted(() => {
 .alert-form {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
   margin-bottom: 0.5rem;
 }
@@ -1274,7 +1275,7 @@ onUnmounted(() => {
 }
 .alert-select {
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.25rem 0.4rem;
   font-size: 0.8rem;
   font-family: inherit;
@@ -1285,7 +1286,7 @@ onUnmounted(() => {
 .alert-input {
   flex: 1;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
   font-family: inherit;
@@ -1307,7 +1308,7 @@ onUnmounted(() => {
   background: var(--text-primary);
   color: #fff;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
   font-weight: bold;
@@ -1318,7 +1319,7 @@ onUnmounted(() => {
 .alert-cancel-btn {
   background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.25rem 0.4rem;
   font-size: 0.75rem;
   cursor: pointer;
@@ -1346,7 +1347,7 @@ onUnmounted(() => {
   color: var(--text-secondary);
   background: #f5f0e6;
   padding: 0.1rem 0.4rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -1354,7 +1355,7 @@ onUnmounted(() => {
   font-size: 0.62rem;
   font-weight: bold;
   padding: 0.1rem 0.4rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -1391,7 +1392,7 @@ onUnmounted(() => {
 .range-chip {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.2rem 0.6rem;
   font-size: 0.7rem;
   font-weight: bold;
@@ -1420,7 +1421,7 @@ onUnmounted(() => {
   height: 200px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0.5rem;
   position: relative;
 }
@@ -1539,7 +1540,7 @@ onUnmounted(() => {
   background: var(--text-primary);
   color: #fff;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.5rem 1rem;
   font-size: 0.82rem;
   font-weight: bold;
@@ -1570,7 +1571,7 @@ onUnmounted(() => {
 
   .stocks-grid { gap: 0.6rem; }
 
-  .modal-content { padding: 1rem; max-width: 100%; margin: 0.5rem; border-radius: 4px; }
+  .modal-content { padding: 1rem; max-width: 100%; margin: 0.5rem; border-radius: var(--radius-lg); }
   .modal-price { font-size: 1.2rem; }
   .modal-header h2 { font-size: 1.1rem; }
   .modal-subtitle { font-size: 0.7rem; }

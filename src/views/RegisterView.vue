@@ -224,7 +224,7 @@ const handleRegister = async () => {
 
 .alert-box {
   padding: 0.75rem 1rem;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
   text-align: left;
@@ -245,7 +245,7 @@ const handleRegister = async () => {
 .bio-registration-box {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-md);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
   text-align: left;
@@ -260,6 +260,7 @@ const handleRegister = async () => {
   right: 3px;
   bottom: 3px;
   border: 1px solid rgba(138, 111, 62, 0.15);
+  border-radius: calc(var(--radius-md) - 3px);
   pointer-events: none;
 }
 
@@ -331,7 +332,7 @@ input:checked + .toggle-slider:before {
   padding: 0.75rem 1rem;
   background: #f3f7fa;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;

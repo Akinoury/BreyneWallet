@@ -358,7 +358,7 @@ onMounted(async () => {
 .sort-btn {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.4rem 1rem;
   font-size: 0.8rem;
   font-weight: bold;
@@ -408,7 +408,7 @@ onMounted(async () => {
 .store-chip {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 0.75rem;
   font-size: 0.78rem;
   font-weight: bold;
@@ -544,7 +544,7 @@ onMounted(async () => {
   background: rgba(30, 70, 37, 0.1);
   color: var(--success-color);
   border: 1px solid rgba(30, 70, 37, 0.2);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.15rem 0.5rem;
   font-size: 0.85rem;
   font-weight: bold;
@@ -560,7 +560,7 @@ onMounted(async () => {
   text-transform: uppercase;
   letter-spacing: 0.3px;
   padding: 0.1rem 0.4rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   align-self: flex-start;
   margin-bottom: 0.15rem;
 }
@@ -599,7 +599,7 @@ onMounted(async () => {
   gap: 0.5rem;
   background: #f5f0e6;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem;
   margin-top: 0.25rem;
 }
@@ -619,7 +619,7 @@ onMounted(async () => {
   background: var(--text-primary);
   color: #fff;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.75rem;
   font-size: 0.72rem;
   font-weight: bold;
@@ -645,7 +645,7 @@ onMounted(async () => {
   background: var(--text-primary);
   color: #fff;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0.5rem 1rem;
   font-size: 0.82rem;
   font-weight: bold;
@@ -689,7 +689,7 @@ onMounted(async () => {
 .bonus-header {
   background: #fdfcf7;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
   display: flex;

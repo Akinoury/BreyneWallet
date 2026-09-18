@@ -176,7 +176,7 @@ const vClickOutside = {
   padding: 1.25rem 2rem;
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   margin-bottom: 2rem;
   box-shadow: 0 4px 10px rgba(11, 29, 51, 0.04);
   position: relative;
@@ -270,10 +270,10 @@ nav {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 230px;
+  width: min(230px, calc(100vw - 1.5rem));
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 15px rgba(11, 29, 51, 0.12);
   z-index: 1000;
   padding: 0.75rem 0;
@@ -285,7 +285,7 @@ nav {
   position: absolute;
   top: 3px; left: 3px; right: 3px; bottom: 3px;
   border: 1px solid rgba(138, 111, 62, 0.15);
-  border-radius: 1px;
+  border-radius: calc(var(--radius-lg) - 3px);
   pointer-events: none;
 }
 
@@ -399,7 +399,7 @@ nav {
   text-transform: uppercase;
   border: 1px solid rgba(26, 66, 37, 0.3);
   padding: 0.05rem 0.25rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .logout-item {
