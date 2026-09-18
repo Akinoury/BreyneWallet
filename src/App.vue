@@ -101,7 +101,7 @@ function closeOnboarding() {
   try { localStorage.setItem(ONBOARDING_KEY, 'true') } catch {}
 }
 
-watch([isAuthenticated, showBiometricGate], () => {
+watch([() => isAuthenticated.value, () => showBiometricGate.value], () => {
   if (isAuthenticated.value && !showBiometricGate.value && !hasSeenOnboarding()) {
     showOnboarding.value = true
   }
