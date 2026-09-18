@@ -1,5 +1,6 @@
 <template>
   <BiometricGate :visible="showBiometricGate" @authenticated="onBioAuthenticated" @skip="onBioSkip" />
+  <OnboardingTutorial v-if="showOnboarding" @close="closeOnboarding" />
   <header v-if="isAuthenticated && !showBiometricGate" class="app-header animate-fade-in">
     <div class="logo" @click="router.push('/')" style="cursor: pointer;">
       <img src="/icon-header.png" alt="" class="logo-icon" />
@@ -79,6 +80,7 @@ import { Capacitor } from '@capacitor/core'
 import { useWalletStore } from './stores/walletStore'
 import { biometricService } from './services/BiometricService'
 import BiometricGate from './components/BiometricGate.vue'
+import OnboardingTutorial from './components/OnboardingTutorial.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -86,6 +88,24 @@ const store = useWalletStore()
 
 const isDropdownOpen = ref(false)
 const showBiometricGate = ref(false)
+
+const ONBOARDING_KEY = 'breyne_onboarding_seen'
+const showOnboarding = ref(false)
+
+function hasSeenOnboarding() {
+  try { return localStorage.getItem(ONBOARDING_KEY) === 'true' } catch { return true }
+}
+
+function closeOnboarding() {
+  showOnboarding.value = false
+  try { localStorage.setItem(ONBOARDING_KEY, 'true') } catch {}
+}
+
+watch([isAuthenticated, showBiometricGate], () => {
+  if (isAuthenticated.value && !showBiometricGate.value && !hasSeenOnboarding()) {
+    showOnboarding.value = true
+  }
+})
 
 onMounted(async () => {
   const ok = await store.loadFromLocalStorage()
