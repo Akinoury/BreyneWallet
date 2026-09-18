@@ -69,9 +69,11 @@
     </nav>
   </header>
   <main v-if="!showBiometricGate" class="app-container">
-    <Transition name="page" mode="out-in">
-      <router-view :key="route.path" />
-    </Transition>
+    <router-view v-slot="{ Component }">
+      <Transition name="page" appear>
+        <component :is="Component" :key="route.path" />
+      </Transition>
+    </router-view>
   </main>
 </template>
 
@@ -512,19 +514,22 @@ nav {
 }
 
 /* Page transition: same slide+fade dynamism as the tutorial steps */
-.page-enter-active,
-.page-leave-active {
+.page-enter-active {
   transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+}
+
+.page-leave-active {
+  transition: opacity 0.18s ease-out;
+  animation: none !important;
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(12px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
 }
 
 /* Logo micro-interaction */
