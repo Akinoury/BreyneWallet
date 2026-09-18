@@ -56,6 +56,11 @@ export const useWalletStore = defineStore('wallet', () => {
   const currentUser = ref(null)
   const isBiometricEnabled = ref(false)
   const walletLoaded = ref(false)
+  const onboardingRequested = ref(false)
+
+  function requestOnboarding() {
+    onboardingRequested.value = true
+  }
 
   const limitConsumption = computed(() => {
     const rate = Number(consumptionRate.value) || 0
@@ -638,6 +643,9 @@ async function clearAllTransactions() {
     internationalInvestmentsTotal,
     internationalInvestmentsTotalBrl,
     totalInvestments,
+
+    onboardingRequested,
+    requestOnboarding,
 
     addTransaction,
     deleteTransaction,

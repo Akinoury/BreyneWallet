@@ -13,6 +13,20 @@
       {{ successMsg }}
     </div>
 
+    <!-- TUTORIAL -->
+    <div class="settings-card tutorial-banner">
+      <div class="tutorial-banner-text">
+        <h3>📖 Conheça o BreyneWallet</h3>
+        <p>
+          Reveja o guia interativo: a Lógica Reversa dos Juros, o Acerto de Contas, o Fundo de Emergência
+          e todos os recursos em poucos passos.
+        </p>
+      </div>
+      <button class="tutorial-banner-btn" @click="openTutorial">
+        ▶ Ver Tutorial
+      </button>
+    </div>
+
     <div class="grid-2">
       <!-- PARAMETROS FINANCEIROS -->
       <div class="settings-card glass-panel full-width-card">
@@ -343,6 +357,10 @@ import { notificationService } from '../services/NotificationService'
 const store = useWalletStore()
 const router = useRouter()
 
+const openTutorial = () => {
+  store.requestOnboarding()
+}
+
 // Parâmetros básicos
 const salary = ref(store.salary)
 const taxRate = ref(store.expenseTaxRate)
@@ -639,6 +657,63 @@ const handleRegisterNewCredential = async () => {
 
 .settings-card {
   text-align: left;
+}
+
+.tutorial-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.35rem 1.5rem;
+  background: linear-gradient(135deg, var(--text-primary), #16325a);
+  border: 1px solid rgba(138, 111, 62, 0.35);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 24px rgba(11, 29, 51, 0.18);
+}
+
+.tutorial-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.tutorial-banner-text h3 {
+  margin: 0;
+  color: #faf9f5;
+  font-size: 1.05rem;
+}
+
+.tutorial-banner-text p {
+  margin: 0;
+  color: rgba(250, 249, 245, 0.82);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.tutorial-banner-btn {
+  flex-shrink: 0;
+  background: var(--accent-color);
+  border: none;
+  color: #ffffff;
+  padding: 0.7rem 1.15rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.tutorial-banner-btn:hover {
+  background: #9b7d45;
+  transform: translateY(-1px);
+}
+
+.tutorial-banner-btn:active {
+  transform: translateY(0);
 }
 
 .section-subtitle {
@@ -1225,6 +1300,22 @@ input:checked + .toggle-slider:before {
 }
 
 @media (max-width: 600px) {
+  .tutorial-banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 1.25rem 1.1rem;
+  }
+
+  .tutorial-banner-text {
+    text-align: center;
+  }
+
+  .tutorial-banner-btn {
+    width: 100%;
+    padding: 0.8rem 1rem;
+  }
+
   .rate-row { flex-direction: column; gap: 0.5rem; }
   .rate-input-group { width: 100%; }
   .rate-input { width: 100%; text-align: left; }

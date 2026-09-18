@@ -98,11 +98,18 @@ function hasSeenOnboarding() {
 
 function closeOnboarding() {
   showOnboarding.value = false
+  store.onboardingRequested = false
   try { localStorage.setItem(ONBOARDING_KEY, 'true') } catch {}
 }
 
 watch([() => isAuthenticated.value, () => showBiometricGate.value], () => {
   if (isAuthenticated.value && !showBiometricGate.value && !hasSeenOnboarding()) {
+    showOnboarding.value = true
+  }
+})
+
+watch(() => store.onboardingRequested, (req) => {
+  if (req && isAuthenticated.value && !showBiometricGate.value) {
     showOnboarding.value = true
   }
 })
