@@ -225,13 +225,21 @@ function onKeydown(e) {
   else if (e.key === 'Escape') dismiss()
 }
 
+function onAppError() {
+  dismiss()
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('error', onAppError)
+  window.addEventListener('unhandledrejection', onAppError)
   document.body.style.overflow = 'hidden'
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('error', onAppError)
+  window.removeEventListener('unhandledrejection', onAppError)
   document.body.style.overflow = ''
 })
 </script>
@@ -245,17 +253,27 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
   padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
   padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  background: rgba(11, 29, 51, 0.6);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(11, 29, 51, 0.72);
   animation: overlayIn 0.3s ease-out forwards;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .tutorial-overlay {
+    background: rgba(11, 29, 51, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
 }
 
 .tutorial-card {
   width: min(540px, 100%);
   max-height: min(92vh, 680px);
+  max-height: min(92dvh, 680px);
+  height: auto;
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -354,7 +372,9 @@ onUnmounted(() => {
 
 .tutorial-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 1.5rem 1.75rem;
 }
@@ -695,13 +715,17 @@ onUnmounted(() => {
 @media (max-width: 600px) {
   .tutorial-overlay {
     padding: 0.75rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
     padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     align-items: flex-end;
   }
 
   .tutorial-card {
+    width: 100%;
     max-height: 94vh;
+    max-height: 94dvh;
     border-radius: var(--radius-lg);
   }
 
@@ -764,16 +788,41 @@ onUnmounted(() => {
 @media (max-height: 560px) {
   .tutorial-card {
     max-height: 96vh;
+    max-height: 96dvh;
   }
 
   .tutorial-icon {
-    width: 52px;
-    height: 52px;
-    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
   }
 
   .tutorial-body {
-    padding: 0.9rem 1rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .tutorial-footer {
+    padding-top: 0.6rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .tutorial-title {
+    font-size: 1rem;
+  }
+
+  .tutorial-text p {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 600px) and (max-height: 480px) {
+  .tutorial-progress {
+    display: none;
+  }
+
+  .tutorial-header {
+    padding-top: 0.6rem;
+    padding-bottom: 0.4rem;
   }
 }
 </style>
