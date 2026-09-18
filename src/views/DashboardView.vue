@@ -332,166 +332,6 @@
       </div>
     </div>
 
-    <!-- SECTION: SIMULADOR DE LIBERDADE FINANCEIRA & RENTABILIDADE SELIC -->
-    <div class="simulator-section glass-panel">
-      <div class="simulator-header flex-between" style="margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <h3>🔮 Simulador de Rentabilidade Selic & Liberdade Financeira</h3>
-          <p>Monitore suas projeções de rentabilidade e descubra quando alcançará a sua independência.</p>
-        </div>
-        <div class="selic-badge-container">
-          <span class="selic-badge">
-            <span class="pulse-dot"></span>
-            Taxa Selic: <strong>{{ selicRate }}% a.a.</strong>
-          </span>
-          <small class="selic-update-text">Atualizado via Banco Central (SGS 432)</small>
-        </div>
-      </div>
-
-      <!-- INPUT PANEL -->
-      <div class="simulator-inputs-grid">
-        <div class="sim-input-group">
-          <label>Valor Inicial (Saldo Fundo)</label>
-          <div class="input-display-box">
-            <span class="prefix">R$</span>
-            <span class="value-text">{{ formatCurrency(store.emergencyFund) }}</span>
-          </div>
-        </div>
-
-        <div class="sim-input-group">
-          <label for="monthly-contrib">Aporte Mensal Adicional</label>
-          <div class="input-prefix-group">
-            <span class="prefix">R$</span>
-            <input 
-              type="number" 
-              id="monthly-contrib" 
-              v-model.number="store.monthlyContribution" 
-              step="50" 
-              class="input-field-inline"
-            />
-          </div>
-          <small class="help-text">Original planejado: R$ {{ formatCurrency(store.investedValue) }}</small>
-        </div>
-
-        <div class="sim-input-group">
-          <label for="target-passive">Meta de Renda Passiva</label>
-          <div class="input-prefix-group">
-            <span class="prefix">R$</span>
-            <input 
-              type="number" 
-              id="target-passive" 
-              v-model.number="targetPassiveIncome" 
-              step="100" 
-              class="input-field-inline"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- SIMULATION RESULTS -->
-      <div class="simulator-results-grid">
-
-        <!-- Row 1 -->
-        <div class="sim-card sim-card-dividendos sim-card-center">
-          <span class="sim-card-label">📊 Dividendos do Fundo</span>
-          <h4 class="sim-card-value text-accent">R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}</h4>
-          <span class="sim-card-sub text-muted">
-            {{ (monthlyRate * 100).toFixed(2) }}% sobre R$ {{ formatCurrency(store.emergencyFund) }}
-          </span>
-        </div>
-
-        <div class="sim-card">
-          <span class="sim-card-label">Patrimônio Total</span>
-          <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 0.6rem;">
-            <div style="text-align: center;">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Aportado</div>
-              <h4 class="sim-card-value" style="font-size: 1.1rem; white-space: nowrap;">R$ {{ formatCurrency(speculativeData.totalContributions) }}</h4>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.15rem;">Juros Acumulados</div>
-              <h4 class="sim-card-value text-success" style="font-size: 1.1rem; white-space: nowrap;">R$ {{ formatCurrency(speculativeData.totalInterestEarned) }}</h4>
-            </div>
-          </div>
-        </div>
-
-        <div class="sim-card sim-card-center target-indep-card" :class="{ 'reached-card': financialIndependenceYears.alreadyReached }">
-          <span class="sim-card-label">Liberdade Financeira</span>
-          
-          <div v-if="financialIndependenceYears.alreadyReached">
-            <h4 class="sim-card-value text-success">Conquistado! 🚀</h4>
-            <span class="sim-card-sub text-success">Seu fundo atual já gera R$ {{ formatCurrency(store.emergencyFund * monthlyRate) }}/mês.</span>
-          </div>
-          <div v-else-if="financialIndependenceYears.unreachable">
-            <h4 class="sim-card-value text-muted">Aporte Necessário ⚠️</h4>
-            <span class="sim-card-sub">Insira um valor de aporte maior que zero para simular.</span>
-          </div>
-          <div v-else>
-            <h4 class="sim-card-value text-purple">
-              {{ financialIndependenceYears.years }} {{ financialIndependenceYears.years === 1 ? 'ano' : 'anos' }}
-              <span v-if="financialIndependenceYears.months > 0">
-                e {{ financialIndependenceYears.months }} {{ financialIndependenceYears.months === 1 ? 'mês' : 'meses' }}
-              </span>
-            </h4>
-            <span class="sim-card-sub text-purple" style="text-align: left;">
-              Patrimônio Alvo: <strong>R$ {{ formatCurrency(financialIndependenceYears.targetWealth) }}</strong>
-            </span>
-          </div>
-        </div>
-
-        <!-- Row 2 -->
-        <div class="sim-card sim-card-center">
-          <span class="sim-card-label">Acumulado em 1 Ano</span>
-          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(12)) }}</h4>
-        </div>
-
-        <div class="sim-card sim-card-center">
-          <span class="sim-card-label">Acumulado em 5 Anos</span>
-          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(60)) }}</h4>
-        </div>
-
-        <div class="sim-card sim-card-center">
-          <span class="sim-card-label">Acumulado em 10 Anos</span>
-          <h4 class="sim-card-value">R$ {{ formatCurrency(calculateAccumulation(120)) }}</h4>
-        </div>
-
-      </div>
-
-      <!-- CHARTS SECTION -->
-      <div class="charts-section">
-        <h4 class="charts-title">📈 Projeções Gráficas</h4>
-
-        <div class="charts-grid">
-          <!-- Inflation-Adjusted Chart -->
-          <div class="chart-card glass-panel">
-            <div class="chart-card-header">
-              <span class="chart-card-label">Poder de Compra vs. Juros (30a)</span>
-              <small class="chart-card-sub">Saldo Nominal x Poder de Compra Ajustado (Inflação {{ inflationRate }}% a.a.)</small>
-            </div>
-            <canvas id="chart-inflation" height="200"></canvas>
-          </div>
-
-          <!-- Monthly Income Bar Chart -->
-          <div class="chart-card glass-panel">
-            <div class="chart-card-header">
-              <span class="chart-card-label">Renda Passiva Mensal por Etapa</span>
-              <small class="chart-card-sub">Rendimento estimado em cada marco</small>
-            </div>
-            <canvas id="chart-income" height="200"></canvas>
-          </div>
-
-        </div>
-
-        <!-- Stacked area: Principal vs Juros -->
-        <div class="chart-card glass-panel chart-wide">
-          <div class="chart-card-header">
-            <span class="chart-card-label">Capital vs. Juros (30a)</span>
-            <small class="chart-card-sub">O poder dos juros compostos ao longo do tempo</small>
-          </div>
-          <canvas id="chart-stacked" height="160"></canvas>
-        </div>
-      </div>
-    </div>
-
     <!-- EXPENSE CATEGORY ANALYSIS -->
     <div class="simulator-section glass-panel">
       <h4 class="charts-title">📊 Análise de Gastos Mensais</h4>
@@ -569,18 +409,16 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   Chart,
-  LineElement, BarElement, PointElement, ArcElement,
-  LinearScale, CategoryScale,
-  Filler, Tooltip, Legend,
-  LineController, BarController, DoughnutController
+  ArcElement,
+  Tooltip, Legend,
+  DoughnutController
 } from 'chart.js'
 import { useWalletStore } from '../stores/walletStore'
 
 Chart.register(
-  LineElement, BarElement, PointElement, ArcElement,
-  LinearScale, CategoryScale,
-  Filler, Tooltip, Legend,
-  LineController, BarController, DoughnutController
+  ArcElement,
+  Tooltip, Legend,
+  DoughnutController
 )
 
 const store = useWalletStore()
@@ -648,9 +486,6 @@ function onTouchEnd(e) {
   }
 }
 
-// Projeção e Simulação da Selic / Liberdade Financeira
-const targetPassiveIncome = ref(0)
-
 watch(showAcertoTable, (val) => {
   localStorage.setItem(STORAGE_KEY_ACERTO_VISIBLE, val ? 'true' : 'false')
 })
@@ -661,51 +496,8 @@ watch(showHealthyCats, (val) => {
   localStorage.setItem(STORAGE_KEY_HEALTHY_CATS, val ? 'true' : 'false')
 })
 
-const selicRate = ref(10.75)
-const inflationRate = ref(4)
-const isFetchingSelic = ref(false)
-
-const monthlyRate = computed(() => {
-  const annual = Number(selicRate.value) || 10.75
-  return Math.pow(1 + annual / 100, 1 / 12) - 1
-})
-
-const fetchSelicRate = async () => {
-  isFetchingSelic.value = true
-  try {
-    const res = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json')
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0 && data[0].valor) {
-        selicRate.value = Number(data[0].valor)
-      }
-    }
-  } catch (err) {
-    console.warn('Erro ao carregar taxa Selic do Banco Central:', err)
-  } finally {
-    isFetchingSelic.value = false
-  }
-}
-
-const fetchInflationRate = async () => {
-  try {
-    const res = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/1?formato=json')
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0 && data[0].valor) {
-        inflationRate.value = Number(data[0].valor.replace(',', '.'))
-      }
-    }
-  } catch (err) {
-    console.warn('Erro ao carregar inflação do Banco Central:', err)
-  }
-}
-
 onMounted(async () => {
   await store.loadFromLocalStorage()
-  if (!store.monthlyContribution) store.monthlyContribution = store.investedValue
-  targetPassiveIncome.value = store.salary
-  await Promise.all([fetchSelicRate(), fetchInflationRate()])
   renderCharts()
 })
 
@@ -829,202 +621,16 @@ const handleFundAction = async (isDeposit) => {
   }
 }
 
-const triggerSimulateInterest = async () => {
-  await store.simulateInterest(selicRate.value)
-}
-
-const calculateAccumulation = (months) => {
-  const S0 = Number(store.emergencyFund) || 0
-  const C = Number(store.monthlyContribution) || 0
-  const r = monthlyRate.value
-  if (r <= 0) return S0 + C * months
-  const finalBalance = S0 * Math.pow(1 + r, months) + C * ((Math.pow(1 + r, months) - 1) / r)
-  return Number(finalBalance.toFixed(2))
-}
-
-const financialIndependenceYears = computed(() => {
-  const S0 = Number(store.emergencyFund) || 0
-  const C = Number(store.monthlyContribution) || 0
-  const targetIncome = Number(targetPassiveIncome.value) || 0
-  const r = monthlyRate.value
-
-  if (r <= 0 || targetIncome <= 0) return { years: 0, months: 0, targetWealth: 0, unreachable: true }
-
-  const targetWealth = Number((targetIncome / r).toFixed(2))
-
-  if (S0 >= targetWealth) {
-    return { years: 0, months: 0, targetWealth, unreachable: false, alreadyReached: true }
-  }
-
-  if (C <= 0) {
-    return { years: 0, months: 0, targetWealth, unreachable: true }
-  }
-
-  const num = targetWealth + (C / r)
-  const den = S0 + (C / r)
-  const months = Math.ceil(Math.log(num / den) / Math.log(1 + r))
-
-  if (isNaN(months) || months < 0 || !isFinite(months)) {
-    return { years: 0, months: 0, targetWealth, unreachable: true }
-  }
-
-  const years = Math.floor(months / 12)
-  const remainingMonths = months % 12
-  return { years, months: remainingMonths, totalMonths: months, targetWealth, unreachable: false }
-})
-
 // -------------------------------------------------------
-// Speculative numbers
+// Chart.js — 2 charts
 // -------------------------------------------------------
-const speculativeData = computed(() => {
-  const fi = financialIndependenceYears.value
-  const r  = monthlyRate.value
-  const C  = Number(store.monthlyContribution) || 0
-  const S0 = Number(store.emergencyFund) || 0
-
-  const N = fi.unreachable || fi.alreadyReached ? 0 : (fi.totalMonths || 0)
-  const targetWealth = fi.targetWealth || 0
-
-  const totalContributions = S0 + C * N
-  const balanceAtN = calculateAccumulation(N)
-  const totalInterestEarned = Math.max(0, balanceAtN - totalContributions)
-
-  const incomeAt20y = calculateAccumulation(240) * r
-
-  return {
-    totalContributions: Number(totalContributions.toFixed(2)),
-    totalInterestEarned: Number(totalInterestEarned.toFixed(2)),
-    incomeAt20y: Number(incomeAt20y.toFixed(2)),
-    targetWealth: Number(targetWealth.toFixed(2))
-  }
-})
-
-// -------------------------------------------------------
-// Chart.js — 4 charts
-// -------------------------------------------------------
-let chartIncome = null
-let chartStacked = null
 let chartExpenseCategory = null
 let chartExpenseBreakdown = null
-let chartInflation = null
-
-const buildChartData = () => {
-  const r  = monthlyRate.value
-  const C  = Number(store.monthlyContribution) || 0
-  const S0 = Number(store.emergencyFund) || 0
-  const tw = financialIndependenceYears.value.targetWealth || 0
-
-  // 30 years = 360 months, sample yearly (every 12 months)
-  const labels = []
-  const balances = []
-  const contributions = []
-  const interests = []
-  const incomes = []
-
-  for (let y = 0; y <= 30; y++) {
-    const m = y * 12
-    labels.push(`Ano ${y}`)
-    const bal = calculateAccumulation(m)
-    const totalIn = S0 + C * m
-    balances.push(Number(bal.toFixed(2)))
-    contributions.push(Number(Math.min(bal, totalIn).toFixed(2)))
-    interests.push(Number(Math.max(0, bal - totalIn).toFixed(2)))
-    incomes.push(Number((bal * r).toFixed(2)))
-  }
-
-  return { labels, balances, contributions, interests, incomes, targetWealth: tw }
-}
 
 const renderCharts = async () => {
   await nextTick()
 
-  const cvIncome = document.getElementById('chart-income')
-  const cvStack  = document.getElementById('chart-stacked')
-  if (!cvIncome || !cvStack) return
-
-  const { labels, balances, contributions, interests, incomes, targetWealth } = buildChartData()
-
-  const palette = {
-    navy:   '#1e3a5f',
-    gold:   '#b8860b',
-    green:  '#2d6a4f',
-    purple: '#5a2882',
-    cream:  '#f5f0e6',
-    border: '#d4c9a8'
-  }
-
-  // ---- Chart 2: Monthly Income Bar ----
-  const milestones = [1, 2, 5, 10, 15, 20, 25, 30]
-  if (chartIncome) chartIncome.destroy()
-  chartIncome = new Chart(cvIncome, {
-    type: 'bar',
-    data: {
-      labels: milestones.map(y => `${y}a`),
-      datasets: [{
-        label: 'Renda Passiva Mensal (R$)',
-        data: milestones.map(y => Number((calculateAccumulation(y * 12) * monthlyRate.value).toFixed(2))),
-        backgroundColor: 'rgba(30,58,95,0.75)',
-        borderColor: palette.navy,
-        borderWidth: 1,
-        borderRadius: 3
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês` } }
-      },
-      scales: {
-        y: { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
-        x: { grid: { display: false } }
-      }
-    }
-  })
-
-  // ---- Chart 3: Stacked Area ----
-  if (chartStacked) chartStacked.destroy()
-  chartStacked = new Chart(cvStack, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Juros Acumulados (R$)',
-          data: interests,
-          backgroundColor: 'rgba(45,106,79,0.45)',
-          borderColor: palette.green,
-          borderWidth: 1.5,
-          fill: true,
-          tension: 0.35,
-          pointRadius: 2
-        },
-        {
-          label: 'Capital Aportado (R$)',
-          data: contributions,
-          backgroundColor: 'rgba(30,58,95,0.30)',
-          borderColor: palette.navy,
-          borderWidth: 1.5,
-          fill: true,
-          tension: 0.35,
-          pointRadius: 2
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { family: 'Georgia, serif', size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ` R$ ${Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` } }
-      },
-      scales: {
-        y: { stacked: false, ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
-        x: { grid: { display: false } }
-      }
-    }
-  })
-
-  // ---- Chart 4: Compras vs Passivos ----
+  // ---- Chart: Compras vs Passivos ----
   const cvExpCat = document.getElementById('chart-expense-category')
   if (cvExpCat) {
     if (chartExpenseCategory) chartExpenseCategory.destroy()
@@ -1118,85 +724,14 @@ const renderCharts = async () => {
     })
   }
 
-  // ---- Chart 6: Inflation-Adjusted ----
-  const cvInflation = document.getElementById('chart-inflation')
-  if (cvInflation) {
-    if (chartInflation) chartInflation.destroy()
-    const inflRate = Number(inflationRate.value) || 4
-    const realBalances = balances.map((bal, i) => {
-      const years = i
-      const factor = Math.pow(1 + inflRate / 100, years)
-      return Number((bal / factor).toFixed(2))
-    })
-    chartInflation = new Chart(cvInflation, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Saldo Nominal (R$)',
-            data: balances,
-            borderColor: '#1e3a5f',
-            backgroundColor: 'rgba(30,58,95,0.08)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.35,
-            pointRadius: 2,
-            pointBackgroundColor: '#1e3a5f',
-            pointBorderColor: '#1e3a5f',
-            pointHoverRadius: 4
-          },
-          {
-            label: 'Poder de Compra Real (R$)',
-            data: realBalances,
-            borderColor: '#2d6a4f',
-            backgroundColor: 'rgba(45,106,79,0.08)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.35,
-            pointRadius: 2,
-            pointBackgroundColor: '#2d6a4f',
-            pointBorderColor: '#2d6a4f',
-            pointHoverRadius: 4,
-            borderDash: [5, 3]
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom', labels: { font: { family: 'Georgia, serif', size: 11 } } },
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                const label = ctx.dataset.label || ''
-                const val = Number(ctx.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-                return ` ${label}: R$ ${val}`
-              },
-              afterBody: items => {
-                if (items.length === 2) {
-                  const diff = items[0].raw - items[1].raw
-                  return `\nPerda para inflação: R$ ${diff.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                }
-                return ''
-              }
-            }
-          }
-        },
-        scales: {
-          y: { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact' }) }, grid: { color: '#e8e2d4' } },
-          x: { grid: { display: false } }
-        }
-      }
-    })
-  }
 }
-watch([selicRate, inflationRate, () => store.monthlyContribution, targetPassiveIncome, () => store.emergencyFund, () => store.transactions], () => {
-  renderCharts()
-}, { debounce: 300 })
 
-watch(() => store.monthlyContribution, () => {
-  store.saveToLocalStorage()
+watch(() => store.transactions, () => {
+  renderCharts()
+}, { deep: true })
+
+watch(() => store.emergencyFund, () => {
+  renderCharts()
 })
 </script>
 
@@ -2125,216 +1660,6 @@ input:checked + .toggle-slider-sm:before {
   width: 100%;
 }
 
-.selic-badge-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
-}
-
-.selic-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(30, 70, 37, 0.08);
-  color: var(--success-color);
-  border: 1px solid rgba(30, 70, 37, 0.2);
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-family: "Times New Roman", Times, Georgia, serif;
-}
-
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--success-color);
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 0 0 0 rgba(30, 70, 37, 0.4);
-  animation: pulse-green 2s infinite;
-}
-
-@keyframes pulse-green {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(30, 70, 37, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(30, 70, 37, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(30, 70, 37, 0);
-  }
-}
-
-.selic-update-text {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.simulator-inputs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  background: #fcfbf8;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1.5rem;
-}
-
-.sim-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.sim-input-group label {
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.input-display-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.6rem;
-  height: 38px;
-}
-
-.input-display-box .value-text {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: var(--text-primary);
-  margin-left: 0.3rem;
-  margin-right: auto;
-}
-
-.btn-apply-interest-inline {
-  background: var(--accent-color);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 0.2rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.15s;
-  font-family: "Times New Roman", Times, Georgia, serif;
-}
-.btn-apply-interest-inline:hover {
-  background: var(--accent-hover);
-}
-
-.input-prefix-group {
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.6rem;
-  height: 38px;
-}
-
-.input-prefix-group input {
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  margin-left: 0.3rem;
-  background: transparent;
-  font-family: "Times New Roman", Times, Georgia, serif;
-}
-
-.simulator-results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-}
-
-.sim-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.sim-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.sim-card-center {
-  text-align: center;
-}
-
-.sim-card-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.sim-card-value {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  margin: 0.2rem 0;
-}
-
-.sim-card-sub {
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-
-.target-indep-card {
-  border: 1.5px solid var(--border-color);
-  background: #faf7ff;
-}
-
-.sim-card-dividendos {
-  border-left: 4px solid var(--accent-color);
-  background: #fcf9f2;
-}
-
-.text-accent {
-  color: var(--accent-color) !important;
-}
-
-.target-indep-card.reached-card {
-  background: #f3fdf5;
-  border-color: rgba(30, 70, 37, 0.3);
-}
-
-.target-indep-card .text-purple {
-  color: #5a2882;
-}
-
-.target-indep-card .text-muted {
-  color: var(--text-secondary);
-}
-
-/* Charts section */
-.charts-section {
-  margin-top: 2rem;
-}
-
 .charts-title {
   font-size: 1rem;
   font-weight: bold;
@@ -2368,74 +1693,6 @@ input:checked + .toggle-slider-sm:before {
   max-width: 100%;
 }
 
-.chart-wide {
-  margin-bottom: 1.25rem;
-}
-
-.chart-card-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.chart-card-label {
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.chart-card-sub {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-/* Speculative numbers */
-.speculative-panel {
-  margin-top: 2rem;
-}
-
-.speculative-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.spec-card {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  transition: transform 0.2s;
-}
-
-.spec-card:hover {
-  transform: translateY(-2px);
-}
-
-.spec-label {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  line-height: 1.3;
-}
-
-.spec-value {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--text-primary);
-}
-
-.spec-value.text-success { color: var(--success-color); }
-.spec-value.text-purple  { color: #5a2882; }
-.spec-value.text-muted   { color: var(--text-secondary); font-size: 1rem; }
-
 @media (max-width: 768px) {
   .welcome-bar { flex-direction: column; align-items: flex-start; gap: 1rem; }
   .welcome-bar h2 { font-size: 1.3rem; }
@@ -2463,8 +1720,6 @@ input:checked + .toggle-slider-sm:before {
   .fund-buttons { width: 100%; }
   .fund-buttons button { flex: 1; }
   .fund-balance-display h2 { font-size: 1.6rem; }
-  .simulator-inputs-grid { padding: 1rem; gap: 1rem; }
-  .sim-card-value { font-size: 1.2rem; }
   .help-modal-box { padding: 1.25rem; margin: 0.5rem; }
 }
 
