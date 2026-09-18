@@ -57,9 +57,33 @@ export const useWalletStore = defineStore('wallet', () => {
   const isBiometricEnabled = ref(false)
   const walletLoaded = ref(false)
   const onboardingRequested = ref(false)
+  const reverseLogicEnabled = ref(true)
 
   function requestOnboarding() {
     onboardingRequested.value = true
+  }
+
+  async function applyReverseLogic(enabled) {
+    reverseLogicEnabled.value = enabled
+    if (enabled) {
+      const inSimpleMode =
+        consumptionRate.value >= 100 ||
+        (investmentRate.value === 0 && expenseTaxRate.value === 0 && penaltyRate.value === 0)
+      if (inSimpleMode) {
+        consumptionRate.value = 70
+        investmentRate.value = 30
+        investmentBonusRate.value = 5.00
+        expenseTaxRate.value = 15
+        penaltyRate.value = 30
+      }
+    } else {
+      consumptionRate.value = 100
+      investmentRate.value = 0
+      investmentBonusRate.value = 0
+      expenseTaxRate.value = 0
+      penaltyRate.value = 0
+    }
+    if (walletLoaded.value) await saveWalletState()
   }
 
   const limitConsumption = computed(() => {
@@ -183,7 +207,8 @@ export const useWalletStore = defineStore('wallet', () => {
       investmentRate: investmentRate.value,
       investmentBonusRate: investmentBonusRate.value,
       penaltyRate: penaltyRate.value,
-      monthlyContribution: monthlyContribution.value
+      monthlyContribution: monthlyContribution.value,
+      reverseLogicEnabled: reverseLogicEnabled.value
     }
   }
 
@@ -205,6 +230,7 @@ export const useWalletStore = defineStore('wallet', () => {
     investmentRate.value = w.investmentRate ?? investmentRate.value
     investmentBonusRate.value = w.investmentBonusRate ?? investmentBonusRate.value
     penaltyRate.value = w.penaltyRate ?? penaltyRate.value
+    reverseLogicEnabled.value = w.reverseLogicEnabled ?? true
     monthlyContribution.value = w.monthlyContribution ?? monthlyContribution.value
   }
 
@@ -220,6 +246,7 @@ export const useWalletStore = defineStore('wallet', () => {
     investmentRate.value = 30
     investmentBonusRate.value = 5.00
     penaltyRate.value = 30
+    reverseLogicEnabled.value = true
     investments.value = [
       { id: 1, name: 'WEGE3', amount: 1500.00, type: 'national', category: 'Ações' },
       { id: 2, name: 'MXRF11', amount: 800.00, type: 'national', category: 'FIIs' },
@@ -646,6 +673,8 @@ async function clearAllTransactions() {
 
     onboardingRequested,
     requestOnboarding,
+    reverseLogicEnabled,
+    applyReverseLogic,
 
     addTransaction,
     deleteTransaction,

@@ -39,6 +39,26 @@
                 </div>
               </div>
 
+              <!-- VISUAL: Você no comando -->
+              <div v-else-if="steps[currentIndex].visual === 'own'" class="tutorial-visual visual-own">
+                <div class="own-panel">
+                  <div class="own-row">
+                    <span class="own-emoji">👤</span>
+                    <span class="own-text"><b>Você</b> insere os registros</span>
+                  </div>
+                  <div class="own-arrow">↓</div>
+                  <div class="own-row">
+                    <span class="own-emoji">🏦</span>
+                    <span class="own-text">Fundo aplicado com eficiência <b>no seu banco</b></span>
+                  </div>
+                  <div class="own-arrow">↑</div>
+                  <div class="own-row own-row-highlight">
+                    <span class="own-emoji">🔁</span>
+                    <span class="own-text">O retorno ao fundo quem faz é <b>você mesmo</b></span>
+                  </div>
+                </div>
+              </div>
+
               <!-- VISUAL: Fundo de Emergência -->
               <div v-else-if="steps[currentIndex].visual === 'fund'" class="tutorial-visual visual-fund">
                 <div class="fund-mini-bar">
@@ -87,6 +107,79 @@
                   Quem sempre paga juros ao banco, agora cobra de si mesmo — e o que "sobra" investe no próprio futuro.
                 </div>
               </div>
+
+              <!-- VISUAL: Salário -->
+              <div v-else-if="steps[currentIndex].visual === 'salary'" class="tutorial-visual visual-salary">
+                <div class="salary-input-wrap">
+                  <span class="salary-prefix">R$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    class="salary-input"
+                    placeholder="0,00"
+                    v-model.number="salaryInput"
+                    @input="onSalaryInput"
+                  />
+                </div>
+                <div class="salary-usage">
+                  <p class="salary-usage-title">Com o salário, o app monta todo o seu ciclo:</p>
+                  <ul>
+                    <li v-if="logicChoice === 'yes'">
+                      <b>Limite de Consumo ({{ store.consumptionRate }}%)</b> → teto de gastos do ciclo.
+                    </li>
+                    <li v-else>
+                      <b>Limite de Consumo = 100%</b> → todo o salário fica disponível para gastos, sem juros.
+                    </li>
+                    <li v-if="logicChoice === 'yes'">
+                      <b>Investimento ({{ store.investmentRate }}%)</b> → parte da entrada vai para a sua carteira,
+                      com bônus de {{ store.investmentBonusRate }}%.
+                    </li>
+                    <li v-if="logicChoice === 'yes'">
+                      <b>Juros de {{ store.expenseTaxRate }}% e penalidade de {{ store.penaltyRate }}%</b> → cobrados de você
+                      para você, quando o consumo passa do limite.
+                    </li>
+                    <li>
+                      <b>Acerto de Contas</b> → no fim do ciclo, compras e passivos são somados com juros na Home.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- VISUAL: Escolha do modo -->
+              <div v-else-if="steps[currentIndex].visual === 'mode'" class="tutorial-visual visual-mode">
+                <p class="mode-intro">Como o BreyneWallet deve tratar o seu dinheiro?</p>
+                <button
+                  class="mode-btn mode-btn-yes"
+                  :class="{ selected: logicChoice === 'yes' }"
+                  :disabled="applyingLogic"
+                  @click="chooseLogic(true)"
+                >
+                  <span class="mode-btn-icon">🔁</span>
+                  <span class="mode-btn-text">
+                    <strong>Seguir a Lógica Reversa</strong>
+                    <small>Juros, penalidades, bônus e Retorno ao Fundo — disciplina para quem busca liberdade financeira.</small>
+                  </span>
+                </button>
+                <button
+                  class="mode-btn mode-btn-no"
+                  :class="{ selected: logicChoice === 'no' }"
+                  :disabled="applyingLogic"
+                  @click="chooseLogic(false)"
+                >
+                  <span class="mode-btn-icon">🧾</span>
+                  <span class="mode-btn-text">
+                    <strong>Modo Simples</strong>
+                    <small>Sem juros: Limite de Consumo = 100% do salário e todas as taxas zeradas.</small>
+                  </span>
+                </button>
+                <div v-if="logicFeedback" class="mode-feedback">{{ logicFeedback }}</div>
+                <p class="mode-hint">
+                  Você pode mudar esta decisão depois em ⚙️ Configurações — é só reabrir o tutorial pelo botão
+                  "📖 Conheça o BreyneWallet".
+                </p>
+              </div>
             </div>
           </Transition>
         </div>
@@ -119,8 +212,33 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useWalletStore } from '../stores/walletStore'
 
 const emit = defineEmits(['close'])
+
+const store = useWalletStore()
+
+const salaryInput = ref(store.salary)
+const logicChoice = ref(store.reverseLogicEnabled ? 'yes' : 'no')
+const logicFeedback = ref('')
+const applyingLogic = ref(false)
+
+function onSalaryInput() {
+  const n = Number(salaryInput.value)
+  if (!isNaN(n) && n >= 0) store.salary = n
+}
+
+async function chooseLogic(enabled) {
+  if (applyingLogic.value) return
+  applyingLogic.value = true
+  logicChoice.value = enabled ? 'yes' : 'no'
+  logicFeedback.value = ''
+  await store.applyReverseLogic(enabled)
+  logicFeedback.value = enabled
+    ? 'Lógica Reversa ativada ✅ Taxas padrão (70 / 30 / 5 / 15 / 30) restauradas. Você pode ajustar tudo em ⚙️ Configurações.'
+    : 'Modo simples ativado 🧾 Limite de Consumo = 100% e todas as taxas zeradas. Você pode mudar isso em ⚙️ Configurações.'
+  applyingLogic.value = false
+}
 
 const steps = [
   {
@@ -130,6 +248,17 @@ const steps = [
     paragraphs: [
       'Aqui você passa a ser o seu próprio banco: suas compras e passivos geram juros que voltam para o SEU Fundo de Emergência — em vez de engordar o banco.',
       'Dê um passeio rápido para conhecer cada área e entender a lógica reversa dos juros.'
+    ]
+  },
+  {
+    icon: '👤',
+    title: 'Você no comando do seu dinheiro',
+    visual: 'own',
+    paragraphs: [
+      'Tudo neste app é para o seu controle financeiro. O BreyneWallet apenas organiza — quem move os números é você.',
+      'O Fundo de Emergência deve ser aplicado da forma mais eficiente possível no seu banco (renda fixa, CDB, Tesouro...), para render e te proteger.',
+      'Quem faz o retorno ao Fundo de Emergência é VOCÊ MESMO: os juros que você paga voltam para a sua própria reserva.',
+      'Os registros são inseridos por você — e a responsabilidade de inseri-los também é sua. Seja honesto(a) com os seus números.'
     ]
   },
   {
@@ -148,6 +277,7 @@ const steps = [
     paragraphs: [
       'Aportar e resgatar é direto na Home. Acompanhe o progresso até a meta ideal de 6 salários.',
       'O Retorno Total do seu ciclo é devolvido a este fundo — é assim que consumo vira reserva.',
+      'Mantenha o saldo aplicado da forma mais eficiente que o seu banco oferecer, para ele render enquanto você dorme.',
       'Com o Simulador Selic (na aba Investimentos) você projeta o rendimento e a sua Liberdade Financeira.'
     ]
   },
@@ -189,6 +319,23 @@ const steps = [
       'Se o Consumo + Juros superar 70% do salário, uma penalidade de 30% sobre o excedente ainda é descontada dos seus investimentos.',
       'Ou seja: quanto mais você gasta, mais o seu próprio banco cobra. Poupar e investir vira a forma mais barata de viver — e os juros voltam a trabalhar a seu favor, no seu fundo.'
     ]
+  },
+  {
+    icon: '💰',
+    title: 'Seu salário em ação',
+    visual: 'salary',
+    paragraphs: [
+      'Informe o valor que entra no mês. Ele é a base de todo o seu ciclo financeiro e pode ser atualizado a qualquer momento na Home ou aqui.'
+    ]
+  },
+  {
+    icon: '🎯',
+    title: 'Escolha o seu modo',
+    visual: 'mode',
+    paragraphs: [
+      'Você pode seguir a Lógica Reversa (com juros, penalidades e bônus) ou o Modo Simples (só controle de gastos, sem juros).',
+      'Essa decisão não é permanente: você pode alterá-la depois em ⚙️ Configurações, reabrindo o tutorial quando quiser.'
+    ]
   }
 ]
 
@@ -215,7 +362,10 @@ const goTo = (i) => {
   currentIndex.value = i
 }
 
-const dismiss = () => {
+const dismiss = async () => {
+  const n = Number(salaryInput.value)
+  if (!isNaN(n) && n >= 0) store.salary = n
+  if (store.walletLoaded) await store.saveToLocalStorage()
   emit('close')
 }
 
@@ -590,6 +740,228 @@ onUnmounted(() => {
   padding-top: 0.6rem;
 }
 
+/* "Você no comando" visual */
+.visual-own {
+  padding: 0.75rem;
+  background: #fcfbf8;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.own-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.own-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.own-row b {
+  color: var(--text-primary);
+}
+
+.own-row-highlight {
+  border-color: rgba(138, 111, 62, 0.4);
+  background: #fdfcf7;
+}
+
+.own-row-highlight b {
+  color: var(--accent-color);
+}
+
+.own-emoji {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.own-arrow {
+  text-align: center;
+  color: var(--accent-color);
+  font-weight: bold;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.1rem 0;
+}
+
+/* Salary visual */
+.visual-salary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.6rem 0.25rem 0.25rem;
+}
+
+.salary-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1.5px solid var(--accent-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.salary-prefix {
+  font-weight: bold;
+  color: var(--accent-color);
+  font-size: 1.1rem;
+}
+
+.salary-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: bold;
+  width: 100%;
+  font-family: "Times New Roman", Times, Georgia, serif;
+}
+
+.salary-input::placeholder {
+  color: rgba(11, 29, 51, 0.25);
+}
+
+.salary-input::-webkit-outer-spin-button,
+.salary-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.salary-usage {
+  background: #fcfbf8;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  text-align: left;
+}
+
+.salary-usage-title {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.salary-usage ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.salary-usage li {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.salary-usage li b {
+  color: var(--text-primary);
+}
+
+/* Mode choice visual */
+.visual-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.25rem 0;
+}
+
+.mode-intro {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.mode-btn.selected {
+  border-color: var(--accent-color);
+  background: #fdfcf7;
+  box-shadow: 0 0 0 2px rgba(138, 111, 62, 0.18);
+}
+
+.mode-btn[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.mode-btn-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.mode-btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.mode-btn-text strong {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.mode-btn-text small {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.mode-feedback {
+  font-size: 0.82rem;
+  font-weight: bold;
+  line-height: 1.45;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: #f3faf5;
+  color: var(--success-color);
+  border: 1px solid #def7ec;
+}
+
+.mode-hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: #fdfcf7;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  margin: 0;
+}
+
 .tutorial-footer {
   display: flex;
   align-items: center;
@@ -772,6 +1144,18 @@ onUnmounted(() => {
 
   .flow-sub {
     font-size: 0.68rem;
+  }
+
+  .salary-input {
+    font-size: 1.3rem;
+  }
+
+  .mode-btn {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .mode-hint {
+    font-size: 0.75rem;
   }
 }
 

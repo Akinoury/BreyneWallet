@@ -68,6 +68,11 @@
           <div class="rate-section-title">📊 Distribuição do Salário (% sobre X)</div>
           <p class="golden-rule-notice">As taxas abaixo são baseadas na "Regra de Ouro" de 50 30 20. Caso mude essas porcentagens marcadas isso poderá prejudicar sua independencia futura.</p>
 
+          <div v-if="!store.reverseLogicEnabled" class="simple-mode-notice">
+            🧾 <b>Modo Simples ativo:</b> sem juros, bônus ou penalidades — o Limite de Consumo é 100% do salário e todas as taxas acima ficam zeradas.
+            Se quiser a Lógica Reversa (juros e retorno ao Fundo), reabra o tutorial pelo botão "📖 Conheça o BreyneWallet" acima ou ajuste as taxas manualmente.
+          </div>
+
           <div class="rate-row">
             <div class="rate-info">
               <label for="consumption-rate">Limite de Consumo</label>
@@ -776,6 +781,18 @@ const handleRegisterNewCredential = async () => {
   border-radius: var(--radius-sm);
   margin-bottom: 1rem;
   line-height: 1.4;
+}
+
+.simple-mode-notice {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  background: #eef4fb;
+  border: 1px solid #bcd2ea;
+  border-left: 3px solid #2f6fb0;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  line-height: 1.45;
 }
 
 .toggle-group-row {
